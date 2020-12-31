@@ -9,6 +9,8 @@ import {Index} from "./Index"
 import {HasManyInstance} from "./HasManyInstance"
 import {EntityState} from "./EntityState"
 import {arrayChanges} from "./Utils"
+import {getOwnProperty} from "./Utils"
+import {setOwnProperty} from "./Utils"
 
 export class HasMany extends Relationship {
   primaryKey!: string | null
@@ -56,6 +58,12 @@ export class HasMany extends Relationship {
   }
 
   getValue<P extends Entity, F extends Entity>(entity: P): Array<F> {
+    // If the entity hasn't been added yet, then treat it as an "own"
+    // property, avoiding any getter that might be on the prototype
+    if (!entity.hasEntityState) {
+      return getOwnProperty(entity, this.name, [])
+    }
+    
     const primaryKeyValue = this.getPrimaryKeyValue(entity)
     const result = this.foreignIndex.proxy[primaryKeyValue]
     return this.getResultProxy(entity, result)
@@ -65,6 +73,13 @@ export class HasMany extends Relationship {
     entity: P,
     val: Array<F> | null | undefined
   ): void {
+    // If the entity hasn't been added yet, then treat it as an "own"
+    // property, avoiding any setter that might be on the prototype
+    if (!entity.hasEntityState) {
+      setOwnProperty(entity, this.name, val)
+      return
+    }
+    
     // Get the EntityStates of the old and new lists
     const val1 = this.getValue(entity).map((e) => e.entityState)
 

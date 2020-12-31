@@ -5,6 +5,8 @@ import {IndexSchema} from "./Types"
 import {Entity} from "./Entity"
 import {EntityClass} from "./Types"
 import {Index} from "./Index"
+import {getOwnProperty} from "./Utils"
+import {setOwnProperty} from "./Utils"
 
 export class HasOne extends Relationship {
   primaryKey!: string | null
@@ -43,6 +45,12 @@ export class HasOne extends Relationship {
   }
 
   getValue<P extends Entity, F extends Entity>(entity: P): F | null {
+    // If the entity hasn't been added yet, then treat it as an "own"
+    // property, avoiding any getter that might be on the prototype
+    if (!entity.hasEntityState) {
+      return getOwnProperty(entity, this.name, null)
+    }
+
     const primaryKeyValue = this.getPrimaryKeyValue(entity)
     return this.foreignIndex.proxy[primaryKeyValue] || null
   }
@@ -51,7 +59,12 @@ export class HasOne extends Relationship {
     entity: P,
     val: F | null | undefined
   ): void {
-    // FIXME - if the entity is not actually an Entity yet, then add it
+    // If the entity hasn't been added yet, then treat it as an "own"
+    // property, avoiding any setter that might be on the prototype
+    if (!entity.hasEntityState) {
+      setOwnProperty(entity, this.name, val)
+      return
+    }
 
     // See if there is an existing value that is different, and remove
     // it if so

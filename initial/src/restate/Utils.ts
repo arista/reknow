@@ -846,3 +846,17 @@ export function copyProperties(
     }
   }
 }
+
+export function setOwnProperty(obj:Object, name:string, value:any) {
+  Object.defineProperty(obj, name, {
+    value,
+    configurable: true,
+    enumerable: true,
+    writable: true,
+  })
+}
+
+export function getOwnProperty<T>(obj:Object, name:string, defaultValue: T):T {
+  const pd = Object.getOwnPropertyDescriptor(obj, name)
+  return (pd != null && pd.value != null) ? pd.value : defaultValue
+}

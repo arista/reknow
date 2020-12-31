@@ -186,14 +186,19 @@ export class EntitiesState<E extends Entity>
   extractRelationshipProperties(entity: E) {
     let ret: {[name: string]: any} | null = null
     for (const r of this.relationships) {
-      const rval = (entity as any)[r.name]
-      if (rval != null) {
-        if (ret == null) {
-          ret = {}
+      // Read the property directly from the object, not from any
+      // prototype
+      const pd = Object.getOwnPropertyDescriptor(entity, r.name)
+      if (pd != null) {
+        const rval = pd.value
+        if (rval != null) {
+          if (ret == null) {
+            ret = {}
+          }
+          ret[r.name] = rval
         }
-        ret[r.name] = rval
+        delete (entity as any)[r.name]
       }
-      delete (entity as any)[r.name]
     }
     return ret
   }
