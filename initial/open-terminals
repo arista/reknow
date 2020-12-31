@@ -1,0 +1,3 @@
+#!/bin/bash
+export WORKING_DIR=`pwd`
+gnome-terminal --tab --working-directory=/home/arista/taterdata/restate --title "restate" --tab --title "build" --working-directory=/home/arista/taterdata/restate -e "npm run build-watch" --tab --title "test" --working-directory=/home/arista/taterdata/restate -e "npm run test-watch"

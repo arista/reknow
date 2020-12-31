@@ -1,0 +1,127 @@
+*Basic Entities
+*  Adding Entities
+*  Removing Entities
+*    accessing properties of deleted entities
+*    mutating deleted entities disallowed
+*    re-adding deleted entities disallowed
+*  Getting Entities by id
+*  Modifying properties
+*  Adding properties
+*  Deleting properties
+*Transactions
+*  adding entity
+*  deleting entity
+*  changing entity property
+*  declared on Entities
+*  declared on Entity
+*  declared on Service
+*  nested actions
+*  no action
+*  actions with parameters
+*Indexes
+*  sorted
+*  uniquehash
+*  manyhash
+*    manyhash+unique
+*    manyhash+sorted
+*    manyhash+manyhash+sorted
+*Relationships
+*  HasOne
+*    getter
+*    setter
+*    enforce uniqueness constraint
+*    dependent
+*      nullify
+*      remove
+*      none
+*    using an existing index
+*    circular remove
+*  BelongsTo
+*    getter
+*    setter
+*    dependent
+*      nullify
+*      remove
+*    using an existing index
+*    circular remove
+*  HasMany
+*    getter
+*    setter
+*    array set
+*    array delete
+*    dependent
+*      nullify
+*      remove
+*      none
+*    using an existing index
+*    circular remove
+*Object Identities
+*  Entity
+*  Entities.entitiesById
+*  Indexes
+*    sorted
+*    uniquehash
+*    manyhash
+*      manyhash+unique
+*      manyhash+sorted
+*      manyhash+manyhash+sorted
+*  Relationships
+*    HasMany
+*  Selectors?
+*Selectors
+*  declared on Entities
+*  declared on Entity
+*  declared on Service
+*Reactions
+*  depend on entity properties
+*  depend on Entities entitiesById
+*  depend on Entities index
+*  depend on relationship
+*  depend on hasOwnProperty
+*  depend on Object.keys
+*  depend on getPropertyDescriptor
+*  declared on Entity class
+*  reaction triggers more reactions
+*  check for circular definitions
+*Advanced Adding
+*  setting id
+*    no declared id property
+*    id specified when adding
+*    id property declared
+*      id not specified in property
+*      id specifed in property
+*      id specified in property and when adding
+*      id already used
+*      id should not be mutable
+*  add Entity
+*  add Entity subclass
+*  add existing Entity
+*  add object not yet an Entity
+*  add Entity or object with relationships
+*  add graph of
+*Updating
+*  modify existing entity with entity instance
+*  modify existing entity with object
+*  create new entity if non-existing
+*  process relationships
+*Effects
+*  afterAdd
+*  afterRemove
+*  afterChange
+*  afterPropertyChange
+*  called on delete
+*  only called once per decorator
+*  isolated between entities
+Initiaiizing Entities
+  initialize() method
+Initiaiizing Services
+API
+  Entities superclass
+  Entity superclass
+  Service superclass
+  Restate api
+Applying Transactions
+  creating reverse transaction
+
+Some way to test useSelector?
+Some way to test useComputed?
