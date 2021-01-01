@@ -1,4 +1,5 @@
 import * as R from "../Restate"
+import {notNull} from "../Utils"
 
 describe("Adding Entities", () => {
   describe("assigning id's", () => {
@@ -39,10 +40,12 @@ describe("Adding Entities", () => {
     })
     describe("with an id property declared", () => {
       class User extends R.Entity {
-        @R.id id: string
+        @R.id id?: string
         constructor(id: string | null = null) {
           super()
-          this.id = id
+          if (id != null) {
+            this.id = id
+          }
         }
       }
       class _Users extends R.Entities<User> {}
@@ -114,9 +117,9 @@ describe("Adding Entities", () => {
     describe("belongsTo", () => {
       it("should assign the relationship", () => {
         class User extends R.Entity {
-          departmentId: string | null
+          departmentId!: string | null
           @R.belongsTo(() => Department, "departmentId")
-          department: Department | null
+          department!: Department | null
           constructor(public name: string) {
             super()
           }
@@ -143,7 +146,7 @@ describe("Adding Entities", () => {
         })
 
         const u1id = u1.entityId
-        const d1id = u1.department.entityId
+        const d1id = notNull(u1.department).entityId
         expect(Users.entitiesById[u1id]).toEqual({
           name: "user1",
           departmentId: d1id,
@@ -156,7 +159,7 @@ describe("Adding Entities", () => {
     describe("hasOne", () => {
       it("should assign the relationship", () => {
         class User extends R.Entity {
-          departmentId: string | null
+          departmentId!: string | null
           constructor(public name: string) {
             super()
           }
@@ -165,7 +168,7 @@ describe("Adding Entities", () => {
         const Users = new _Users(User)
 
         class Department extends R.Entity {
-          @R.hasOne(() => User, "departmentId") user: User | null
+          @R.hasOne(() => User, "departmentId") user!: User | null
           constructor(public name: string) {
             super()
           }
@@ -184,7 +187,7 @@ describe("Adding Entities", () => {
         })
 
         const d1id = d1.entityId
-        const u1id = d1.user.entityId
+        const u1id = notNull(d1.user).entityId
         expect(Users.entitiesById[u1id]).toEqual({
           name: "user1",
           departmentId: d1id,
@@ -197,7 +200,7 @@ describe("Adding Entities", () => {
     describe("hasMany", () => {
       it("should assign the relationship", () => {
         class User extends R.Entity {
-          departmentId: string | null
+          departmentId!: string | null
           constructor(public name: string) {
             super()
           }
@@ -207,7 +210,7 @@ describe("Adding Entities", () => {
 
         class Department extends R.Entity {
           @R.hasMany(() => User, "departmentId", {sort: "name"})
-          users: Array<User>
+          users!: Array<User>
           constructor(public name: string) {
             super()
           }
@@ -245,7 +248,7 @@ describe("Adding Entities", () => {
   describe("adding a graph of objects", () => {
     it("should add each object only once", () => {
       class User extends R.Entity {
-        departmentId: string | null
+        departmentId!: string | null
         @R.belongsTo(() => Department, "departmentId")
         department!: Department | null
         constructor(public name: string) {
@@ -257,7 +260,7 @@ describe("Adding Entities", () => {
 
       class Department extends R.Entity {
         @R.hasMany(() => User, "departmentId", {sort: "name"})
-        users: Array<User>
+        users!: Array<User>
         constructor(public name: string) {
           super()
         }
@@ -310,7 +313,7 @@ describe("Adding Entities", () => {
 
       const _u1 = {name: "user1", age: 20}
       const u1 = AppModel.action(() => {
-        return Users.add(_u1)
+        return Users.addObject(_u1)
       })
       expect(u1 instanceof User).toBe(true)
       expect(u1).not.toBe(_u1)
@@ -323,7 +326,7 @@ describe("Adding Entities", () => {
     })
     it("should convert a mixture of objects in a graph", () => {
       class User extends R.Entity {
-        departmentId: string | null
+        departmentId!: string | null
         @R.belongsTo(() => Department, "departmentId")
         department!: Department | null
         constructor(public name: string) {
@@ -335,7 +338,7 @@ describe("Adding Entities", () => {
 
       class Department extends R.Entity {
         @R.hasMany(() => User, "departmentId", {sort: "name"})
-        users: Array<User>
+        users!: Array<User>
         constructor(public name: string) {
           super()
         }
@@ -348,12 +351,12 @@ describe("Adding Entities", () => {
       })
 
       const d1 = AppModel.action(() => {
-        const u1 = {name: "user1"}
-        const u2 = {name: "user2"}
+        const u1:any = {name: "user1"}
+        const u2:any = {name: "user2"}
         const dd1 = {name: "department1", users: [u1, u2]}
         u1.department = dd1
         u2.department = dd1
-        return Departments.add(dd1)
+        return Departments.addObject(dd1)
       })
 
       expect(d1 instanceof Department).toBe(true)
@@ -404,7 +407,7 @@ describe("Adding Entities", () => {
     it("should not allow an object of the wrong class", () => {
       AppModel.action(() => {
         const d = new Department("d1")
-        expect(() => Users.add(d)).toThrow(
+        expect(() => Users.add(d as any)).toThrow(
           new Error(
             "Attempt to add entity of unexpected class Department to Users"
           )
@@ -415,7 +418,7 @@ describe("Adding Entities", () => {
       AppModel.action(() => {
         const d1 = Departments.add(new Department("d1"))
         const _d2 = new Department("d2")
-        expect(() => d1.users.push(_d2)).toThrow(
+        expect(() => d1.users.push(_d2 as any)).toThrow(
           new Error(
             "Attempt to add entity of unexpected class Department to Users"
           )
@@ -451,7 +454,7 @@ describe("Adding Entities", () => {
     it("should allow an object referencing an already-added object", () => {
       AppModel.action(() => {
         const u1 = Users.add(new User("u1"))
-        const d1 = Departments.add({name: "d1", users: [u1]})
+        const d1 = Departments.addObject({name: "d1", users: [u1]})
         expect(u1.departmentId).toBe(d1.entityId)
       })
     })
@@ -505,7 +508,7 @@ describe("Adding Entities", () => {
       AppModel.action(() => {
         const u1 = Users.add(new User("u1"))
 
-        const u1a = Users.update({
+        const u1a = Users.updateObject({
           id: u1.id,
           name: "u1a",
           department: {
@@ -516,7 +519,7 @@ describe("Adding Entities", () => {
         expect(u1.currentEntity).toBe(u1a)
         const d1 = u1.department
         expect(d1 == null).toBe(false)
-        expect(Departments.entitiesById[d1.id]).toBe(d1)
+        expect(Departments.entitiesById[notNull(d1).id]).toBe(d1)
       })
     })
     it("should process relationships with existing entities", () => {
@@ -524,7 +527,7 @@ describe("Adding Entities", () => {
         const d1 = Departments.add(new Department("d1"))
         const u1 = Users.add(new User("u1"))
 
-        const d1a = Departments.update({
+        const d1a = Departments.updateObject({
           id: d1.id,
           name: "d1a",
           users: [u1],
@@ -543,7 +546,7 @@ describe("Adding Entities", () => {
       AppModel.action(() => {
         const d1 = Departments.add(new Department("d1"))
         const u1 = Users.add(new User("u1"))
-        const d1a = Departments.update({
+        const d1a = Departments.updateObject({
           id: d1.id,
           name: "d1a",
           users: [u1, {name: "u2"}],

@@ -40,6 +40,14 @@ export class Entities<E extends Entity> extends Manageable {
     return this.entitiesState.update(entity, id)
   }
 
+  addObject(entity: Object, id: string | null = null): E {
+    return this.entitiesState.add(entity as E, id)
+  }
+
+  updateObject(entity: Object, id: string | null = null): E {
+    return this.entitiesState.update(entity as E, id)
+  }
+
   remove(entity: E) {
     this.entitiesState.remove(entity)
   }
