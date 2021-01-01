@@ -2,22 +2,25 @@ import * as R from "../Restate"
 
 describe("Changing Object Identities", () => {
   class User extends R.Entity {
+    age?:number
+    name?:string
     constructor(
-      public name: string,
+      name: string,
       public gender: string | null = null,
       public height: number | null = null,
       public status: string | null = null
     ) {
       super()
+      this.name = name
     }
-    @R.hasMany(() => Job, "userId", {sort: "name"}) jobs: Array<Job>
+    @R.hasMany(() => Job, "userId", {sort: "name"}) jobs!: Array<Job>
   }
   class _Users extends R.Entities<User> {
-    @R.index("+name") index1: R.SortIndex<User>
-    @R.uniqueIndex("=name") index2: R.UniquuHashIndex<User>
-    @R.index("=gender", "+height") index3: R.HashIndex<SortIndex<User>>
-    @R.index("=gender", "=status", "+height") index4: R.HashIndex<
-      HashIndex<SortIndex<User>>
+    @R.index("+name") index1!: R.SortIndex<User>
+    @R.uniqueIndex("=name") index2!: R.UniqueHashIndex<User>
+    @R.index("=gender", "+height") index3!: R.HashIndex<R.SortIndex<User>>
+    @R.index("=gender", "=status", "+height") index4!: R.HashIndex<
+      R.HashIndex<R.SortIndex<User>>
     >
   }
   const Users = new _Users(User)
@@ -26,7 +29,7 @@ describe("Changing Object Identities", () => {
     constructor(
       public name: string,
       public userId: string,
-      public salary: number = null
+      public salary: number |null = null
     ) {
       super()
     }

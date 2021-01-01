@@ -2,8 +2,13 @@ import * as R from "../Restate"
 
 describe("Basic entity functions", () => {
   class User extends R.Entity {
-    constructor(public name: string, public age: number) {
+    name?:string
+    age?:number
+    gender!:string
+    constructor(name: string, age: number) {
       super()
+      this.name = name
+      this.age = age
     }
   }
   class _Users extends R.Entities<User> {}

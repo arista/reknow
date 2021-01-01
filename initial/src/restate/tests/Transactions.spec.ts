@@ -3,8 +3,10 @@ import * as R from "../Restate"
 describe("Transactions", () => {
   class User extends R.Entity {
     gender!: string
-    constructor(public name: string, public age: number) {
+    name?:string
+    constructor(name: string, public age: number) {
       super()
+      this.name = name
     }
     @R.action setAge(age: number) {
       this.age = age
@@ -46,7 +48,7 @@ describe("Transactions", () => {
     }
   }
   const UsersService = new _UsersService()
-  let transactions: Array<Transaction> = []
+  let transactions: Array<R.Transaction> = []
   const AppModel = new R.StateManager({
     entities: {Users},
     services: {UsersService},

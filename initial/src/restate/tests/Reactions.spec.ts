@@ -2,19 +2,20 @@ import * as R from "../Restate"
 
 describe("Reactions", () => {
   class User extends R.Entity {
-    constructor(public name: string, public age: number | null = null) {
+    constructor(public name: string, public age: number) {
       super()
     }
 
     @R.hasMany(() => Job, "userId") jobs!: Array<Job>
 
+    _r1!:string
     @R.reaction r1() {
       r1counters[this.entityId]++
       this._r1 = `${this.name}:${this.age || "none"}`
     }
   }
   class _Users extends R.Entities<User> {
-    @R.uniqueIndex("=name") byUniqueName: R.UniqueHashIndex<Job>
+    @R.uniqueIndex("=name") byUniqueName!: R.UniqueHashIndex<Job>
   }
   const Users = new _Users(User)
 
@@ -296,7 +297,7 @@ describe("Reactions", () => {
     describe("calling ownKeys", () => {
       let u1!: User
       let r1count!: number
-      let r1val!: string | null
+      let r1val!: boolean | null
       let r1!: R.Reaction
       beforeEach(() => {
         u1 = action(() => Users.add(new User("u1", 10), "user1"))

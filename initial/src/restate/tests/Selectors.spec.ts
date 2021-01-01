@@ -16,8 +16,8 @@ describe("Selector", () => {
     }
   }
   class _Users extends R.Entities<User> {
-    @R.index("=name") byName: R.HashIndex<R.SortIndex<User>>
-    @R.index("+name") sortByName: R.SortIndex<User>
+    @R.index("=name") byName!: R.HashIndex<R.SortIndex<User>>
+    @R.index("+name") sortByName!: R.SortIndex<User>
 
     @R.selector get s1() {
       counters.s1++
@@ -72,7 +72,11 @@ describe("Selector", () => {
     s4: 0,
     s5: 0,
   }
-  const ecounters = {
+  interface ECounter {
+    name2:number
+    name4:number
+  }
+  const ecounters:{[key:string]:ECounter} = {
     user1: {
       name2: 0,
       name4: 0,

@@ -20,16 +20,16 @@ describe("BelongsTo", () => {
     ) {
       super()
     }
-    @R.belongsTo(() => User, "userId") user: User | null
+    @R.belongsTo(() => User, "userId") user!: User | null
     @R.belongsTo(() => User, "userName", {foreignKey: "name"})
-    userByName: User | null
+    userByName!: User | null
 
     @R.belongsTo(() => User, "dependentUnspecifiedId")
-    dependentUnspecified: User | null
+    dependentUnspecified!: User | null
     @R.belongsTo(() => User, "dependentNoneId", {dependent: "none"})
-    dependentNone: User | null
+    dependentNone!: User | null
     @R.belongsTo(() => User, "dependentRemoveId", {dependent: "remove"})
-    dependentRemove: User | null
+    dependentRemove!: User | null
   }
   class _Jobs extends R.Entities<Job> {}
   const Jobs = new _Jobs(Job)
@@ -218,20 +218,20 @@ describe("BelongsTo", () => {
     describe("circular dependentRemove", () => {
       it("should not get caught in an infinite loop", () => {
         class M1 extends R.Entity {
-          @R.id id: string
+          @R.id id!: string
           @R.belongsTo(() => M2, "m2Id", {dependent: "remove"}) m2!: M2 | null
           constructor(public m2Id: string) {
             super()
           }
         }
-        class _M1s extends R.Entities<User> {}
+        class _M1s extends R.Entities<M1> {}
         const M1s = new _M1s(M1)
 
         class M2 extends R.Entity {
-          @R.id id: string
+          @R.id id!: string
           @R.hasOne(() => M1, "m2Id", {dependent: "remove"}) m1!: M1 | null
         }
-        class _M2s extends R.Entities<User> {}
+        class _M2s extends R.Entities<M2> {}
         const M2s = new _M2s(M2)
 
         const AppModel = new R.StateManager({entities: {M1s, M2s}})
@@ -272,11 +272,11 @@ describe("BelongsTo", () => {
       class M1 extends R.Entity {
         @R.belongsTo(() => M2, "m1Id", {foreignKey: "name"}) r!: M2 | null
       }
-      class _M1s extends R.Entities<User> {}
+      class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
       class M2 extends R.Entity {}
-      class _M2s extends R.Entities<User> {
-        @R.uniqueIndex("=name") ix1: R.UniqueHashIndex<M2>
+      class _M2s extends R.Entities<M2> {
+        @R.uniqueIndex("=name") ix1!: R.UniqueHashIndex<M2>
       }
       const M2s = new _M2s(M2)
       const AppModel = new R.StateManager({entities: {M1s, M2s}})
@@ -288,10 +288,10 @@ describe("BelongsTo", () => {
         @R.belongsTo(() => M2, "m1Id", {foreignKey: "name"}) r!: M2 | null
         @R.belongsTo(() => M2, "m1Id", {foreignKey: "name"}) r2!: M2 | null
       }
-      class _M1s extends R.Entities<User> {}
+      class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
       class M2 extends R.Entity {}
-      class _M2s extends R.Entities<User> {}
+      class _M2s extends R.Entities<M2> {}
       const M2s = new _M2s(M2)
       const AppModel = new R.StateManager({entities: {M1s, M2s}})
 
@@ -304,11 +304,11 @@ describe("BelongsTo", () => {
       class M1 extends R.Entity {
         @R.belongsTo(() => M2, "m1Id", {foreignKey: "name"}) r!: M2 | null
       }
-      class _M1s extends R.Entities<User> {}
+      class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
       class M2 extends R.Entity {}
-      class _M2s extends R.Entities<User> {
-        @R.index("=name") ix1: R.HashIndex<R.SortIndex<M2>>
+      class _M2s extends R.Entities<M2> {
+        @R.index("=name") ix1!: R.HashIndex<R.SortIndex<M2>>
       }
       const M2s = new _M2s(M2)
       const AppModel = new R.StateManager({entities: {M1s, M2s}})
@@ -319,11 +319,11 @@ describe("BelongsTo", () => {
       class M1 extends R.Entity {
         @R.belongsTo(() => M2, "m1Id", {foreignKey: "name"}) r!: M2 | null
       }
-      class _M1s extends R.Entities<User> {}
+      class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
       class M2 extends R.Entity {}
-      class _M2s extends R.Entities<User> {
-        @R.uniqueIndex("=name2") ix1: R.UniqueHashIndex<M2>
+      class _M2s extends R.Entities<M2> {
+        @R.uniqueIndex("=name2") ix1!: R.UniqueHashIndex<M2>
       }
       const M2s = new _M2s(M2)
       const AppModel = new R.StateManager({entities: {M1s, M2s}})

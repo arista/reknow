@@ -377,7 +377,7 @@ describe("Adding Entities", () => {
   })
   describe("error checking", () => {
     class User extends R.Entity {
-      departmentId: string | null
+      departmentId!: string | null
       @R.belongsTo(() => Department, "departmentId")
       department!: Department | null
       constructor(public name: string) {
@@ -388,7 +388,7 @@ describe("Adding Entities", () => {
     const Users = new _Users(User)
 
     class Department extends R.Entity {
-      @R.hasMany(() => User, "departmentId", {sort: "name"}) users: Array<User>
+      @R.hasMany(() => User, "departmentId", {sort: "name"}) users!: Array<User>
       constructor(public name: string) {
         super()
       }
@@ -459,7 +459,7 @@ describe("Adding Entities", () => {
   describe("update", () => {
     class User extends R.Entity {
       @R.id id!: string
-      departmentId: string | null
+      departmentId!: string | null
       @R.belongsTo(() => Department, "departmentId")
       department!: Department | null
       constructor(public name: string) {
@@ -471,7 +471,7 @@ describe("Adding Entities", () => {
 
     class Department extends R.Entity {
       @R.id id!: string
-      @R.hasMany(() => User, "departmentId", {sort: "name"}) users: Array<User>
+      @R.hasMany(() => User, "departmentId", {sort: "name"}) users!: Array<User>
       constructor(public name: string) {
         super()
       }

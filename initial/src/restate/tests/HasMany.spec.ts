@@ -6,18 +6,18 @@ describe("HasMany", () => {
       super()
     }
 
-    @R.hasMany(() => Job, "userId", {sort: "+name"}) jobs: Array<Job>
+    @R.hasMany(() => Job, "userId", {sort: "+name"}) jobs!: Array<Job>
     @R.hasMany(() => Job, "userName", {primaryKey: "name"})
-    jobsByName: Array<Job>
+    jobsByName!: Array<Job>
 
     @R.hasMany(() => Job, "dependentUnspecifiedId")
-    dependentUnspecifieds: Array<Job>
+    dependentUnspecifieds!: Array<Job>
     @R.hasMany(() => Job, "dependentNoneId", {dependent: "none"})
-    dependentNones: Array<Job>
+    dependentNones!: Array<Job>
     @R.hasMany(() => Job, "dependentRemoveId", {dependent: "remove"})
-    dependentRemoves: Array<Job>
+    dependentRemoves!: Array<Job>
     @R.hasMany(() => Job, "dependentNullifyId", {dependent: "nullify"})
-    dependentNullifys: Array<Job>
+    dependentNullifys!: Array<Job>
   }
   class _Users extends R.Entities<User> {}
   const Users = new _Users(User)
@@ -185,7 +185,7 @@ describe("HasMany", () => {
         const j1 = Jobs.add(new Job("banker", "user#1"))
         const j2 = Jobs.add(new Job("acrobat", "user#1"))
         expect(u1.jobs).toEqual([j2, j1])
-        u1.jobs = null
+        ;(u1 as any).jobs = null
         expect(u1.jobs).toEqual([])
         expect(j1.userId).toBe(null)
         expect(j2.userId).toBe(null)
@@ -273,7 +273,7 @@ describe("HasMany", () => {
           const u1 = Users.add(new User("jack"), "user#1")
           const j1 = Jobs.add(new Job("banker", "user#1"))
           expect(u1.jobs).toEqual([j1])
-          u1.jobs[0] = null
+          ;(u1.jobs as any)[0] = null
           expect(u1.jobs).toEqual([])
           expect(j1.userId).toBe(null)
         })
@@ -333,7 +333,7 @@ describe("HasMany", () => {
           const u1 = Users.add(new User("jack"), "user#1")
           const j1 = Jobs.add(new Job("banker", null, "jack"))
           expect(u1.jobsByName).toEqual([j1])
-          u1.jobsByName[0] = null
+          ;(u1.jobsByName as any)[0] = null
           expect(u1.jobsByName).toEqual([])
           expect(j1.userName).toBe(null)
         })
@@ -468,21 +468,21 @@ describe("HasMany", () => {
     describe("circular dependentRemove", () => {
       it("should not get caught in an infinite loop", () => {
         class M1 extends R.Entity {
-          @R.id id: string
+          @R.id id!: string
           @R.hasMany(() => M2, "m1Id", {dependent: "remove", sort: "+num"})
-          m2s!: M2 | null
+          m2s!: Array<M2>
         }
-        class _M1s extends R.Entities<User> {}
+        class _M1s extends R.Entities<M1> {}
         const M1s = new _M1s(M1)
 
         class M2 extends R.Entity {
-          @R.id id: string
+          @R.id id!: string
           @R.belongsTo(() => M1, "m1Id", {dependent: "remove"}) m1!: M1 | null
           constructor(public m1Id: string, public num: number) {
             super()
           }
         }
-        class _M2s extends R.Entities<User> {}
+        class _M2s extends R.Entities<M2> {}
         const M2s = new _M2s(M2)
 
         const AppModel = new R.StateManager({entities: {M1s, M2s}})
@@ -530,11 +530,11 @@ describe("HasMany", () => {
       class M1 extends R.Entity {
         @R.hasMany(() => M2, "m1Id") r!: M2 | null
       }
-      class _M1s extends R.Entities<User> {}
+      class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
       class M2 extends R.Entity {}
-      class _M2s extends R.Entities<User> {
-        @R.index("=m1Id") ix1: R.HashIndex<R.SortIndex<M2>>
+      class _M2s extends R.Entities<M2> {
+        @R.index("=m1Id") ix1!: R.HashIndex<R.SortIndex<M2>>
       }
       const M2s = new _M2s(M2)
       const AppModel = new R.StateManager({entities: {M1s, M2s}})
@@ -546,10 +546,10 @@ describe("HasMany", () => {
         @R.hasMany(() => M2, "m1Id") r!: M2 | null
         @R.hasMany(() => M2, "m1Id") r2!: M2 | null
       }
-      class _M1s extends R.Entities<User> {}
+      class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
       class M2 extends R.Entity {}
-      class _M2s extends R.Entities<User> {}
+      class _M2s extends R.Entities<M2> {}
       const M2s = new _M2s(M2)
       const AppModel = new R.StateManager({entities: {M1s, M2s}})
 
@@ -562,11 +562,11 @@ describe("HasMany", () => {
       class M1 extends R.Entity {
         @R.hasMany(() => M2, "m1Id") r!: M2 | null
       }
-      class _M1s extends R.Entities<User> {}
+      class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
       class M2 extends R.Entity {}
-      class _M2s extends R.Entities<User> {
-        @R.uniqueIndex("=m1Id") ix1: R.UniqueHashIndex<M2>
+      class _M2s extends R.Entities<M2> {
+        @R.uniqueIndex("=m1Id") ix1!: R.UniqueHashIndex<M2>
       }
       const M2s = new _M2s(M2)
       const AppModel = new R.StateManager({entities: {M1s, M2s}})
@@ -577,11 +577,11 @@ describe("HasMany", () => {
       class M1 extends R.Entity {
         @R.hasMany(() => M2, "m1Id") r!: M2 | null
       }
-      class _M1s extends R.Entities<User> {}
+      class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
       class M2 extends R.Entity {}
-      class _M2s extends R.Entities<User> {
-        @R.index("=m1Id2") ix1: R.HashIndex<R.SortIndex<M2>>
+      class _M2s extends R.Entities<M2> {
+        @R.index("=m1Id2") ix1!: R.HashIndex<R.SortIndex<M2>>
       }
       const M2s = new _M2s(M2)
       const AppModel = new R.StateManager({entities: {M1s, M2s}})
@@ -592,13 +592,13 @@ describe("HasMany", () => {
       class M1 extends R.Entity {
         @R.hasMany(() => M2, "m1Id", {sort: "-num"}) r!: M2 | null
       }
-      class _M1s extends R.Entities<User> {}
+      class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
       class M2 extends R.Entity {}
-      class _M2s extends R.Entities<User> {
-        @R.index("=m1Id") ix1: R.HashIndex<R.SortIndex<M2>>
-        @R.index("=m1Id", "+num") ix2: R.HashIndex<R.SortIndex<M2>>
-        @R.index("=m1Id", "-num") ix3: R.HashIndex<R.SortIndex<M2>>
+      class _M2s extends R.Entities<M2> {
+        @R.index("=m1Id") ix1!: R.HashIndex<R.SortIndex<M2>>
+        @R.index("=m1Id", "+num") ix2!: R.HashIndex<R.SortIndex<M2>>
+        @R.index("=m1Id", "-num") ix3!: R.HashIndex<R.SortIndex<M2>>
       }
       const M2s = new _M2s(M2)
       const AppModel = new R.StateManager({entities: {M1s, M2s}})
@@ -609,13 +609,13 @@ describe("HasMany", () => {
       class M1 extends R.Entity {
         @R.hasMany(() => M2, "m1Id", {sort: "-num"}) r!: M2 | null
       }
-      class _M1s extends R.Entities<User> {}
+      class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
       class M2 extends R.Entity {}
-      class _M2s extends R.Entities<User> {
-        @R.index("=m1Id") ix1: R.HashIndex<R.SortIndex<M2>>
-        @R.index("=m1Id", "+num") ix2: R.HashIndex<R.SortIndex<M2>>
-        @R.index("=m1Id", "-num", "+age", "-gender") ix3: R.HashIndex<
+      class _M2s extends R.Entities<M2> {
+        @R.index("=m1Id") ix1!: R.HashIndex<R.SortIndex<M2>>
+        @R.index("=m1Id", "+num") ix2!: R.HashIndex<R.SortIndex<M2>>
+        @R.index("=m1Id", "-num", "+age", "-gender") ix3!: R.HashIndex<
           R.SortIndex<M2>
         >
       }

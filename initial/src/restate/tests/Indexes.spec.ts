@@ -8,9 +8,9 @@ describe("Indexes", () => {
       }
     }
     class _Users extends R.Entities<User> {
-      @R.index("+name") index1: R.SortIndex<User>
-      @R.index("-age") index2: R.SortIndex<User>
-      @R.index("+name", "-age") index3: R.SortIndex<User>
+      @R.index("+name") index1!: R.SortIndex<User>
+      @R.index("-age") index2!: R.SortIndex<User>
+      @R.index("+name", "-age") index3!: R.SortIndex<User>
     }
     const Users = new _Users(User)
     const AppModel = new R.StateManager({entities: {Users}})
@@ -104,7 +104,7 @@ describe("Indexes", () => {
       }
     }
     class _Users extends R.Entities<User> {
-      @R.uniqueIndex("=name") index1: R.UniqueHashIndex<User>
+      @R.uniqueIndex("=name") index1!: R.UniqueHashIndex<User>
     }
     const Users = new _Users(User)
     const AppModel = new R.StateManager({entities: {Users}})
@@ -173,14 +173,14 @@ describe("Indexes", () => {
     })
   })
 
-  describe("HashIndex to SortedIndex", () => {
+  describe("HashIndex to SortIndex", () => {
     class User extends R.Entity {
       constructor(public name: string | null, age: number | null) {
         super()
       }
     }
     class _Users extends R.Entities<User> {
-      @R.index("=name", "+age") index1: R.UniqueHashIndex<User>
+      @R.index("=name", "+age") index1!: R.UniqueHashIndex<User>
     }
     const Users = new _Users(User)
     const AppModel = new R.StateManager({entities: {Users}})
@@ -241,7 +241,7 @@ describe("Indexes", () => {
       }
     }
     class _Users extends R.Entities<User> {
-      @R.uniqueIndex("=job", "=name") index1: R.HashIndex<
+      @R.uniqueIndex("=job", "=name") index1!: R.HashIndex<
         R.UniqueHashIndex<User>
       >
     }
@@ -374,14 +374,14 @@ describe("Indexes", () => {
     })
   })
 
-  describe("HashIndex to SortedIndex", () => {
+  describe("HashIndex to SortIndex", () => {
     class User extends R.Entity {
       constructor(public name: string | null, public age: number | null) {
         super()
       }
     }
     class _Users extends R.Entities<User> {
-      @R.index("=name", "+age") index1: R.HashIndex<R.SortedIndex<User>>
+      @R.index("=name", "+age") index1!: R.HashIndex<R.SortIndex<User>>
     }
     const Users = new _Users(User)
     const AppModel = new R.StateManager({entities: {Users}})
@@ -429,7 +429,7 @@ describe("Indexes", () => {
     })
   })
 
-  describe("HashIndex to HashIndex to SortedIndex", () => {
+  describe("HashIndex to HashIndex to SortIndex", () => {
     class User extends R.Entity {
       constructor(
         public job: string | null,
@@ -440,8 +440,8 @@ describe("Indexes", () => {
       }
     }
     class _Users extends R.Entities<User> {
-      @R.index("=job", "=name", "+age") index1: R.HashIndex<
-        R.HashIndex<R.SortedIndex<User>>
+      @R.index("=job", "=name", "+age") index1!: R.HashIndex<
+        R.HashIndex<R.SortIndex<User>>
       >
     }
     const Users = new _Users(User)

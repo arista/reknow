@@ -4,9 +4,12 @@ describe("Effects", () => {
   describe("basic calls", () => {
     class User extends R.Entity {
       @R.id id: string
-      constructor(id: string, public name: string, age: number) {
+      name?:string
+      constructor(id: string, name: string, public age: number) {
         super()
         this.id = id
+        this.name = name
+        this.age = age
       }
       @R.afterAdd afterAdd1() {
         calls.push({
@@ -32,7 +35,7 @@ describe("Effects", () => {
           age: this.age,
         })
       }
-      @R.afterPropertyChange("name") afterChangeName1(oldValue) {
+      @R.afterPropertyChange("name") afterChangeName1(oldValue:string) {
         calls.push({
           type: "afterChangeName1",
           id: this.entityId,
