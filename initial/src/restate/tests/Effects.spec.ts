@@ -57,7 +57,7 @@ describe("Effects", () => {
 
     it("should make the call on adding", () => {
       AppModel.action(() => {
-        Users.add({id: "u1", name: "user1", age: 20})
+        Users.add(new User("u1", "user1", 20))
       })
       expect(calls).toEqual([
         {type: "afterAdd1", id: "u1", name: "user1", age: 20},
@@ -65,7 +65,7 @@ describe("Effects", () => {
     })
     it("should make the call on removing", () => {
       AppModel.action(() => {
-        const u1 = Users.add({id: "u1", name: "user1", age: 20})
+        const u1 = Users.add(new User("u1", "user1", 20))
         Users.remove(u1)
       })
       expect(calls).toEqual([
@@ -75,7 +75,7 @@ describe("Effects", () => {
     })
     it("should make the call on changing properties", () => {
       AppModel.action(() => {
-        const u1 = Users.add({id: "u1", name: "user1", age: 20})
+        const u1 = Users.add(new User("u1", "user1", 20))
         u1.age = 21
       })
       expect(calls).toEqual([
@@ -85,7 +85,7 @@ describe("Effects", () => {
     })
     it("should make the call on changing specific properties", () => {
       AppModel.action(() => {
-        const u1 = Users.add({id: "u1", name: "user1", age: 20})
+        const u1 = Users.add(new User("u1", "user1", 20))
         u1.age = 21
         u1.name = "user1a"
       })
@@ -103,7 +103,7 @@ describe("Effects", () => {
     })
     it("should make the call on deleting properties", () => {
       AppModel.action(() => {
-        const u1 = Users.add({id: "u1", name: "user1", age: 20})
+        const u1 = Users.add(new User("u1", "user1", 20))
         delete u1.name
       })
       expect(calls).toEqual([
@@ -120,7 +120,7 @@ describe("Effects", () => {
     })
     it("should make the call only once per decorator", () => {
       AppModel.action(() => {
-        const u1 = Users.add({id: "u1", name: "user1", age: 20})
+        const u1 = Users.add(new User("u1", "user1", 20))
         u1.name = "user1a"
         u1.age = 22
         u1.name = "user1b"
@@ -139,8 +139,8 @@ describe("Effects", () => {
     })
     it("should make the calls for each affected entity, ordered by entity", () => {
       AppModel.action(() => {
-        const u1 = Users.add({id: "u1", name: "user1", age: 20})
-        const u2 = Users.add({id: "u2", name: "user2", age: 24})
+        const u1 = Users.add(new User("u1", "user1", 20))
+        const u2 = Users.add(new User("u2", "user2", 24))
         u2.age++
         u1.age++
       })
@@ -153,7 +153,7 @@ describe("Effects", () => {
     })
     it("should make multiple calls from multiple actions", () => {
       const u1 = AppModel.action(() =>
-        Users.add({id: "u1", name: "user1", age: 20})
+                                 Users.add(new User("u1", "user1", 20))
       )
       expect(calls).toEqual([
         {type: "afterAdd1", id: "u1", name: "user1", age: 20},
