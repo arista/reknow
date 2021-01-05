@@ -2,9 +2,9 @@ import * as R from "../Restate"
 
 describe("Basic entity functions", () => {
   class User extends R.Entity {
-    name?:string
-    age?:number
-    gender!:string
+    name?: string
+    age?: number
+    gender!: string
     constructor(name: string, age: number) {
       super()
       this.name = name

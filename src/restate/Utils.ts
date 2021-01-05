@@ -847,7 +847,7 @@ export function copyProperties(
   }
 }
 
-export function setOwnProperty(obj:Object, name:string, value:any) {
+export function setOwnProperty(obj: Object, name: string, value: any) {
   Object.defineProperty(obj, name, {
     value,
     configurable: true,
@@ -856,7 +856,11 @@ export function setOwnProperty(obj:Object, name:string, value:any) {
   })
 }
 
-export function getOwnProperty<T>(obj:Object, name:string, defaultValue: T):T {
+export function getOwnProperty<T>(
+  obj: Object,
+  name: string,
+  defaultValue: T
+): T {
   const pd = Object.getOwnPropertyDescriptor(obj, name)
-  return (pd != null && pd.value != null) ? pd.value : defaultValue
+  return pd != null && pd.value != null ? pd.value : defaultValue
 }

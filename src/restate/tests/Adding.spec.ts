@@ -351,8 +351,8 @@ describe("Adding Entities", () => {
       })
 
       const d1 = AppModel.action(() => {
-        const u1:any = {name: "user1"}
-        const u2:any = {name: "user2"}
+        const u1: any = {name: "user1"}
+        const u2: any = {name: "user2"}
         const dd1 = {name: "department1", users: [u1, u2]}
         u1.department = dd1
         u2.department = dd1

@@ -7,15 +7,15 @@ import {getSortedLT} from "./Utils"
 
 describe("Utils", () => {
   describe("sorted list methods", () => {
-    const compare0 = (v:number) => v - 0
-    const compare1 = (v:number) => v - 1
-    const compare2 = (v:number) => v - 2
-    const compare3 = (v:number) => v - 3
-    const compare4 = (v:number) => v - 4
-    const compare5 = (v:number) => v - 5
-    const compare6 = (v:number) => v - 6
-    const compare7 = (v:number) => v - 7
-    const compare8 = (v:number) => v - 8
+    const compare0 = (v: number) => v - 0
+    const compare1 = (v: number) => v - 1
+    const compare2 = (v: number) => v - 2
+    const compare3 = (v: number) => v - 3
+    const compare4 = (v: number) => v - 4
+    const compare5 = (v: number) => v - 5
+    const compare6 = (v: number) => v - 6
+    const compare7 = (v: number) => v - 7
+    const compare8 = (v: number) => v - 8
     const l = [1, 2, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 7, 7, 7]
     describe("getSortedInsertPosition", () => {
       it("should return the expected values", () => {

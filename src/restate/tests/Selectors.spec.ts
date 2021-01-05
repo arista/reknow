@@ -73,10 +73,10 @@ describe("Selector", () => {
     s5: 0,
   }
   interface ECounter {
-    name2:number
-    name4:number
+    name2: number
+    name4: number
   }
-  const ecounters:{[key:string]:ECounter} = {
+  const ecounters: {[key: string]: ECounter} = {
     user1: {
       name2: 0,
       name4: 0,

@@ -63,7 +63,7 @@ export class HasMany extends Relationship {
     if (!entity.hasEntityState) {
       return getOwnProperty(entity, this.name, [])
     }
-    
+
     const primaryKeyValue = this.getPrimaryKeyValue(entity)
     const result = this.foreignIndex.proxy[primaryKeyValue]
     return this.getResultProxy(entity, result)
@@ -79,7 +79,7 @@ export class HasMany extends Relationship {
       setOwnProperty(entity, this.name, val)
       return
     }
-    
+
     // Get the EntityStates of the old and new lists
     const val1 = this.getValue(entity).map((e) => e.entityState)
 

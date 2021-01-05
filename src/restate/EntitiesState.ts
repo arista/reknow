@@ -401,7 +401,7 @@ export class EntitiesState<E extends Entity>
 
   removeAll() {
     const ids = Object.keys(this.byId)
-    for(const id of ids) {
+    for (const id of ids) {
       const entityState = this.byId[id]
       this.remove(entityState.entity)
     }

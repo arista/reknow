@@ -2,8 +2,8 @@ import * as R from "../Restate"
 
 describe("Changing Object Identities", () => {
   class User extends R.Entity {
-    age?:number
-    name?:string
+    age?: number
+    name?: string
     constructor(
       name: string,
       public gender: string | null = null,
@@ -29,7 +29,7 @@ describe("Changing Object Identities", () => {
     constructor(
       public name: string,
       public userId: string,
-      public salary: number |null = null
+      public salary: number | null = null
     ) {
       super()
     }

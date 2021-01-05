@@ -3,7 +3,7 @@ import * as R from "../Restate"
 describe("Transactions", () => {
   class User extends R.Entity {
     gender!: string
-    name?:string
+    name?: string
     constructor(name: string, public age: number) {
       super()
       this.name = name

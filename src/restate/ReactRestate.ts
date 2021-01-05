@@ -59,7 +59,7 @@ export function ReactRestate(stateManager: StateManager) {
           }
           */
           state.selector()
-          setChangeCount((c:number) => c + 1)
+          setChangeCount((c: number) => c + 1)
         },
       }
     })[0]

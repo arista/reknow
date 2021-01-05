@@ -4,7 +4,7 @@ describe("Effects", () => {
   describe("basic calls", () => {
     class User extends R.Entity {
       @R.id id: string
-      name?:string
+      name?: string
       constructor(id: string, name: string, public age: number) {
         super()
         this.id = id
@@ -35,7 +35,7 @@ describe("Effects", () => {
           age: this.age,
         })
       }
-      @R.afterPropertyChange("name") afterChangeName1(oldValue:string) {
+      @R.afterPropertyChange("name") afterChangeName1(oldValue: string) {
         calls.push({
           type: "afterChangeName1",
           id: this.entityId,
@@ -152,9 +152,7 @@ describe("Effects", () => {
       ])
     })
     it("should make multiple calls from multiple actions", () => {
-      const u1 = AppModel.action(() =>
-                                 Users.add(new User("u1", "user1", 20))
-      )
+      const u1 = AppModel.action(() => Users.add(new User("u1", "user1", 20)))
       expect(calls).toEqual([
         {type: "afterAdd1", id: "u1", name: "user1", age: 20},
       ])

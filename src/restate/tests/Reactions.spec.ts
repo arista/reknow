@@ -8,7 +8,7 @@ describe("Reactions", () => {
 
     @R.hasMany(() => Job, "userId") jobs!: Array<Job>
 
-    _r1!:string
+    _r1!: string
     @R.reaction r1() {
       r1counters[this.entityId]++
       this._r1 = `${this.name}:${this.age || "none"}`
