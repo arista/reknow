@@ -1,3 +1,0 @@
-#!/bin/bash
-export WORKING_DIR=`pwd`
-gnome-terminal --tab --working-directory=${WORKING_DIR} --title "restate" --tab --title "build" --working-directory=${WORKING_DIR} -e "npm run build-watch" --tab --title "test" --working-directory=${WORKING_DIR} -e "npm run test-watch"
