@@ -23,6 +23,7 @@ import {Listener} from "./Types"
 import {ChangeSubscriberDumper} from "./ChangeSubscriberDumper"
 import {Reaction} from "./Reaction"
 import {StateDumper} from "./StateDumper"
+import {Query} from "./Query"
 
 export interface StateManagerConfig {
   entities?: EntitiesDefinitionTree
@@ -46,20 +47,6 @@ export class StateManager {
     }
     this.initializeEntities(config.entities)
     this.initializeServices(config.services)
-  }
-
-  initialize() {
-    this.whileInAction({type: "InitializeAction"}, () => {
-      // Call initialize on all entities
-      for (const entitiesState of this.entitiesStates) {
-        entitiesState.entities.initialize()
-      }
-
-      // Call initialize on all services
-      for (const servicesState of this.serviceStates) {
-        servicesState.service.initialize()
-      }
-    })
   }
 
   clearState() {
@@ -295,6 +282,10 @@ export class StateManager {
     // Run this in an action in case it modifies any state
     this.whileInAction({type: "NoAction"}, () => reaction.evaluate())
     return reaction
+  }
+
+  createQuery<T>(query: ()=>T, name:string = "UnnamedQuery", onInvalidate:(()=>void)|null = null) {
+    return new Query(this, query, name, onInvalidate)
   }
 
   dumpState() {
