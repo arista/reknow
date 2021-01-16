@@ -65,6 +65,13 @@ describe("Query", () => {
       const action = () => delete (u as any).age
       testInvalidation(query, action, true)
     })
+    it("should invalidate if that property is added", ()=>{
+      const User = state.User
+      const u = state.action(()=>User.entities.add(new User("a", 10), "id1"))
+      const query = ()=>(u.amount || 0) * 2
+      const action = ()=>u.amount = 20
+      testInvalidation(query, action, true)
+    })
     it("should not invalidate if a different property is changed", () => {
       const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
