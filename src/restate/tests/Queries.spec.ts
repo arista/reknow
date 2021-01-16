@@ -163,12 +163,6 @@ describe("Query", () => {
 
 /*
 
-A query that uses Object.keys
-does not invalidate if a property changes
-invalidates if a property is added
-invalidates if a property is removed
-does not invalidate if a property changes on a different instance
-
 A query that depends on a property of entitiesById
 invalidates if an instance is added with that id
 invalidates if an instance is removed with that id
