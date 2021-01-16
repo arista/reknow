@@ -111,6 +111,55 @@ describe("Query", () => {
       testInvalidation(query, action2, false)
     })
   })
+  describe("A Query that uses Object.getOwnPropertyNames on an entity", ()=>{
+    it("should not invalidate if a property changes", ()=>{
+      const User = state.User
+      const u = state.action(()=>User.entities.add(new User("a", 10), "id1"))
+      const query = ()=>Object.getOwnPropertyNames(u).length
+      const action = ()=>u.name = "b"
+      testInvalidation(query, action, false)
+    })
+    it("should invalidate if a property is added", ()=>{
+      const User = state.User
+      const u = state.action(()=>User.entities.add(new User("a", 10), "id1"))
+      const query = ()=>Object.getOwnPropertyNames(u).length
+      const action = ()=>u.amount = 20
+      testInvalidation(query, action, true)
+    })
+    it("should invalidate if a property is removed", ()=>{
+      const User = state.User
+      const u = state.action(()=>User.entities.add(new User("a", 10), "id1"))
+      const query = ()=>Object.getOwnPropertyNames(u).length
+      const action = ()=>delete (u as any).age
+      testInvalidation(query, action, true)
+    })
+    it("should not invalidate if a property is added to a different instance", ()=>{
+      const User = state.User
+      const u = state.action(()=>User.entities.add(new User("a", 10), "id1"))
+      const u2 = state.action(()=>User.entities.add(new User("a", 10), "id2"))
+      const query = ()=>Object.getOwnPropertyNames(u).length
+      const action = ()=>u2.amount = 20
+      testInvalidation(query, action, false)
+    })
+  })
+  describe("A Query that uses Object.keys on an entity or otherwise enumerates them", ()=>{
+    // This is unfortunate.  Ideally just calling Object.keys wouldn't
+    // introduce dependencies on the values of those properties.  But
+    // underneath, JavaScript implements this by getting the property
+    // descriptors (to see which ones are enumerable), and for some
+    // reason accesses the values of those property descriptors.  This
+    // means that we can't distinguish between accessing a property
+    // value, and calling Object.keys() or for(x in ...).  Note that
+    // getOwnPropertyNames doesn't have this issue, since it isn't
+    // limited to enumerable properties.
+    it("should invalidate if a property changes", ()=>{
+      const User = state.User
+      const u = state.action(()=>User.entities.add(new User("a", 10), "id1"))
+      const query = ()=>Object.keys(u).length
+      const action = ()=>u.name = "b"
+      testInvalidation(query, action, true)
+    })
+  })
 
 /*
 
