@@ -3,29 +3,31 @@ import {ChangePublisher} from "./ChangePublisher"
 import {StateManager} from "./StateManager"
 
 class CachedValue<T> {
-  constructor(public value:T) {}
+  constructor(public value: T) {}
 }
 
 export class Query<T> extends ChangeSubscriber {
-  cachedValue:CachedValue<T>|null = null
-  isRemoved:boolean = false
-  publisher:ChangePublisher
-  
+  cachedValue: CachedValue<T> | null = null
+  isRemoved: boolean = false
+  publisher: ChangePublisher
+
   constructor(
     public stateManager: StateManager,
-    public query: ()=>T,
+    public query: () => T,
     name: string,
-    public onInvalidate: (()=>void)|null
+    public onInvalidate: (() => void) | null
   ) {
     super(name)
     this.publisher = new ChangePublisher(name, stateManager)
   }
 
-  get value():T {
+  get value(): T {
     if (this.isRemoved) {
-      throw new Error(`Attempt to evaluate Query "${this.name}" after it has been removed`)
+      throw new Error(
+        `Attempt to evaluate Query "${this.name}" after it has been removed`
+      )
     }
-    
+
     if (this.cachedValue == null) {
       const value = this.evaluate()
       this.cachedValue = new CachedValue(value)
@@ -33,9 +35,11 @@ export class Query<T> extends ChangeSubscriber {
     return this.cachedValue.value
   }
 
-  evaluate():T {
+  evaluate(): T {
     if (this.stateManager.currentChangeSubscriber != null) {
-      this.stateManager.currentChangeSubscriber.addChangePublisher(this.publisher)
+      this.stateManager.currentChangeSubscriber.addChangePublisher(
+        this.publisher
+      )
     }
     this.removeChangePublishers()
     return this.stateManager.whileEvaluatingChangeSubscriber(this, this.query)

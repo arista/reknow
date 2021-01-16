@@ -1,0 +1,88 @@
+import {ChangeSubscriber} from "./ChangeSubscriber"
+import {ChangePublisher} from "./ChangePublisher"
+import {StateManager} from "./StateManager"
+
+/**
+ * Manages subscribers listening for changes on an object with
+ * properties, by allowing subscribers to be notified of changes to
+ * specific properties, or to the actual list of properties.
+ **/
+export class ObjectChangePublishers {
+  // Maintains subscribers that have referenced a property of the object
+  _propertyChangePublishers: {[prop: string]: ChangePublisher} | null = null
+
+  // Maintains subscribers that have referenced "ownKeys" of the object
+  _ownKeysChangePublisher: ChangePublisher | null = null
+
+  constructor(public stateManager: StateManager, public name: string) {}
+
+  get currentChangeSubscriber() {
+    return this.stateManager.currentChangeSubscriber
+  }
+
+  removeChangePublishers() {
+    this._propertyChangePublishers = null
+    this._ownKeysChangePublisher = null
+  }
+
+  get ownKeysChangePublisher() {
+    if (this._ownKeysChangePublisher == null) {
+      this._ownKeysChangePublisher = new ChangePublisher(
+        `${this.name}.$ownKeys`,
+        this.stateManager
+      )
+    }
+    return this._ownKeysChangePublisher
+  }
+
+  addOwnKeysSubscriber() {
+    const changeSubscriber = this.currentChangeSubscriber
+    if (changeSubscriber != null) {
+      changeSubscriber.addChangePublisher(this.ownKeysChangePublisher)
+    }
+  }
+
+  notifyOwnKeysSubscribersOfChange() {
+    if (this.ownKeysChangePublisher != null) {
+      this.ownKeysChangePublisher.notifyChangeSubscribers()
+    }
+  }
+
+  get propertyChangePublishers() {
+    if (this._propertyChangePublishers == null) {
+      this._propertyChangePublishers = {}
+    }
+    return this._propertyChangePublishers
+  }
+
+  getOrCreatePropertyChangePublisher(property: string) {
+    let ret = this.propertyChangePublishers[property]
+    if (ret == null) {
+      ret = new ChangePublisher(`${this.name}.${property}`, this.stateManager)
+      this.propertyChangePublishers[property] = ret
+    }
+    return ret
+  }
+
+  getPropertyChangePublisher(property: string) {
+    if (this._propertyChangePublishers == null) {
+      return null
+    }
+    return this.propertyChangePublishers[property] || null
+  }
+
+  addPropertySubscriber(property: string) {
+    const changeSubscriber = this.currentChangeSubscriber
+    if (changeSubscriber != null) {
+      const changePublisher = this.getOrCreatePropertyChangePublisher(property)
+      changeSubscriber.addChangePublisher(changePublisher)
+    }
+  }
+
+  notifySubscribersOfPropertyChange(property: string) {
+    const ppub = this.getPropertyChangePublisher(property)
+    if (ppub != null) {
+      ppub.notifyChangeSubscribers()
+    }
+  }
+}

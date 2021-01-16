@@ -7,17 +7,14 @@ import {Reaction} from "./Reaction"
 import {ChangePublisher} from "./ChangePublisher"
 import {isNonInheritedProperty} from "./Utils"
 import {PendingEffects} from "./PendingEffects"
+import {ObjectChangePublishers} from "./ObjectChangePublishers"
 
 export class EntityState<E extends Entity>
   extends Proxied<E, E>
   implements ManagedState {
   reactions: Array<Reaction> = []
 
-  // Tracks @reactions that have referenced a property of this entity
-  _propertyChangePublishers: {[prop: string]: ChangePublisher} | null = null
-
-  // Tracks @reactions that have referenced "ownKeys" of this entity
-  _ownKeysChangePublisher: ChangePublisher | null = null
+  _changePublishers: ObjectChangePublishers | null = null
 
   // Tracks the @afterAdd, @afterRemove, and @afterChange calls that
   // need to be made after the current transaction ends
@@ -39,8 +36,7 @@ export class EntityState<E extends Entity>
   }
 
   clearState() {
-    this._propertyChangePublishers = null
-    this._ownKeysChangePublisher = null
+    this._changePublishers = null
   }
 
   get changePublisherName() {
@@ -76,8 +72,10 @@ export class EntityState<E extends Entity>
   }
 
   removeChangePublishers() {
-    this._propertyChangePublishers = null
-    this._ownKeysChangePublisher = null
+    if (this._changePublishers != null) {
+      this._changePublishers.removeChangePublishers()
+      this._changePublishers = null
+    }
   }
 
   checkMutable() {
@@ -269,72 +267,38 @@ export class EntityState<E extends Entity>
   }
 
   //--------------------------------------------------
-  // ChangeSubscribers and ChangePublishers for handling @reactions
+  // ChangeSubscribers and ChangePublishers
 
-  get ownKeysChangePublisher() {
-    if (this._ownKeysChangePublisher == null) {
-      this._ownKeysChangePublisher = new ChangePublisher(
-        `${this.changePublisherName}.$ownKeys`,
-        this._stateManager
+  get changePublishers() {
+    if (this._changePublishers == null) {
+      this._changePublishers = new ObjectChangePublishers(
+        this._stateManager,
+        this.changePublisherName
       )
     }
-    return this._ownKeysChangePublisher
+    return this._changePublishers
   }
 
   addOwnKeysSubscriber() {
-    const changeSubscriber = this.currentChangeSubscriber
-    if (changeSubscriber != null) {
-      changeSubscriber.addChangePublisher(this.ownKeysChangePublisher)
-    }
+    this.changePublishers.addOwnKeysSubscriber()
   }
 
   notifyOwnKeysSubscribersOfChange() {
-    if (this.ownKeysChangePublisher != null) {
-      this.ownKeysChangePublisher.notifyChangeSubscribers()
+    if (this._changePublishers != null) {
+      this.changePublishers.notifyOwnKeysSubscribersOfChange()
     }
     // Any change to an Entity also notifies @reactions subscribed to
     // the EntitiesState
     this.entitiesState.notifySubscribersOfChange()
   }
 
-  get propertyChangePublishers() {
-    if (this._propertyChangePublishers == null) {
-      this._propertyChangePublishers = {}
-    }
-    return this._propertyChangePublishers
-  }
-
-  getOrCreatePropertyChangePublisher(property: string) {
-    let ret = this.propertyChangePublishers[property]
-    if (ret == null) {
-      ret = new ChangePublisher(
-        `${this.changePublisherName}.${property}`,
-        this._stateManager
-      )
-      this.propertyChangePublishers[property] = ret
-    }
-    return ret
-  }
-
-  getPropertyChangePublisher(property: string) {
-    if (this._propertyChangePublishers == null) {
-      return null
-    }
-    return this.propertyChangePublishers[property] || null
-  }
-
   addPropertySubscriber(property: string) {
-    const changeSubscriber = this.currentChangeSubscriber
-    if (changeSubscriber != null) {
-      const changePublisher = this.getOrCreatePropertyChangePublisher(property)
-      changeSubscriber.addChangePublisher(changePublisher)
-    }
+    this.changePublishers.addPropertySubscriber(property)
   }
 
   notifySubscribersOfPropertyChange(property: string) {
-    const ppub = this.getPropertyChangePublisher(property)
-    if (ppub != null) {
-      ppub.notifyChangeSubscribers()
+    if (this._changePublishers) {
+      this._changePublishers.notifySubscribersOfPropertyChange(property)
     }
     // Any change to an Entity also notifies @reactions subscribed to
     // the EntitiesState

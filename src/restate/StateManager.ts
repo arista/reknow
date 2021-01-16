@@ -284,7 +284,11 @@ export class StateManager {
     return reaction
   }
 
-  createQuery<T>(query: ()=>T, name:string = "UnnamedQuery", onInvalidate:(()=>void)|null = null) {
+  createQuery<T>(
+    query: () => T,
+    name: string = "UnnamedQuery",
+    onInvalidate: (() => void) | null = null
+  ) {
     return new Query(this, query, name, onInvalidate)
   }
 
