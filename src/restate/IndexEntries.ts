@@ -44,4 +44,8 @@ export abstract class IndexEntries<
     this.entitiesState.addSubscriber()
     super.proxyAccessed()
   }
+
+  get changePublisherName() {
+    return this.name
+  }
 }

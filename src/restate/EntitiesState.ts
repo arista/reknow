@@ -584,4 +584,8 @@ export class EntitiesState<E extends Entity>
       this.changePublisher.notifyChangeSubscribers()
     }
   }
+
+  get changePublisherName() {
+    return this.name
+  }
 }

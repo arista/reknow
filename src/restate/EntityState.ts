@@ -7,14 +7,11 @@ import {Reaction} from "./Reaction"
 import {ChangePublisher} from "./ChangePublisher"
 import {isNonInheritedProperty} from "./Utils"
 import {PendingEffects} from "./PendingEffects"
-import {ObjectChangePublishers} from "./ObjectChangePublishers"
 
 export class EntityState<E extends Entity>
   extends Proxied<E, E>
   implements ManagedState {
   reactions: Array<Reaction> = []
-
-  _changePublishers: ObjectChangePublishers | null = null
 
   // Tracks the @afterAdd, @afterRemove, and @afterChange calls that
   // need to be made after the current transaction ends
@@ -33,10 +30,6 @@ export class EntityState<E extends Entity>
 
   get stateManager() {
     return this.entitiesState.stateManager
-  }
-
-  clearState() {
-    this._changePublishers = null
   }
 
   get changePublisherName() {
@@ -68,13 +61,6 @@ export class EntityState<E extends Entity>
   removeReactions() {
     for (const reaction of this.reactions) {
       reaction.remove()
-    }
-  }
-
-  removeChangePublishers() {
-    if (this._changePublishers != null) {
-      this._changePublishers.removeChangePublishers()
-      this._changePublishers = null
     }
   }
 
@@ -269,39 +255,19 @@ export class EntityState<E extends Entity>
   //--------------------------------------------------
   // ChangeSubscribers and ChangePublishers
 
-  get changePublishers() {
-    if (this._changePublishers == null) {
-      this._changePublishers = new ObjectChangePublishers(
-        this._stateManager,
-        this.changePublisherName
-      )
-    }
-    return this._changePublishers
-  }
-
-  addOwnKeysSubscriber() {
-    this.changePublishers.addOwnKeysSubscriber()
-  }
-
   notifyOwnKeysSubscribersOfChange() {
-    if (this._changePublishers != null) {
-      this.changePublishers.notifyOwnKeysSubscribersOfChange()
-    }
+      super.notifyOwnKeysSubscribersOfChange()
     // Any change to an Entity also notifies @reactions subscribed to
     // the EntitiesState
+    // FIXME - remove this eventually
     this.entitiesState.notifySubscribersOfChange()
   }
 
-  addPropertySubscriber(property: string) {
-    this.changePublishers.addPropertySubscriber(property)
-  }
-
-  notifySubscribersOfPropertyChange(property: string) {
-    if (this._changePublishers) {
-      this._changePublishers.notifySubscribersOfPropertyChange(property)
-    }
+    notifySubscribersOfPropertyChange(property: string) {
+      super.notifySubscribersOfPropertyChange(property)
     // Any change to an Entity also notifies @reactions subscribed to
     // the EntitiesState
+    // FIXME - remove this eventually
     this.entitiesState.notifySubscribersOfChange()
   }
 }

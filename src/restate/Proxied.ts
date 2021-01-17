@@ -1,4 +1,5 @@
 import {StateManager} from "./StateManager"
+import {ObjectChangePublishers} from "./ObjectChangePublishers"
 
 /** Superclass for objects that expose their state to the application
  * through a Proxy.  A change to the state of the object is
@@ -9,6 +10,8 @@ import {StateManager} from "./StateManager"
 export abstract class Proxied<P extends Object, T extends Object>
   implements ProxyHandler<P> {
   _proxy: P | null = null
+
+  _changePublishers: ObjectChangePublishers | null = null
 
   _stateManager: StateManager
 
@@ -166,6 +169,52 @@ export abstract class Proxied<P extends Object, T extends Object>
       (this.target as unknown) as Function,
       argumentsList
     )
+  }
+
+  //--------------------------------------------------
+  // ChangeSubscribers and ChangePublishers
+
+  abstract get changePublisherName():string
+
+  clearState() {
+    this._changePublishers = null
+  }
+
+  removeChangePublishers() {
+    if (this._changePublishers != null) {
+      this._changePublishers.removeChangePublishers()
+      this._changePublishers = null
+    }
+  }
+
+  get changePublishers() {
+    if (this._changePublishers == null) {
+      this._changePublishers = new ObjectChangePublishers(
+        this._stateManager,
+        this.changePublisherName
+      )
+    }
+    return this._changePublishers
+  }
+
+  addOwnKeysSubscriber() {
+    this.changePublishers.addOwnKeysSubscriber()
+  }
+
+  notifyOwnKeysSubscribersOfChange() {
+    if (this._changePublishers != null) {
+      this.changePublishers.notifyOwnKeysSubscribersOfChange()
+    }
+  }
+
+  addPropertySubscriber(property: string) {
+    this.changePublishers.addPropertySubscriber(property)
+  }
+
+  notifySubscribersOfPropertyChange(property: string) {
+    if (this._changePublishers) {
+      this._changePublishers.notifySubscribersOfPropertyChange(property)
+    }
   }
 }
 
