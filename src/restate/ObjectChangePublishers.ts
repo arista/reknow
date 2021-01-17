@@ -14,6 +14,10 @@ export class ObjectChangePublishers {
   // Maintains subscribers that have referenced "ownKeys" of the object
   _ownKeysChangePublisher: ChangePublisher | null = null
 
+  // Maintains subscribers that want to be notified of any change to
+  // the object
+  _changePublisher: ChangePublisher | null = null
+
   constructor(public stateManager: StateManager, public name: string) {}
 
   get currentChangeSubscriber() {
@@ -43,9 +47,10 @@ export class ObjectChangePublishers {
   }
 
   notifyOwnKeysSubscribersOfChange() {
-    if (this.ownKeysChangePublisher != null) {
-      this.ownKeysChangePublisher.notifyChangeSubscribers()
+    if (this._ownKeysChangePublisher != null) {
+      this._ownKeysChangePublisher.notifyChangeSubscribers()
     }
+    this.notifySubscribersOfChange()
   }
 
   get propertyChangePublishers() {
@@ -83,6 +88,23 @@ export class ObjectChangePublishers {
     const ppub = this.getPropertyChangePublisher(property)
     if (ppub != null) {
       ppub.notifyChangeSubscribers()
+    }
+    this.notifySubscribersOfChange()
+  }
+
+  get changePublisher() {
+    if (this._changePublisher == null) {
+      this._changePublisher = new ChangePublisher(
+        `${this.name}`,
+        this.stateManager
+      )
+    }
+    return this._changePublisher
+  }
+
+  notifySubscribersOfChange() {
+    if (this._changePublisher != null) {
+      this._changePublisher.notifyChangeSubscribers()
     }
   }
 }

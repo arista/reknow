@@ -263,6 +263,11 @@ FIXME
 
 
 Query returning an instance
+  should invalidate on any change to the instance
+Query returning an entitiesById
+  should invalidate on any change to entitiesByID
+Query returning an index
+  should invalidate on any change to the index
 FIXME
 
 Depends on other Queries
