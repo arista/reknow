@@ -38,8 +38,7 @@ export abstract class IndexEntries<
     throw new Error(`Indexes are currently not mutable`)
   }
 
-  // If the entitiesById index is accessed, subscribe to any changes
-  // in the EntitiesState
+  // If the index is accessed, subscribe to any changes in the index
   proxyAccessed() {
     this.entitiesState.addSubscriber()
     super.proxyAccessed()

@@ -27,11 +27,27 @@ describe("Query", () => {
     class _JobEntities extends R.Entities<Job> {}
     const JobEntities = new _JobEntities(Job)
 
+    // I1 entity - for testing SortIndex
+    class I1 extends R.Entity {
+      static get entities() {
+        return I1Entities
+      }
+      amount: number = 0
+      constructor(public name: string) {
+        super()
+      }
+    }
+    class _I1Entities extends R.Entities<I1> {
+      @R.index("+name") byName!: R.SortIndex<I1>
+    }
+    const I1Entities = new _I1Entities(I1)
+
     // StateManager
     const stateManager = new R.StateManager({
       entities: {
         User: User.entities,
         Job: Job.entities,
+        I1: I1.entities,
       },
     })
 
@@ -44,15 +60,18 @@ describe("Query", () => {
       action,
       User,
       Job,
+      I1,
     }
   }
   let state!: ReturnType<typeof createState>
   let User!: typeof state.User
   let Job!: typeof state.Job
+  let I1!: typeof state.I1
   beforeEach(() => {
     state = createState()
     User = state.User
     Job = state.Job
+    I1 = state.I1
   })
 
   function testInvalidation<T>(
@@ -267,23 +286,78 @@ describe("Query", () => {
       testInvalidation(query, action, false)
     })
   })
+  describe("SortIndex dependencies", () => {
+    describe("A Query that depends on an element of a SortIndex", () => {
+      it("should invalidate if an instance is added", () => {
+        const query = () => I1.entities.byName[0] != null
+        const action = () => I1.entities.add(new I1("a"))
+        testInvalidation(query, action, true)
+      })
+      it("should invalidate if an instance is removed", () => {
+        const i1 = state.action(() => I1.entities.add(new I1("a"), "id1"))
+        const query = () => I1.entities.byName[0] != null
+        const action = () => i1.removeEntity()
+        testInvalidation(query, action, true)
+      })
+      it("should invalidate if an instance moves in the index", () => {
+        const i1 = state.action(() => I1.entities.add(new I1("a"), "id1"))
+        const i2 = state.action(() => I1.entities.add(new I1("d"), "id2"))
+        const query = () => I1.entities.byName[0] != null
+        const action = () => (i1.name = "q")
+        testInvalidation(query, action, true)
+      })
+      it("should not invalidate if an instance does not move in the index", () => {
+        const i1 = state.action(() => I1.entities.add(new I1("a"), "id1"))
+        const i2 = state.action(() => I1.entities.add(new I1("d"), "id2"))
+        const query = () => I1.entities.byName[0] != null
+        const action = () => (i1.name = "b")
+        testInvalidation(query, action, false)
+      })
+      it("should not invalidate if an instance changes a value unrelated to the index", () => {
+        const i1 = state.action(() => I1.entities.add(new I1("a"), "id1"))
+        const query = () => I1.entities.byName[0] != null
+        const action = () => i1.amount++
+        testInvalidation(query, action, false)
+      })
+    })
+    describe("A Query that depends on Object.keys of a SortIndex", () => {
+      it("should invalidate if an instance is added", () => {
+        const query = () => Object.keys(I1.entities.byName).length
+        const action = () => I1.entities.add(new I1("a"))
+        testInvalidation(query, action, true)
+      })
+      it("should invalidate if an instance is removed", () => {
+        const i1 = state.action(() => I1.entities.add(new I1("a"), "id1"))
+        const query = () => Object.keys(I1.entities.byName).length
+        const action = () => i1.removeEntity()
+        testInvalidation(query, action, true)
+      })
+      it("should invalidate if an instance moves in the index", () => {
+        const i1 = state.action(() => I1.entities.add(new I1("a"), "id1"))
+        const i2 = state.action(() => I1.entities.add(new I1("d"), "id2"))
+        const query = () => Object.keys(I1.entities.byName).length
+        const action = () => (i1.name = "q")
+        testInvalidation(query, action, true)
+      })
+      it("should not invalidate if an instance does not move in the index", () => {
+        const i1 = state.action(() => I1.entities.add(new I1("a"), "id1"))
+        const i2 = state.action(() => I1.entities.add(new I1("d"), "id2"))
+        const query = () => Object.keys(I1.entities.byName).length
+        const action = () => (i1.name = "b")
+        testInvalidation(query, action, false)
+      })
+      it("should not invalidate if an instance changes a value unrelated to the index", () => {
+        const i1 = state.action(() => I1.entities.add(new I1("a"), "id1"))
+        const query = () => Object.keys(I1.entities.byName).length
+        const action = () => i1.amount++
+        testInvalidation(query, action, false)
+      })
+    })
+  })
 
   /*
 
 Index dependencies
-SortIndex
-A query that depends on an index of a SortIndex
-It should invalidate if an instance is added that would affect that instance
-It should not invalidate if an instance is added that would affect that instance
-It should invalidate if an instance is removed that would affect that instance
-It should not invalidate if an instance is removed that would affect that instance
-It should invalidate if the instance changes such that that index's value changes
-It should not invalidate if the instance changes such that that index's value does not change
-A query that depends on Object.keys of a SortIndex
-It should invalidate if an instance is added
-It should invalidate if an instance is removed
-It should invalidate if an instance changes a property that would reorder the index
-It should invalidate if an instance changes a property that would not reorder the index
 
 UniqueHashIndex
 A query that depends on a property of a HashIndex

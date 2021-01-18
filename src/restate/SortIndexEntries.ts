@@ -37,20 +37,14 @@ export class SortIndexEntries<E extends Entity> extends IndexEntries<
     return this.entries.length === 0
   }
 
-  // If this is being accessed in a @reaction, don't bother recording
-  // individual property accesses, since this is an array.  Any change
-  // to the array will trigger a recompute.  We could get more
-  // granular if that would really improve performance for a
-  // significant set of use cases.
-  shouldAddPropertySubscribers() {
-    return false
-  }
-
   onEntityAdded(e: EntityState<E>) {
     const sortValues = this.toSortValues(e.entity, e.id)
     const ix = this.getSortPosition(sortValues)
     const entry = new SortIndexEntry(e, sortValues)
     this.entries.splice(ix, 0, entry)
+    // See comment in propertyGet - any change notifies all
+    // subscribers dependent on the array
+    this.notifySubscribersOfChange()
     this.invalidateProxy()
   }
 
@@ -60,6 +54,9 @@ export class SortIndexEntries<E extends Entity> extends IndexEntries<
     const entry = this.entries[ix]
     if (entry != null && entry.entity === e) {
       this.entries.splice(ix, 1)
+      // See comment in propertyGet - any change notifies all
+      // subscribers dependent on the array
+      this.notifySubscribersOfChange()
       this.invalidateProxy()
     }
   }
@@ -80,6 +77,8 @@ export class SortIndexEntries<E extends Entity> extends IndexEntries<
     const oldState = this.entries[oldIx]
     const isInList = oldState.entity === e
     if (isInList && (newIx === oldIx || newIx === oldIx + 1)) {
+      // The sorting key of the instance has changed, but its position
+      // within the index hasn't
       oldState.sortValues = newSortValues
     } else {
       if (isInList) {
@@ -90,7 +89,12 @@ export class SortIndexEntries<E extends Entity> extends IndexEntries<
       }
       const entry = new SortIndexEntry(e, newSortValues)
       this.entries.splice(newIx, 0, entry)
+
+      // See comment in propertyGet - any change notifies all
+      // subscribers dependent on the array
+      this.notifySubscribersOfChange()
     }
+    // FIXME - this should move into the part that only happens if the index changes
     this.invalidateProxy()
   }
 
@@ -114,6 +118,15 @@ export class SortIndexEntries<E extends Entity> extends IndexEntries<
   }
 
   propertyGet(prop: string) {
+    // For SortIndexes, change subscribers watch for any changes on
+    // the array, rather than watching individual properties of the
+    // array.  Changing the granularity to be at the individual
+    // property level would not be very practical, since inserts and
+    // removals will result in many underlying gets/sets and
+    // notifications.  The assumption is that this level of
+    // granularity would be sufficient for applications.
+    this.addSubscriber()
+
     if (prop === "length") {
       return this.entries.length
     }
@@ -128,5 +141,12 @@ export class SortIndexEntries<E extends Entity> extends IndexEntries<
       return entry
     }
     return entry.entity.proxy
+  }
+
+  getOwnKeys() {
+    // See comment in propertyGet - any access of the array introduces
+    // a dependency on any change in the array
+    this.addSubscriber()
+    return super.getOwnKeys()
   }
 }

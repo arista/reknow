@@ -256,6 +256,16 @@ export abstract class Proxied<P extends Object, T extends Object>
       this._changePublishers.notifySubscribersOfPropertyChange(property)
     }
   }
+
+  addSubscriber() {
+    this.changePublishers.addSubscriber()
+  }
+
+  notifySubscribersOfChange() {
+    if (this._changePublishers) {
+      this._changePublishers.notifySubscribersOfChange()
+    }
+  }
 }
 
 const TARGET = Symbol("TARGET")

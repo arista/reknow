@@ -15,7 +15,9 @@ export class ObjectChangePublishers {
   _ownKeysChangePublisher: ChangePublisher | null = null
 
   // Maintains subscribers that want to be notified of any change to
-  // the object
+  // the object.  This is used for Arrays, in which tracking the
+  // gets/sets of individual properties in the array isn't very
+  // practical or useful.
   _changePublisher: ChangePublisher | null = null
 
   constructor(public stateManager: StateManager, public name: string) {}
@@ -105,6 +107,13 @@ export class ObjectChangePublishers {
   notifySubscribersOfChange() {
     if (this._changePublisher != null) {
       this._changePublisher.notifyChangeSubscribers()
+    }
+  }
+
+  addSubscriber() {
+    const changeSubscriber = this.currentChangeSubscriber
+    if (changeSubscriber != null) {
+      changeSubscriber.addChangePublisher(this.changePublisher)
     }
   }
 }
