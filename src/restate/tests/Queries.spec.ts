@@ -2,6 +2,7 @@ import * as R from "../Restate"
 
 describe("Query", () => {
   function createState() {
+    // User entity
     class User extends R.Entity {
       static get entities() {
         return UserEntities
@@ -14,9 +15,23 @@ describe("Query", () => {
     class _UserEntities extends R.Entities<User> {}
     const UserEntities = new _UserEntities(User)
 
+    // Job entity
+    class Job extends R.Entity {
+      static get entities() {
+        return JobEntities
+      }
+      constructor(public name: string) {
+        super()
+      }
+    }
+    class _JobEntities extends R.Entities<Job> {}
+    const JobEntities = new _JobEntities(Job)
+
+    // StateManager
     const stateManager = new R.StateManager({
       entities: {
         User: User.entities,
+        Job: Job.entities,
       },
     })
 
@@ -28,11 +43,16 @@ describe("Query", () => {
       stateManager,
       action,
       User,
+      Job,
     }
   }
   let state!: ReturnType<typeof createState>
+  let User!: typeof state.User
+  let Job!: typeof state.Job
   beforeEach(() => {
     state = createState()
+    User = state.User
+    Job = state.Job
   })
 
   function testInvalidation<T>(
@@ -52,35 +72,30 @@ describe("Query", () => {
 
   describe("A Query that depends on an instance's property", () => {
     it("should invalidate if that property changes", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => u.age * 2
       const action = () => u.age++
       testInvalidation(query, action, true)
     })
     it("should invalidate if that property is deleted", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => (u.age || 0) * 2
       const action = () => delete (u as any).age
       testInvalidation(query, action, true)
     })
     it("should invalidate if that property is added", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => (u.amount || 0) * 2
       const action = () => (u.amount = 20)
       testInvalidation(query, action, true)
     })
     it("should not invalidate if a different property is changed", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => u.age * 2
       const action = () => (u.name = "xyz")
       testInvalidation(query, action, false)
     })
     it("should not invalidate if the property changes on a different instance", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const u2 = state.action(() => User.entities.add(new User("b", 20), "id2"))
       const query = () => u.age * 2
@@ -90,7 +105,6 @@ describe("Query", () => {
   })
   describe("A Query that depends on multiple properties of an instance", () => {
     it("should invalidate if either property changes", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => `${u.name} = ${u.age}`
       const action1 = () => u.age++
@@ -99,7 +113,6 @@ describe("Query", () => {
       testInvalidation(query, action2, true)
     })
     it("should invalidate if either property is deleted", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => `${u.name} = ${u.age}`
       const action1 = () => delete (u as any).age
@@ -108,14 +121,12 @@ describe("Query", () => {
       testInvalidation(query, action2, true)
     })
     it("should not invalidate if a different property changes", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => `${u.name} = ${u.age}`
       const action = () => (u.amount = 20)
       testInvalidation(query, action, false)
     })
     it("should not invalidate if either property changes on a different instance", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const u2 = state.action(() => User.entities.add(new User("b", 20), "id2"))
       const query = () => `${u.name} = ${u.age}`
@@ -127,28 +138,24 @@ describe("Query", () => {
   })
   describe("A Query that uses Object.getOwnPropertyNames on an entity", () => {
     it("should not invalidate if a property changes", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => Object.getOwnPropertyNames(u).length
       const action = () => (u.name = "b")
       testInvalidation(query, action, false)
     })
     it("should invalidate if a property is added", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => Object.getOwnPropertyNames(u).length
       const action = () => (u.amount = 20)
       testInvalidation(query, action, true)
     })
     it("should invalidate if a property is removed", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => Object.getOwnPropertyNames(u).length
       const action = () => delete (u as any).age
       testInvalidation(query, action, true)
     })
     it("should not invalidate if a property is added to a different instance", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const u2 = state.action(() => User.entities.add(new User("a", 10), "id2"))
       const query = () => Object.getOwnPropertyNames(u).length
@@ -167,7 +174,6 @@ describe("Query", () => {
     // getOwnPropertyNames doesn't have this issue, since it isn't
     // limited to enumerable properties.
     it("should invalidate if a property changes", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => Object.keys(u).length
       const action = () => (u.name = "b")
@@ -176,53 +182,93 @@ describe("Query", () => {
   })
   describe("A Query that depends on a property of entitiesById", () => {
     it("should invalidate if an instance is added with that id", () => {
-      const User = state.User
       const query = () => User.entities.entitiesById.id1 != null
       const action = () => User.entities.add(new User("a", 10), "id1")
       testInvalidation(query, action, true)
     })
     it("should invalidate if an instance is removed with that id", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => User.entities.entitiesById.id1 != null
       const action = () => u.removeEntity()
       testInvalidation(query, action, true)
     })
     it("should not invalidate if an instance with that id is changed", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () => User.entities.entitiesById.id1 != null
       const action = () => u.age++
       testInvalidation(query, action, false)
     })
     it("should not invalidate if an instance is added with a different id", () => {
-      const User = state.User
       const query = () => User.entities.entitiesById.id1 != null
       const action = () => User.entities.add(new User("a", 10), "id2")
       testInvalidation(query, action, false)
     })
     it("should not invalidate if an instance is removed with a different id", () => {
-      const User = state.User
       const u = state.action(() => User.entities.add(new User("a", 10), "id2"))
       const query = () => User.entities.entitiesById.id1 != null
       const action = () => u.removeEntity()
       testInvalidation(query, action, false)
     })
+    it("should not invalidate if an instance is added to a different Entities with the same id", () => {
+      const query = () => User.entities.entitiesById.id1 != null
+      const action = () => Job.entities.add(new Job("a"), "id1")
+      testInvalidation(query, action, false)
+    })
+  })
+  describe("A Query that depends on Object.getPropertyNames of entitiesById", () => {
+    it("should invalidate if an instance is added", () => {
+      const query = () =>
+        Object.getOwnPropertyNames(User.entities.entitiesById).length
+      const action = () => User.entities.add(new User("a", 10), "id1")
+      testInvalidation(query, action, true)
+    })
+    it("should invalidate if an instance is removed", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () =>
+        Object.getOwnPropertyNames(User.entities.entitiesById).length
+      const action = () => u.removeEntity()
+      testInvalidation(query, action, true)
+    })
+    it("should not invalidate if an existing instance is changed", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () =>
+        Object.getOwnPropertyNames(User.entities.entitiesById).length
+      const action = () => u.age++
+      testInvalidation(query, action, false)
+    })
+    it("should not invalidate if an instance is added to a different Entities", () => {
+      const query = () =>
+        Object.getOwnPropertyNames(User.entities.entitiesById).length
+      const action = () => Job.entities.add(new Job("a"), "id1")
+      testInvalidation(query, action, false)
+    })
+  })
+  describe("A Query that depends on Object.keys of entitiesById", () => {
+    it("should invalidate if an instance is added", () => {
+      const query = () => Object.keys(User.entities.entitiesById).length
+      const action = () => User.entities.add(new User("a", 10), "id1")
+      testInvalidation(query, action, true)
+    })
+    it("should invalidate if an instance is removed", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () => Object.keys(User.entities.entitiesById).length
+      const action = () => u.removeEntity()
+      testInvalidation(query, action, true)
+    })
+    it("should not invalidate if an existing instance is changed", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () => Object.keys(User.entities.entitiesById).length
+      const action = () => u.age++
+      testInvalidation(query, action, false)
+    })
+    it("should not invalidate if an instance is added to a different Entities", () => {
+      const query = () => Object.keys(User.entities.entitiesById).length
+      const action = () => Job.entities.add(new Job("a"), "id1")
+      testInvalidation(query, action, false)
+    })
   })
 
   /*
-
-does not invalidate if an instance with a different id is added
-does not invalidate if an instance with a different id is removed
-does not invalidate if an instance with same id is added to a different Entities
-
-A query that depends on Object.keys of entitiesById
-invalidates if an instance is added
-invalidates if an instance is removed
-does not invalidate if an existing instance is changed
-does not invalidate if an instance is added to a different Entities
-
-A query that depends on entitiesById
 
 Index dependencies
 SortIndex
