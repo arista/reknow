@@ -42,12 +42,28 @@ describe("Query", () => {
     }
     const I1Entities = new _I1Entities(I1)
 
+    // I2 entity - for testing SortIndex
+    class I2 extends R.Entity {
+      static get entities() {
+        return I2Entities
+      }
+      amount: number = 0
+      constructor(public name: string | null) {
+        super()
+      }
+    }
+    class _I2Entities extends R.Entities<I2> {
+      @R.uniqueIndex("=name") byName!: R.UniqueHashIndex<I2>
+    }
+    const I2Entities = new _I2Entities(I2)
+
     // StateManager
     const stateManager = new R.StateManager({
       entities: {
         User: User.entities,
         Job: Job.entities,
         I1: I1.entities,
+        I2: I2.entities,
       },
     })
 
@@ -61,17 +77,20 @@ describe("Query", () => {
       User,
       Job,
       I1,
+      I2,
     }
   }
   let state!: ReturnType<typeof createState>
   let User!: typeof state.User
   let Job!: typeof state.Job
   let I1!: typeof state.I1
+  let I2!: typeof state.I2
   beforeEach(() => {
     state = createState()
     User = state.User
     Job = state.Job
     I1 = state.I1
+    I2 = state.I2
   })
 
   function testInvalidation<T>(
@@ -354,22 +373,79 @@ describe("Query", () => {
       })
     })
   })
+  describe("UniqueHashIndex dependencies", () => {
+    describe("A Query that depends on a property of a HashIndex", () => {
+      it("should invalidate if an instance is added for that property", () => {
+        const query = () => I2.entities.byName.a != null
+        const action = () => I2.entities.add(new I2("a"))
+        testInvalidation(query, action, true)
+      })
+      it("should invalidate if an instance is removed for that property", () => {
+        const i1 = state.action(() => I2.entities.add(new I2("a")))
+        const query = () => I2.entities.byName.a != null
+        const action = () => i1.removeEntity()
+        testInvalidation(query, action, true)
+      })
+      it("should invalidate if an instance is changed to that property", () => {
+        const i1 = state.action(() => I2.entities.add(new I2("b")))
+        const query = () => I2.entities.byName.a != null
+        const action = () => (i1.name = "a")
+        testInvalidation(query, action, true)
+      })
+      it("should invalidate if an instance is changed away from that property", () => {
+        const i1 = state.action(() => I2.entities.add(new I2("a")))
+        const query = () => I2.entities.byName.a != null
+        const action = () => (i1.name = "b")
+        testInvalidation(query, action, true)
+      })
+      it("should not invalidate if an instance is changed unrelated to that property", () => {
+        const i1 = state.action(() => I2.entities.add(new I2("b")))
+        const query = () => I2.entities.byName.a != null
+        const action = () => (i1.name = "c")
+        testInvalidation(query, action, false)
+      })
+      it("should not invalidate if an instance is added not for that property", () => {
+        const query = () => I2.entities.byName.a != null
+        const action = () => I2.entities.add(new I2("b"))
+        testInvalidation(query, action, false)
+      })
+      it("should not invalidate if an instance is removed not for that property", () => {
+        const i1 = state.action(() => I2.entities.add(new I2("a")))
+        const i2 = state.action(() => I2.entities.add(new I2("b")))
+        const query = () => I2.entities.byName.a != null
+        const action = () => i2.removeEntity()
+        testInvalidation(query, action, false)
+      })
+      it("should not invalidate if an instance changes an unrelated property", () => {
+        const i1 = state.action(() => I2.entities.add(new I2("a")))
+        const query = () => I2.entities.byName.a != null
+        const action = () => (i1.amount = 10)
+        testInvalidation(query, action, false)
+      })
+    })
+    describe("A Query that depends on Object.keys of a HashIndex", () => {
+      it("should invalidate if an instance is added", () => {
+        const query = () => Object.keys(I2.entities.byName).length
+        const action = () => I2.entities.add(new I2("a"))
+        testInvalidation(query, action, true)
+      })
+      it("should invalidate if an instance is removed", () => {
+        const i1 = state.action(() => I2.entities.add(new I2("a")))
+        const query = () => Object.keys(I2.entities.byName).length
+        const action = () => i1.removeEntity()
+        testInvalidation(query, action, true)
+      })
+      it("should not invalidate if an instance is added that does not affect that index", () => {
+        const query = () => Object.keys(I2.entities.byName).length
+        const action = () => I2.entities.add(new I2(null))
+        testInvalidation(query, action, false)
+      })
+    })
+  })
 
   /*
 
 Index dependencies
-
-UniqueHashIndex
-A query that depends on a property of a HashIndex
-It should invalidate if an instance is added for that property
-It should invalidate if an instance is removed for that property
-It should invalidate if an instance replaces that property
-It should not invalidate if an instance is added not for that property
-It should not invalidate if an instance is removed not for that property
-A query that depends on Object.keys of a HashIndex
-It should invalidate if an instance is added
-It should invalidate if an instance is removed
-It should not invalidate if an instance is added that does not affect that index
 
 HashIndex to secondary SortIndex
 FIXME

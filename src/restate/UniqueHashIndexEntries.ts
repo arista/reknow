@@ -43,6 +43,8 @@ export class UniqueHashIndexEntries<E extends Entity> extends IndexEntries<
       if (this.entries[key] !== e) {
         this.entries[key] = e
         this.entryCount++
+        this.notifySubscribersOfPropertyChange(key)
+        this.notifyOwnKeysSubscribersOfChange()
         this.invalidateProxy()
       }
     }
@@ -53,6 +55,8 @@ export class UniqueHashIndexEntries<E extends Entity> extends IndexEntries<
       if (this.entries[key] != null) {
         delete this.entries[key]
         this.entryCount--
+        this.notifySubscribersOfPropertyChange(key)
+        this.notifyOwnKeysSubscribersOfChange()
         this.invalidateProxy()
       }
     }
@@ -84,19 +88,17 @@ export class UniqueHashIndexEntries<E extends Entity> extends IndexEntries<
         this.addEntity(newValue, e)
       }
     } else {
+      // FIXME - shouldn't be invalidating proxy except for real changes
       this.invalidateProxy()
     }
   }
 
   propertyGet(prop: string) {
-    if (this.entries.hasOwnProperty(prop)) {
-      const entityState = this.entries[prop]
-      if (entityState == null) {
-        return null
-      }
-      return entityState.proxy
+    const es = super.propertyGet(prop)
+    if (es instanceof EntityState) {
+      return es.proxy
     } else {
-      return super.propertyGet(prop)
+      return es
     }
   }
 }
