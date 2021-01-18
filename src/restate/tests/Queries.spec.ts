@@ -65,11 +65,11 @@ describe("Query", () => {
       const action = () => delete (u as any).age
       testInvalidation(query, action, true)
     })
-    it("should invalidate if that property is added", ()=>{
+    it("should invalidate if that property is added", () => {
       const User = state.User
-      const u = state.action(()=>User.entities.add(new User("a", 10), "id1"))
-      const query = ()=>(u.amount || 0) * 2
-      const action = ()=>u.amount = 20
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () => (u.amount || 0) * 2
+      const action = () => (u.amount = 20)
       testInvalidation(query, action, true)
     })
     it("should not invalidate if a different property is changed", () => {
@@ -175,41 +175,39 @@ describe("Query", () => {
     })
   })
   describe("A Query that depends on a property of entitiesById", () => {
-    /*
-    it("should invalidate if an instance is added with that id", ()=>{
+    it("should invalidate if an instance is added with that id", () => {
       const User = state.User
-      const query = ()=>User.entities.entitiesById.id1 != null
-      const action = ()=>User.entities.add(new User("a", 10), "id1")
+      const query = () => User.entities.entitiesById.id1 != null
+      const action = () => User.entities.add(new User("a", 10), "id1")
       testInvalidation(query, action, true)
     })
-    it("should invalidate if an instance is removed with that id", ()=>{
+    it("should invalidate if an instance is removed with that id", () => {
       const User = state.User
-      const u = state.action(()=>User.entities.add(new User("a", 10), "id1"))
-      const query = ()=>User.entities.entitiesById.id1 != null
-      const action = ()=>u.removeEntity()
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () => User.entities.entitiesById.id1 != null
+      const action = () => u.removeEntity()
       testInvalidation(query, action, true)
     })
-    it("should not invalidate if an instance with that id is changed", ()=>{
+    it("should not invalidate if an instance with that id is changed", () => {
       const User = state.User
-      const u = state.action(()=>User.entities.add(new User("a", 10), "id1"))
-      const query = ()=>User.entities.entitiesById.id1 != null
-      const action = ()=>u.age++
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () => User.entities.entitiesById.id1 != null
+      const action = () => u.age++
       testInvalidation(query, action, false)
     })
-    it("should not invalidate if an instance is added with a different id", ()=>{
+    it("should not invalidate if an instance is added with a different id", () => {
       const User = state.User
-      const query = ()=>User.entities.entitiesById.id1 != null
-      const action = ()=>User.entities.add(new User("a", 10), "id2")
+      const query = () => User.entities.entitiesById.id1 != null
+      const action = () => User.entities.add(new User("a", 10), "id2")
       testInvalidation(query, action, false)
     })
-    it("should not invalidate if an instance is removed with a different id", ()=>{
+    it("should not invalidate if an instance is removed with a different id", () => {
       const User = state.User
-      const u = state.action(()=>User.entities.add(new User("a", 10), "id2"))
-      const query = ()=>User.entities.entitiesById.id1 != null
-      const action = ()=>u.removeEntity()
-      testInvalidation(query, action, true)
+      const u = state.action(() => User.entities.add(new User("a", 10), "id2"))
+      const query = () => User.entities.entitiesById.id1 != null
+      const action = () => u.removeEntity()
+      testInvalidation(query, action, false)
     })
-    */
   })
 
   /*

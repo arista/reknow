@@ -50,6 +50,10 @@ export class EntitiesState<E extends Entity>
   // entitiesById of this EntitiesState
   _changePublisher: ChangePublisher | null = null
 
+  // Flag if the proxy is being mutated internally, vs. from the
+  // application
+  mutatingProxyInternally: boolean = false
+
   constructor(
     public name: string,
     public stateManager: StateManager,
@@ -285,8 +289,7 @@ export class EntitiesState<E extends Entity>
       // Add the reactions
       this.addReactions(entityState)
 
-      this.byId[entityId] = entityState
-      this.notifySubscribersOfChange()
+      this.addEntityToEntitiesById(entityId, entityState)
       this.updateIndexesOnEntityAdded(entityState)
       this.stateManager.recordEntityAdded(entityState)
       entityState.addPendingAfterAdd()
@@ -305,6 +308,23 @@ export class EntitiesState<E extends Entity>
     )
 
     return entityState.proxy
+  }
+
+  addEntityToEntitiesById(entityId: string, entityState: EntityState<E>) {
+    const oldValue = this.mutatingProxyInternally
+    try {
+      this.mutatingProxyInternally = true
+      // We need to modify the proxy to get its side effects, but
+      // from the application's view it is typed as having Entity
+      // instances, so we need to do some type-casting to make this
+      // pass the compiler
+      const byId = (this.entitiesById as unknown) as {
+        [key: string]: EntityState<E>
+      }
+      byId[entityId] = entityState
+    } finally {
+      this.mutatingProxyInternally = oldValue
+    }
   }
 
   addEntityRelationships(
@@ -383,11 +403,10 @@ export class EntitiesState<E extends Entity>
       )
     }
     entityState.isRemoved = true
-    delete this.byId[id]
+    this.deleteEntityFromEntitiesById(id)
     entityState.removeReactions()
     entityState.removeChangePublishers()
     this.removeRelationships(entity)
-    this.notifySubscribersOfChange()
     this.updateIndexesOnEntityRemoved(entityState)
     this.stateManager.recordEntityRemoved(entityState)
     entityState.addPendingAfterRemove()
@@ -396,6 +415,16 @@ export class EntitiesState<E extends Entity>
   removeRelationships(entity: E) {
     for (const relationship of this.relationships) {
       relationship.primaryRemoved(entity)
+    }
+  }
+
+  deleteEntityFromEntitiesById(entityId: string) {
+    const oldValue = this.mutatingProxyInternally
+    try {
+      this.mutatingProxyInternally = true
+      delete this.entitiesById[entityId]
+    } finally {
+      this.mutatingProxyInternally = oldValue
     }
   }
 
@@ -530,26 +559,28 @@ export class EntitiesState<E extends Entity>
 
   // Method from Proxied, exposing byId
   propertyGet(prop: string) {
-    if (this.byId.hasOwnProperty(prop)) {
-      const es = this.byId[prop]
-      if (es != null) {
-        return es.proxy
-      } else {
-        return null
-      }
+    const es = super.propertyGet(prop)
+    if (es instanceof EntityState) {
+      return es.proxy
     } else {
-      return super.propertyGet(prop)
+      return es
     }
   }
 
   // Method from Proxied, exposing byId
   propertySet(prop: string, value: any): boolean {
-    throw new Error(`ById cannot be modified directly`)
+    if (!this.mutatingProxyInternally) {
+      throw new Error(`ById cannot be modified directly`)
+    }
+    return super.propertySet(prop, value)
   }
 
   // Method from Proxied, exposing byId
   propertyDelete(prop: string): boolean {
-    throw new Error(`ById cannot be modified directly`)
+    if (!this.mutatingProxyInternally) {
+      throw new Error(`ById cannot be modified directly`)
+    }
+    return super.propertyDelete(prop)
   }
 
   //--------------------------------------------------

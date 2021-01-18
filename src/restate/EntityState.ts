@@ -68,32 +68,6 @@ export class EntityState<E extends Entity>
     this.stateManager.checkMutable()
   }
 
-  propertyGet(prop: string) {
-    if (isNonInheritedProperty(this.target, prop)) {
-      this.addPropertySubscriber(prop)
-    }
-    return super.propertyGet(prop)
-  }
-
-  propertyDescriptorGet(prop: string) {
-    if (isNonInheritedProperty(this.target, prop)) {
-      this.addPropertySubscriber(prop)
-    }
-    return super.propertyDescriptorGet(prop)
-  }
-
-  propertyHas(prop: string) {
-    if (isNonInheritedProperty(this.target, prop)) {
-      this.addPropertySubscriber(prop)
-    }
-    return super.propertyHas(prop)
-  }
-
-  getOwnKeys() {
-    this.addOwnKeysSubscriber()
-    return super.getOwnKeys()
-  }
-
   propertySet(prop: string, value: any) {
     this.checkMutable()
 
@@ -107,41 +81,28 @@ export class EntityState<E extends Entity>
       throw new Error(`A removed entity may not be mutated`)
     }
 
-    // FIXME - check for setters on relationships
+    return super.propertySet(prop, value)
+  }
 
-    const hadValue = this.entity.hasOwnProperty(prop)
-    const oldValue = (this.entity as any)[prop]
-    const ret = super.propertySet(prop, value)
-
-    if (oldValue !== value) {
-      this.invalidateProxy()
-      this.notifySubscribersOfPropertyChange(prop)
-      this.entitiesState.updateIndexesOnEntityPropertyChanged(
-        this,
-        prop,
-        hadValue,
-        oldValue,
-        true,
-        value
-      )
-      this.stateManager.recordEntityPropertyChanged(
-        this,
-        prop,
-        hadValue,
-        oldValue,
-        true,
-        value
-      )
-      this.addPendingAfterChangeProperty(prop, oldValue)
-    }
-
-    // If the property is being added, notify any @reactions watching
-    // "ownKeys"
-    if (!hadValue) {
-      this.notifyOwnKeysSubscribersOfChange()
-    }
-
-    return ret
+  propertyChanged(prop: string, hadValue: boolean, oldValue: any, value: any) {
+    this.invalidateProxy()
+    this.entitiesState.updateIndexesOnEntityPropertyChanged(
+      this,
+      prop,
+      hadValue,
+      oldValue,
+      true,
+      value
+    )
+    this.stateManager.recordEntityPropertyChanged(
+      this,
+      prop,
+      hadValue,
+      oldValue,
+      true,
+      value
+    )
+    this.addPendingAfterChangeProperty(prop, oldValue)
   }
 
   propertyDelete(prop: string) {
@@ -157,40 +118,28 @@ export class EntityState<E extends Entity>
       throw new Error(`A removed entity may not be mutated`)
     }
 
-    // FIXME - check for setters on relationships
+    return super.propertyDelete(prop)
+  }
 
-    const hadValue = this.entity.hasOwnProperty(prop)
-    const oldValue = (this.entity as any)[prop]
-    const ret = super.propertyDelete(prop)
-    if (hadValue) {
-      this.invalidateProxy()
-      this.notifySubscribersOfPropertyChange(prop)
-      this.entitiesState.updateIndexesOnEntityPropertyChanged(
-        this,
-        prop,
-        hadValue,
-        oldValue,
-        false,
-        null
-      )
-      this.stateManager.recordEntityPropertyChanged(
-        this,
-        prop,
-        hadValue,
-        oldValue,
-        false,
-        null
-      )
-      this.addPendingAfterChangeProperty(prop, oldValue)
-    }
-
-    // If the property is being removed, notify any @reactions
-    // watching "ownKeys"
-    if (hadValue) {
-      this.notifyOwnKeysSubscribersOfChange()
-    }
-
-    return ret
+  propertyDeleted(prop: string, hadValue: boolean, oldValue: any) {
+    this.invalidateProxy()
+    this.entitiesState.updateIndexesOnEntityPropertyChanged(
+      this,
+      prop,
+      hadValue,
+      oldValue,
+      false,
+      null
+    )
+    this.stateManager.recordEntityPropertyChanged(
+      this,
+      prop,
+      hadValue,
+      oldValue,
+      false,
+      null
+    )
+    this.addPendingAfterChangeProperty(prop, oldValue)
   }
 
   static getEntityState<E extends Entity>(entity: E): EntityState<E> | null {
@@ -250,24 +199,5 @@ export class EntityState<E extends Entity>
         }
       }
     }
-  }
-
-  //--------------------------------------------------
-  // ChangeSubscribers and ChangePublishers
-
-  notifyOwnKeysSubscribersOfChange() {
-      super.notifyOwnKeysSubscribersOfChange()
-    // Any change to an Entity also notifies @reactions subscribed to
-    // the EntitiesState
-    // FIXME - remove this eventually
-    this.entitiesState.notifySubscribersOfChange()
-  }
-
-    notifySubscribersOfPropertyChange(property: string) {
-      super.notifySubscribersOfPropertyChange(property)
-    // Any change to an Entity also notifies @reactions subscribed to
-    // the EntitiesState
-    // FIXME - remove this eventually
-    this.entitiesState.notifySubscribersOfChange()
   }
 }

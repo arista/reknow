@@ -1,4 +1,5 @@
 import {StateManager} from "./StateManager"
+import {isNonInheritedProperty} from "./Utils"
 import {ObjectChangePublishers} from "./ObjectChangePublishers"
 
 /** Superclass for objects that expose their state to the application
@@ -55,28 +56,67 @@ export abstract class Proxied<P extends Object, T extends Object>
   proxyAccessed() {}
 
   propertyGet(prop: string) {
+    if (isNonInheritedProperty(this.target, prop)) {
+      this.addPropertySubscriber(prop)
+    }
     return Reflect.get(this.target, prop, this.target)
   }
 
   propertyDescriptorGet(prop: string) {
+    if (isNonInheritedProperty(this.target, prop)) {
+      this.addPropertySubscriber(prop)
+    }
     return Reflect.getOwnPropertyDescriptor(this.target, prop)
   }
 
   propertyHas(prop: string) {
+    if (isNonInheritedProperty(this.target, prop)) {
+      this.addPropertySubscriber(prop)
+    }
     return Reflect.has(this.target, prop)
   }
 
   getOwnKeys() {
+    this.addOwnKeysSubscriber()
     return Reflect.ownKeys(this.target)
   }
 
   propertySet(prop: string, value: any) {
-    return Reflect.set(this.target, prop, value, this.target)
+    const hadValue = this.target.hasOwnProperty(prop)
+    const oldValue = (this.target as any)[prop]
+    const ret = Reflect.set(this.target, prop, value, this.target)
+
+    // See if the property value has changed
+    if (oldValue !== value) {
+      this.propertyChanged(prop, hadValue, oldValue, value)
+      this.notifySubscribersOfPropertyChange(prop)
+    }
+
+    // If the property is being added, notify any subscribers watching
+    // "ownKeys"
+    if (!hadValue) {
+      this.notifyOwnKeysSubscribersOfChange()
+    }
+
+    return ret
   }
 
+  propertyChanged(prop: string, hadValue: boolean, oldValue: any, value: any) {}
+
   propertyDelete(prop: string) {
-    return Reflect.deleteProperty(this.target, prop)
+    const hadValue = this.target.hasOwnProperty(prop)
+    const oldValue = (this.target as any)[prop]
+    const ret = Reflect.deleteProperty(this.target, prop)
+    if (hadValue) {
+      this.notifySubscribersOfPropertyChange(prop)
+      this.notifyOwnKeysSubscribersOfChange()
+      this.propertyDeleted(prop, hadValue, oldValue)
+    }
+
+    return ret
   }
+
+  propertyDeleted(prop: string, hadValue: boolean, oldValue: any) {}
 
   //--------------------------------------------------
   // ProxyHandler methods
@@ -174,7 +214,7 @@ export abstract class Proxied<P extends Object, T extends Object>
   //--------------------------------------------------
   // ChangeSubscribers and ChangePublishers
 
-  abstract get changePublisherName():string
+  abstract get changePublisherName(): string
 
   clearState() {
     this._changePublishers = null

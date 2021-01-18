@@ -1,6 +1,6 @@
 import * as R from "../Restate"
 
-describe("Reactions", () => {
+xdescribe("Reactions", () => {
   class User extends R.Entity {
     constructor(public name: string, public age: number) {
       super()
