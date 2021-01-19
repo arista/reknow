@@ -1,7 +1,11 @@
 import {EntitiesState} from "./EntitiesState"
 import {ChangePublisher} from "./ChangePublisher"
+import {ObjectChangePublishers} from "./ObjectChangePublishers"
 import {Entities} from "./Entities"
 import {StateManager} from "./StateManager"
+import {Index} from "./Index"
+import {IndexEntries} from "./IndexEntries"
+import {ManyHashIndexEntries} from "./ManyHashIndexEntries"
 
 export class ChangeSubscriberDumper {
   constructor(public stateManager: StateManager) {}
@@ -25,8 +29,10 @@ export class ChangeSubscriberDumper {
   dumpEntitiesStateChangeSubscribers(o: EntitiesState<any>) {
     return {
       name: o.name,
+      changePublishers: this.dumpObjectChangePublishers(o._changePublishers),
       changePublisher: this.dumpChangePublisher(o._changePublisher),
       entities: this.dumpEntities(o.entities),
+      indexes: this.dumpIndexes(o.indexes),
     }
   }
 
@@ -56,16 +62,55 @@ export class ChangeSubscriberDumper {
     for (const id in e.entitiesById) {
       const en = e.entitiesById[id]
       const es = en.entityState
-      ret[id] = {
-        ownKeysChangePublisher:
-          es._ownKeysChangePublisher == null
-            ? null
-            : this.dumpChangePublisher(es._ownKeysChangePublisher),
-        propertyChangePublishers:
-          es._propertyChangePublishers == null
-            ? null
-            : this.dumpPropertyChangePublishers(es._propertyChangePublishers),
+      ret[id] = this.dumpObjectChangePublishers(es._changePublishers)
+    }
+    return ret
+  }
+
+  dumpObjectChangePublishers(p: ObjectChangePublishers|null) {
+    if(p == null) {
+      return null
+    }
+    return {
+      propertyChangePublishers:
+      p._propertyChangePublishers == null
+        ? null
+        : this.dumpPropertyChangePublishers(p._propertyChangePublishers),
+      ownKeysChangePublisher:
+      p._ownKeysChangePublisher == null
+        ? null
+        : this.dumpChangePublisher(p._ownKeysChangePublisher),
+      changePublisher:
+      p._changePublisher == null
+        ? null
+        : this.dumpChangePublisher(p._changePublisher),
+    }
+  }
+
+  dumpIndexes(indexes: Array<Index<any>>) {
+    let ret: any = {}
+    for (const index of indexes) {
+      ret[index.name] = this.dumpIndex(index)
+    }
+    return ret
+  }
+
+  dumpIndex(index: Index<any>) {
+    return (index._entries != null) ? this.dumpIndexEntries(index._entries) : null
+  }
+
+  dumpIndexEntries(entries: IndexEntries<any,any,any>) {
+    let ret: any = {
+      changePublishers: this.dumpObjectChangePublishers(entries._changePublishers)
+    }
+    if (entries instanceof ManyHashIndexEntries) {
+      const keys:any = {}
+      const e = entries.entries
+      for(const key in e) {
+        const entry = e[key]
+        keys[key] = this.dumpIndexEntries(entry)
       }
+      ret.keys = keys
     }
     return ret
   }

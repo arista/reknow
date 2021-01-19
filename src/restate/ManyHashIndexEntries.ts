@@ -43,7 +43,10 @@ export class ManyHashIndexEntries<E extends Entity> extends IndexEntries<
         entries = createIndexEntries(this.index, name, this.schema.entrySchema)
         this.entries[key] = entries
         this.entryCount++
+        this.notifySubscribersOfPropertyChange(key)
+        this.notifyOwnKeysSubscribersOfChange()
       }
+      // FIXME - invalidateProxy should be moved up to the if clause
       this.invalidateProxy()
       entries.onEntityAdded(e)
     }
@@ -53,11 +56,14 @@ export class ManyHashIndexEntries<E extends Entity> extends IndexEntries<
     if (key != null) {
       let entries = this.entries[key]
       if (entries != null) {
+        // FIXME - only invalidate proxy if entries is empty
         this.invalidateProxy()
         entries.onEntityRemoved(e)
         if (entries.empty) {
           delete this.entries[key]
           this.entryCount--
+          this.notifySubscribersOfPropertyChange(key)
+          this.notifyOwnKeysSubscribersOfChange()
         }
       }
     }
@@ -115,14 +121,11 @@ export class ManyHashIndexEntries<E extends Entity> extends IndexEntries<
   }
 
   propertyGet(prop: string) {
-    if (this.entries.hasOwnProperty(prop)) {
-      const entry = this.entries[prop]
-      if (entry == null) {
-        return null
-      }
-      return entry.proxy
+    const es = super.propertyGet(prop)
+    if (es != null) {
+      return es.proxy
     } else {
-      return super.propertyGet(prop)
+      return es
     }
   }
 }
