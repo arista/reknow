@@ -1,6 +1,7 @@
 import {ChangeSubscriber} from "./ChangeSubscriber"
 import {ChangePublisher} from "./ChangePublisher"
 import {StateManager} from "./StateManager"
+import {Proxied} from "./Proxied"
 
 class CachedValue<T> {
   constructor(public value: T) {}
@@ -42,7 +43,25 @@ export class Query<T> extends ChangeSubscriber {
       )
     }
     this.removeChangePublishers()
-    return this.stateManager.whileEvaluatingChangeSubscriber(this, this.query)
+    const ret = this.stateManager.whileEvaluatingChangeSubscriber(
+      this,
+      this.query
+    )
+
+    // If the return value is a Proxied (Entity, byId, or index node),
+    // then subscribe to any changes to the proxy, and return the
+    // proxy's latest value.
+    if (ret instanceof Object) {
+      const p = Proxied.getProxied(ret)
+      if (p != null) {
+        this.stateManager.whileEvaluatingChangeSubscriber(this, () =>
+          p.addSubscriber()
+        )
+        return p.proxy as T
+      }
+    }
+
+    return ret
   }
 
   remove() {

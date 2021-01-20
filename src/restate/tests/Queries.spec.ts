@@ -62,7 +62,7 @@ describe("Query", () => {
       static get entities() {
         return I3Entities
       }
-      constructor(public name: string, public age:number) {
+      constructor(public name: string, public age: number) {
         super()
       }
     }
@@ -114,7 +114,8 @@ describe("Query", () => {
   function testInvalidation<T>(
     queryFunc: () => T,
     actionFunc: () => void,
-    shouldInvalidate: boolean
+    shouldInvalidate: boolean,
+    shouldChangeValue: boolean | null = null
   ) {
     const query = state.stateManager.createQuery(queryFunc, "TestQuery")
     expect(query.hasCachedValue).toBe(false)
@@ -124,6 +125,14 @@ describe("Query", () => {
     state.action(actionFunc)
 
     expect(query.hasCachedValue).toBe(!shouldInvalidate)
+    if (shouldChangeValue != null) {
+      const value2 = query.value
+      if (shouldChangeValue) {
+        expect(value2).not.toBe(value)
+      } else {
+        expect(value2).toBe(value)
+      }
+    }
   }
 
   describe("A Query that depends on an instance's property", () => {
@@ -460,93 +469,118 @@ describe("Query", () => {
       })
     })
     describe("ManyHashIndex to SortIndex dependencies", () => {
-      it("should invalidate if an instance is added", ()=>{
+      it("should invalidate if an instance is added", () => {
         const query = () => I3.entities.byNameAndAge.a != null
-        const action = ()=>I3.entities.add(new I3("a", 10))
+        const action = () => I3.entities.add(new I3("a", 10))
         testInvalidation(query, action, true)
       })
-      it("should invalidate if an instance is added to a different name", ()=>{
-        const i1 = state.action(() =>I3.entities.add(new I3("a", 10)))
+      it("should invalidate if an instance is added to a different name", () => {
+        const i1 = state.action(() => I3.entities.add(new I3("a", 10)))
         const query = () => I3.entities.byNameAndAge.b != null
-        const action = ()=>I3.entities.add(new I3("b", 20))
+        const action = () => I3.entities.add(new I3("b", 20))
         testInvalidation(query, action, true)
       })
-      it("should not invalidate if an instance is added to an existing name", ()=>{
-        const i1 = state.action(() =>I3.entities.add(new I3("a", 10)))
+      it("should not invalidate if an instance is added to an existing name", () => {
+        const i1 = state.action(() => I3.entities.add(new I3("a", 10)))
         const query = () => I3.entities.byNameAndAge.a != null
-        const action = ()=>I3.entities.add(new I3("a", 20))
+        const action = () => I3.entities.add(new I3("a", 20))
         testInvalidation(query, action, false)
       })
-      it("should invalidate if the last instance is removed from an existing name", ()=>{
-        const i1 = state.action(() =>I3.entities.add(new I3("a", 10)))
-        const i2 = state.action(() =>I3.entities.add(new I3("a", 20)))
+      it("should invalidate if the last instance is removed from an existing name", () => {
+        const i1 = state.action(() => I3.entities.add(new I3("a", 10)))
+        const i2 = state.action(() => I3.entities.add(new I3("a", 20)))
         const query = () => I3.entities.byNameAndAge.a != null
-        const action = ()=>{
+        const action = () => {
           i2.removeEntity()
           i1.removeEntity()
         }
         testInvalidation(query, action, true)
       })
-      it("should not invalidate if an instance is removed from an existing name that has other instances", ()=>{
-        const i1 = state.action(() =>I3.entities.add(new I3("a", 10)))
-        const i2 = state.action(() =>I3.entities.add(new I3("a", 20)))
+      it("should not invalidate if an instance is removed from an existing name that has other instances", () => {
+        const i1 = state.action(() => I3.entities.add(new I3("a", 10)))
+        const i2 = state.action(() => I3.entities.add(new I3("a", 20)))
         const query = () => I3.entities.byNameAndAge.a != null
-        const action = ()=>i2.removeEntity()
+        const action = () => i2.removeEntity()
         testInvalidation(query, action, false)
       })
-      it("should not invalidate if an instance's position changes within the same name", ()=>{
-        const i1 = state.action(() =>I3.entities.add(new I3("a", 10)))
-        const i2 = state.action(() =>I3.entities.add(new I3("a", 20)))
+      it("should not invalidate if an instance's position changes within the same name", () => {
+        const i1 = state.action(() => I3.entities.add(new I3("a", 10)))
+        const i2 = state.action(() => I3.entities.add(new I3("a", 20)))
         const query = () => I3.entities.byNameAndAge.a != null
-        const action = ()=>i1.age = 30
+        const action = () => (i1.age = 30)
         testInvalidation(query, action, false)
       })
-      it("should invalidate if an instance is moved to a new name, from a name that has other instances to a name that doesn't yet have instances", ()=>{
-        const i1 = state.action(() =>I3.entities.add(new I3("a", 10)))
-        const i2 = state.action(() =>I3.entities.add(new I3("a", 20)))
-        const query = () => I3.entities.byNameAndAge.a != null && I3.entities.byNameAndAge.b != null
-        const action = ()=>i1.name = "b"
+      it("should invalidate if an instance is moved to a new name, from a name that has other instances to a name that doesn't yet have instances", () => {
+        const i1 = state.action(() => I3.entities.add(new I3("a", 10)))
+        const i2 = state.action(() => I3.entities.add(new I3("a", 20)))
+        const query = () =>
+          I3.entities.byNameAndAge.a != null &&
+          I3.entities.byNameAndAge.b != null
+        const action = () => (i1.name = "b")
         testInvalidation(query, action, true)
       })
-      it("should invalidate if an instance is moved to a new name, from a name that has no other instances to a name that does have instances", ()=>{
-        const i1 = state.action(() =>I3.entities.add(new I3("a", 10)))
-        const i2 = state.action(() =>I3.entities.add(new I3("b", 20)))
-        const query = () => I3.entities.byNameAndAge.a != null && I3.entities.byNameAndAge.b != null
-        const action = ()=>i1.name = "b"
+      it("should invalidate if an instance is moved to a new name, from a name that has no other instances to a name that does have instances", () => {
+        const i1 = state.action(() => I3.entities.add(new I3("a", 10)))
+        const i2 = state.action(() => I3.entities.add(new I3("b", 20)))
+        const query = () =>
+          I3.entities.byNameAndAge.a != null &&
+          I3.entities.byNameAndAge.b != null
+        const action = () => (i1.name = "b")
         testInvalidation(query, action, true)
       })
-      it("should invalidate if an instance is moved to a new name, from a name that has no other instances to a name that doesn't yet have instances", ()=>{
-        const i1 = state.action(() =>I3.entities.add(new I3("a", 10)))
-        const query = () => I3.entities.byNameAndAge.a != null && I3.entities.byNameAndAge.b != null
-        const action = ()=>i1.name = "b"
+      it("should invalidate if an instance is moved to a new name, from a name that has no other instances to a name that doesn't yet have instances", () => {
+        const i1 = state.action(() => I3.entities.add(new I3("a", 10)))
+        const query = () =>
+          I3.entities.byNameAndAge.a != null &&
+          I3.entities.byNameAndAge.b != null
+        const action = () => (i1.name = "b")
         testInvalidation(query, action, true)
       })
-      it("should not invalidate if an instance is moved to a new name, from a name that has other instances to a name that does have instances", ()=>{
-        const i1 = state.action(() =>I3.entities.add(new I3("a", 10)))
-        const i2 = state.action(() =>I3.entities.add(new I3("b", 20)))
-        const i3 = state.action(() =>I3.entities.add(new I3("a", 30)))
-        const query = () => I3.entities.byNameAndAge.a != null && I3.entities.byNameAndAge.b != null
-        const action = ()=>i3.name = "b"
+      it("should not invalidate if an instance is moved to a new name, from a name that has other instances to a name that does have instances", () => {
+        const i1 = state.action(() => I3.entities.add(new I3("a", 10)))
+        const i2 = state.action(() => I3.entities.add(new I3("b", 20)))
+        const i3 = state.action(() => I3.entities.add(new I3("a", 30)))
+        const query = () =>
+          I3.entities.byNameAndAge.a != null &&
+          I3.entities.byNameAndAge.b != null
+        const action = () => (i3.name = "b")
         testInvalidation(query, action, false)
       })
+    })
+  })
+  describe("A Query that returns an entity", () => {
+    it("should invalidate if a property of the instance is changed", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () => u
+      const action = () => u.age++
+      testInvalidation(query, action, true, true)
+    })
+    it("should invalidate if a property of the instance is deleted", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () => u
+      const action = () => delete (u as any).age
+      testInvalidation(query, action, true, true)
+    })
+    it("should invalidate if a property of the instance is added", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () => u
+      const action = () => (u.amount = 10)
+      testInvalidation(query, action, true, true)
+    })
+    it("should not invalidate if a different instance is changed", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const u2 = state.action(() => User.entities.add(new User("b", 20), "id2"))
+      const query = () => u
+      const action = () => u2.age++
+      testInvalidation(query, action, false, false)
     })
   })
 
   /*
 
-Index dependencies
-
-HashIndex to secondary SortIndex
-FIXME
-
-HashIndex to secondary HashIndex
-FIXME
 
 
 
-
-Query returning an instance
-  should invalidate on any change to the instance
 Query returning an entitiesById
   should invalidate on any change to entitiesByID
 Query returning an index
@@ -557,6 +591,7 @@ Depends on other Queries
 FIXME
 
 Invalidates only once
+Should regenerate dependencies on re-evaluation
 FIXME
 
 */

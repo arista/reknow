@@ -67,23 +67,23 @@ export class ChangeSubscriberDumper {
     return ret
   }
 
-  dumpObjectChangePublishers(p: ObjectChangePublishers|null) {
-    if(p == null) {
+  dumpObjectChangePublishers(p: ObjectChangePublishers | null) {
+    if (p == null) {
       return null
     }
     return {
       propertyChangePublishers:
-      p._propertyChangePublishers == null
-        ? null
-        : this.dumpPropertyChangePublishers(p._propertyChangePublishers),
+        p._propertyChangePublishers == null
+          ? null
+          : this.dumpPropertyChangePublishers(p._propertyChangePublishers),
       ownKeysChangePublisher:
-      p._ownKeysChangePublisher == null
-        ? null
-        : this.dumpChangePublisher(p._ownKeysChangePublisher),
+        p._ownKeysChangePublisher == null
+          ? null
+          : this.dumpChangePublisher(p._ownKeysChangePublisher),
       changePublisher:
-      p._changePublisher == null
-        ? null
-        : this.dumpChangePublisher(p._changePublisher),
+        p._changePublisher == null
+          ? null
+          : this.dumpChangePublisher(p._changePublisher),
     }
   }
 
@@ -96,17 +96,19 @@ export class ChangeSubscriberDumper {
   }
 
   dumpIndex(index: Index<any>) {
-    return (index._entries != null) ? this.dumpIndexEntries(index._entries) : null
+    return index._entries != null ? this.dumpIndexEntries(index._entries) : null
   }
 
-  dumpIndexEntries(entries: IndexEntries<any,any,any>) {
+  dumpIndexEntries(entries: IndexEntries<any, any, any>) {
     let ret: any = {
-      changePublishers: this.dumpObjectChangePublishers(entries._changePublishers)
+      changePublishers: this.dumpObjectChangePublishers(
+        entries._changePublishers
+      ),
     }
     if (entries instanceof ManyHashIndexEntries) {
-      const keys:any = {}
+      const keys: any = {}
       const e = entries.entries
-      for(const key in e) {
+      for (const key in e) {
         const entry = e[key]
         keys[key] = this.dumpIndexEntries(entry)
       }
