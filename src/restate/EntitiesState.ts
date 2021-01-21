@@ -46,10 +46,6 @@ export class EntitiesState<E extends Entity>
 
   entityDeclarations = EntityDeclarations.forClass(this.entityClass)
 
-  // Tracks @reactions that have referenced any indexes or the
-  // entitiesById of this EntitiesState
-  _changePublisher: ChangePublisher | null = null
-
   // Flag if the proxy is being mutated internally, vs. from the
   // application
   mutatingProxyInternally: boolean = false
@@ -78,8 +74,8 @@ export class EntitiesState<E extends Entity>
   }
 
   clearState() {
+    super.clearState()
     this.idGenerator = 1
-    this._changePublisher = null
     for (const id in this.target) {
       const entityState = this.target[id]
       entityState.clearState()
@@ -289,7 +285,9 @@ export class EntitiesState<E extends Entity>
       // Add the reactions
       this.addReactions(entityState)
 
+      this.invalidateProxy()
       this.addEntityToEntitiesById(entityId, entityState)
+      this.notifySubscribersOfChange()
       this.updateIndexesOnEntityAdded(entityState)
       this.stateManager.recordEntityAdded(entityState)
       entityState.addPendingAfterAdd()
@@ -403,7 +401,9 @@ export class EntitiesState<E extends Entity>
       )
     }
     entityState.isRemoved = true
+    this.invalidateProxy()
     this.deleteEntityFromEntitiesById(id)
+    this.notifySubscribersOfChange()
     entityState.removeReactions()
     entityState.removeChangePublishers()
     this.removeRelationships(entity)
@@ -521,10 +521,6 @@ export class EntitiesState<E extends Entity>
     }
   }
 
-  onStateChange(e: StateChange<E>) {
-    super.invalidateProxy()
-  }
-
   getEntityWithId(id: string): E {
     return notNull(this.byId[id]).entity
   }
@@ -585,36 +581,6 @@ export class EntitiesState<E extends Entity>
 
   //--------------------------------------------------
   // ChangeSubscribers and ChangePublishers for handling @reactions
-
-  // If the entitiesById index is accessed, subscribe to any changes
-  // in the EntitiesState
-  proxyAccessed() {
-    this.addSubscriber()
-    super.proxyAccessed()
-  }
-
-  get changePublisher() {
-    if (this._changePublisher == null) {
-      this._changePublisher = new ChangePublisher(
-        `${this.name}`,
-        this._stateManager
-      )
-    }
-    return this._changePublisher
-  }
-
-  addSubscriber() {
-    const changeSubscriber = this.stateManager.currentChangeSubscriber
-    if (changeSubscriber != null) {
-      changeSubscriber.addChangePublisher(this.changePublisher)
-    }
-  }
-
-  notifySubscribersOfChange() {
-    if (this.changePublisher != null) {
-      this.changePublisher.notifyChangeSubscribers()
-    }
-  }
 
   get changePublisherName() {
     return this.name

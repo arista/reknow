@@ -40,7 +40,7 @@ export class Index<E extends Entity> {
         ret
       )
     }
-    this.entitiesState.addSubscriber()
+
     return ret
   }
 

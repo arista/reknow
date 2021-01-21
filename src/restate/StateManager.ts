@@ -165,7 +165,6 @@ export class StateManager {
       entity: entityStateSnapshot,
     }
     this.recordStateChange(stateChange)
-    e.entitiesState.onStateChange(stateChange)
   }
 
   recordEntityRemoved<E extends Entity>(e: EntityState<E>) {
@@ -177,7 +176,6 @@ export class StateManager {
       entity: entityStateSnapshot,
     }
     this.recordStateChange(stateChange)
-    e.entitiesState.onStateChange(stateChange)
   }
 
   recordEntityPropertyChanged<E extends Entity>(
@@ -201,7 +199,6 @@ export class StateManager {
       stateChange.oldValue = oldValue
     }
     this.recordStateChange(stateChange)
-    e.entitiesState.onStateChange(stateChange)
   }
 
   whileEvaluatingSelector<T>(selector: Selector<any>, f: () => T): T {

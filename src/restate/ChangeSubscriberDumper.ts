@@ -30,7 +30,6 @@ export class ChangeSubscriberDumper {
     return {
       name: o.name,
       changePublishers: this.dumpObjectChangePublishers(o._changePublishers),
-      changePublisher: this.dumpChangePublisher(o._changePublisher),
       entities: this.dumpEntities(o.entities),
       indexes: this.dumpIndexes(o.indexes),
     }

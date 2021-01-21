@@ -122,6 +122,7 @@ describe("Query", () => {
     const value = query.value
     expect(query.hasCachedValue).toBe(true)
 
+    //console.log(JSON.stringify(state.stateManager.dumpChangeSubscribers(), null, 2))
     state.action(actionFunc)
 
     expect(query.hasCachedValue).toBe(!shouldInvalidate)
@@ -572,6 +573,30 @@ describe("Query", () => {
       const u2 = state.action(() => User.entities.add(new User("b", 20), "id2"))
       const query = () => u
       const action = () => u2.age++
+      testInvalidation(query, action, false, false)
+    })
+  })
+  describe("A Query that returns entitiesById", () => {
+    it("should invalidate if an instance is added", () => {
+      const query = () => User.entities.entitiesById
+      const action = () => User.entities.add(new User("a", 10), "id1")
+      testInvalidation(query, action, true, true)
+    })
+    it("should invalidate if an instance is removed", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () => User.entities.entitiesById
+      const action = () => u.removeEntity()
+      testInvalidation(query, action, true, true)
+    })
+    it("should not invalidate if an existing instance is changed", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const query = () => User.entities.entitiesById
+      const action = () => u.age++
+      testInvalidation(query, action, false, false)
+    })
+    it("should not invalidate if an instance is added to a different Entities", () => {
+      const query = () => User.entities.entitiesById
+      const action = () => Job.entities.add(new Job("a"), "id1")
       testInvalidation(query, action, false, false)
     })
   })

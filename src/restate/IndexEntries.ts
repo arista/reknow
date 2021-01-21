@@ -38,12 +38,6 @@ export abstract class IndexEntries<
     throw new Error(`Indexes are currently not mutable`)
   }
 
-  // If the index is accessed, subscribe to any changes in the index
-  proxyAccessed() {
-    this.entitiesState.addSubscriber()
-    super.proxyAccessed()
-  }
-
   get changePublisherName() {
     return this.name
   }
