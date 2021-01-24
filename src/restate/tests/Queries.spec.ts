@@ -724,11 +724,24 @@ describe("Query", () => {
       testInvalidation(query, action, false, false)
     })
   })
+  describe("A Query that depends on another Query", () => {
+    it("should invalidate if that Query is invalidated", ()=>{
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const q = state.stateManager.createQuery(()=>u.age * 2, "q1")
+      const query = () => q.value * 3
+      const action = () => u.age++
+      testInvalidation(query, action, true, true)
+    })
+    it("should not invalidate if that Query is not invalidated", ()=>{
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const q = state.stateManager.createQuery(()=>u.age * 2, "q1")
+      const query = () => q.value * 3
+      const action = () => u.name = "b"
+      testInvalidation(query, action, false, false)
+    })
+  })
 
   /*
-
-Depends on other Queries
-FIXME
 
 Invalidates only once
 Should regenerate dependencies on re-evaluation
