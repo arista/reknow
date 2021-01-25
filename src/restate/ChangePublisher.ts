@@ -22,7 +22,8 @@ export class ChangePublisher {
       const subscribers = this.subscribers
       this.subscribers = []
       for (const subscriber of subscribers) {
-        this.stateManager.queueChangeSubscriber(this, subscriber)
+        subscriber.notifyChangeSubscriber()
+        //this.stateManager.queueChangeSubscriber(this, subscriber)
       }
     }
   }

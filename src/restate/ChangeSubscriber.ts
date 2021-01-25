@@ -21,11 +21,13 @@ export abstract class ChangeSubscriber {
   }
 
   removeChangePublishers() {
-    for (const publisher of this.publishers) {
-      publisher.removeChangeSubscriber(this)
+    if (this.publishers.length > 0) {
+      for (const publisher of this.publishers) {
+        publisher.removeChangeSubscriber(this)
+      }
+      this.publishers = []
+      this.publisherSet = new Set()
     }
-    this.publishers = []
-    this.publisherSet = new Set()
   }
 
   abstract notifyChangeSubscriber(): void

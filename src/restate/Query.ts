@@ -67,11 +67,11 @@ export class Query<T> extends ChangeSubscriber {
   remove() {
     this.removeChangePublishers()
     this.isRemoved = true
+    this.cachedValue = null
   }
 
   notifyChangeSubscriber() {
     this.cachedValue = null
-    // FIXME - currently this queues up notifications, instead of sending them out immediately
     this.publisher.notifyChangeSubscribers()
     // FIXME - set up the notification to onInvalidate
   }

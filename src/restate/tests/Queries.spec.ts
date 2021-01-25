@@ -725,27 +725,122 @@ describe("Query", () => {
     })
   })
   describe("A Query that depends on another Query", () => {
-    it("should invalidate if that Query is invalidated", ()=>{
+    it("should invalidate if that Query is invalidated", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
-      const q = state.stateManager.createQuery(()=>u.age * 2, "q1")
+      const q = state.stateManager.createQuery(() => u.age * 2, "q1")
       const query = () => q.value * 3
       const action = () => u.age++
       testInvalidation(query, action, true, true)
     })
-    it("should not invalidate if that Query is not invalidated", ()=>{
+    it("should not invalidate if that Query is not invalidated", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
-      const q = state.stateManager.createQuery(()=>u.age * 2, "q1")
+      const q = state.stateManager.createQuery(() => u.age * 2, "q1")
       const query = () => q.value * 3
-      const action = () => u.name = "b"
+      const action = () => (u.name = "b")
       testInvalidation(query, action, false, false)
+    })
+  })
+  describe("Query.remove", () => {
+    it("should no longer receive notifications", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const q = state.stateManager.createQuery(() => u.age * 2, "q1")
+      let callCount = 0
+      q.notifyChangeSubscriber = () => {
+        callCount++
+        R.Query.prototype.notifyChangeSubscriber.call(q)
+      }
+
+      expect(q.value).toBe(20)
+      expect(q.hasCachedValue).toBe(true)
+      // A change should trigger a notification
+      state.action(() => u.age++)
+      expect(q.hasCachedValue).toBe(false)
+      expect(callCount).toBe(1)
+      expect(q.value).toBe(22)
+      expect(q.hasCachedValue).toBe(true)
+
+      q.remove()
+
+      // A change should no longer trigger a notification
+      expect(q.hasCachedValue).toBe(false)
+      state.action(() => u.age++)
+      expect(q.hasCachedValue).toBe(false)
+      expect(callCount).toBe(1)
+
+      // Getting the value should throw an exception
+      expect(() => q.value).toThrow(
+        new Error(`Attempt to evaluate Query "q1" after it has been removed`)
+      )
+    })
+  })
+  describe("Query dependencies", () => {
+    it("should be regenerated with each call", () => {
+      const u1 = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const u2 = state.action(() => User.entities.add(new User("b", 20), "id2"))
+      let which = u1
+      const query = () => which.age * 2
+      const q = state.stateManager.createQuery(query, "q1")
+      expect(q.hasCachedValue).toBe(false)
+      expect(q.value).toBe(20)
+      expect(q.hasCachedValue).toBe(true)
+
+      // Starts off depending on u1
+      state.action(() => u2.age++)
+      expect(q.hasCachedValue).toBe(true)
+      state.action(() => u1.age++)
+      expect(q.hasCachedValue).toBe(false)
+
+      // Switch the dependency
+      which = u2
+      expect(q.value).toBe(42)
+      expect(q.hasCachedValue).toBe(true)
+      state.action(() => u1.age++)
+      expect(q.hasCachedValue).toBe(true)
+      state.action(() => u2.age++)
+      expect(q.hasCachedValue).toBe(false)
+      expect(q.value).toBe(44)
+      expect(q.hasCachedValue).toBe(true)
+    })
+  })
+  describe("Query.notifyChangeSubscriber", () => {
+    it("should be called during the transaction if there is a change", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const q = state.stateManager.createQuery(() => u.age * 2, "q1")
+      let callCount = 0
+      q.notifyChangeSubscriber = () => {
+        callCount++
+        R.Query.prototype.notifyChangeSubscriber.call(q)
+      }
+      let value = q.value
+      expect(value).toBe(20)
+      state.action(() => {
+        u.age++
+        expect(callCount).toBe(1)
+      })
+    })
+    it("should be called only once during the transaction even if there are multiple changes", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const q = state.stateManager.createQuery(() => u.age * 2, "q1")
+      let callCount = 0
+      q.notifyChangeSubscriber = () => {
+        callCount++
+        R.Query.prototype.notifyChangeSubscriber.call(q)
+      }
+      let value = q.value
+      expect(value).toBe(20)
+      state.action(() => {
+        u.age++
+        expect(callCount).toBe(1)
+        u.age++
+        expect(callCount).toBe(1)
+      })
     })
   })
 
   /*
+Notification
 
-Invalidates only once
-Should regenerate dependencies on re-evaluation
-FIXME
-
+it should be called once 
+it should detect circular dependencies
 */
 })
