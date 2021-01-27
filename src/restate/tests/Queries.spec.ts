@@ -836,11 +836,153 @@ describe("Query", () => {
       })
     })
   })
+  describe("invalidation callback", () => {
+    it("should be called once after the transaction by default", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      let callCount = 0
+      const query = () => u.age * 2
+      const callback = () => callCount++
+      const q = state.stateManager.createQuery(query, "q1", callback)
 
-  /*
-Notification
+      state.action(() => {
+        u.age++
+        expect(q.value).toBe(22)
+        expect(callCount).toBe(0)
+        u.age++
+        expect(q.value).toBe(24)
+        expect(callCount).toBe(0)
+      })
+      expect(callCount).toBe(1)
 
-it should be called once 
-it should detect circular dependencies
-*/
+      state.action(() => {
+        u.age++
+        expect(q.value).toBe(26)
+        expect(callCount).toBe(1)
+        u.age++
+        expect(q.value).toBe(28)
+        expect(callCount).toBe(1)
+      })
+      expect(callCount).toBe(2)
+    })
+    it("should error if the notification tries to mutate when being called after the transaction", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      let callCount = 0
+      const query = () => u.age * 2
+      const callback = () => {
+        u.name = "b"
+        callCount++
+      }
+      const q = state.stateManager.createQuery(query, "q1", callback)
+      expect(q.value).toBe(20)
+
+      expect(() => {
+        state.action(() => {
+          u.age++
+        })
+      }).toThrow(new Error("Attempt to mutate state outside of an action"))
+    })
+    it("should be called back during the transaciton if set with transactionEnd", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      let callCount = 0
+      const query = () => u.age * 2
+      const callback = () => {
+        u.name = "b"
+        callCount++
+      }
+      const q = state.stateManager.createQuery(
+        query,
+        "q1",
+        callback,
+        "transactionEnd"
+      )
+      expect(q.value).toBe(20)
+
+      state.action(() => {
+        u.age++
+        expect(u.name).toBe("a")
+      })
+      expect(callCount).toBe(1)
+      expect(u.name).toBe("b")
+    })
+    it("should allow query callbacks to trigger other queries", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+
+      let callCount1 = 0
+      const query1 = () => u.age * 2
+      const callback1 = () => {
+        u.name = "b"
+        callCount1++
+      }
+      const q1 = state.stateManager.createQuery(
+        query1,
+        "q1",
+        callback1,
+        "transactionEnd"
+      )
+      expect(q1.value).toBe(20)
+
+      let callCount2 = 0
+      const query2 = () => u.name + "!"
+      const callback2 = () => {
+        callCount2++
+      }
+      const q2 = state.stateManager.createQuery(
+        query2,
+        "q2",
+        callback2,
+        "transactionEnd"
+      )
+      expect(q2.value).toBe("a!")
+
+      state.action(() => {
+        u.age++
+      })
+      expect(callCount1).toBe(1)
+      expect(u.name).toBe("b")
+      expect(callCount2).toBe(1)
+    })
+    it("should detect circular query callbacks", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+
+      let callCount1 = 0
+      const query1 = () => u.age * 2
+      const callback1 = () => {
+        const value = q1.value
+        u.name = "b"
+        callCount1++
+      }
+      const q1 = state.stateManager.createQuery(
+        query1,
+        "q1",
+        callback1,
+        "transactionEnd"
+      )
+      expect(q1.value).toBe(20)
+
+      let callCount2 = 0
+      const query2 = () => u.name + "!"
+      const callback2 = () => {
+        const value = q2.value
+        callCount2++
+        u.age++
+      }
+      const q2 = state.stateManager.createQuery(
+        query2,
+        "q2",
+        callback2,
+        "transactionEnd"
+      )
+      expect(q2.value).toBe("a!")
+
+      expect(() => {
+        state.action(() => {
+          u.age++
+        })
+      }).toThrow(
+        new Error(
+          "Circular dependency detected while executing these queries: q1, q2"
+        )
+      )
+    })
+  })
 })

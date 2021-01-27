@@ -3,6 +3,8 @@ import {ChangePublisher} from "./ChangePublisher"
 export abstract class ChangeSubscriber {
   publishers: Array<ChangePublisher> = []
   publisherSet = new Set<ChangePublisher>()
+
+  // FIXME - remove these flags
   // Flag if the subscriber has already been queued for notification
   // at the end of the current action
   queued = false

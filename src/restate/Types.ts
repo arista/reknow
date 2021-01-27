@@ -233,3 +233,5 @@ export interface StateDump {
 export interface EntitiesStateDump {
   byId: {[id: string]: Object}
 }
+
+export type QueryNotifyAt = "transactionEnd" | "afterTransaction"

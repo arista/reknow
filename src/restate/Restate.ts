@@ -4,6 +4,7 @@ import {ServiceDefinitions as _ServiceDefinitions} from "./Types"
 import {HashIndex as _HashIndex} from "./Types"
 import {UniqueHashIndex as _UniqueHashIndex} from "./Types"
 import {SortIndex as _SortIndex} from "./Types"
+import {QueryNotifyAt as _QueryNotifyAt} from "./Types"
 
 import {Entity as _Entity} from "./Entity"
 
@@ -48,6 +49,7 @@ export type HashIndex<
 > = _HashIndex<I>
 export type UniqueHashIndex<E extends _Entity> = _UniqueHashIndex<E>
 export type SortIndex<E extends _Entity> = _SortIndex<E>
+export type QueryNotifyAt = _QueryNotifyAt
 
 export type Transaction = _Transaction
 export type StateChange<E extends _Entity> = _StateChange<E>

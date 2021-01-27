@@ -2,6 +2,7 @@ import {ChangeSubscriber} from "./ChangeSubscriber"
 import {ChangePublisher} from "./ChangePublisher"
 import {StateManager} from "./StateManager"
 import {Proxied} from "./Proxied"
+import {QueryNotifyAt} from "./Types"
 
 class CachedValue<T> {
   constructor(public value: T) {}
@@ -16,7 +17,8 @@ export class Query<T> extends ChangeSubscriber {
     public stateManager: StateManager,
     public query: () => T,
     name: string,
-    public onInvalidate: (() => void) | null
+    public onInvalidate: (() => void) | null,
+    public notifyAt: QueryNotifyAt
   ) {
     super(name)
     this.publisher = new ChangePublisher(name, stateManager)
@@ -73,7 +75,9 @@ export class Query<T> extends ChangeSubscriber {
   notifyChangeSubscriber() {
     this.cachedValue = null
     this.publisher.notifyChangeSubscribers()
-    // FIXME - set up the notification to onInvalidate
+    if (this.onInvalidate) {
+      this.stateManager.addPendingQueryNotification(this)
+    }
   }
 
   get hasCachedValue() {

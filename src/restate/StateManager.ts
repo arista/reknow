@@ -24,6 +24,8 @@ import {ChangeSubscriberDumper} from "./ChangeSubscriberDumper"
 import {Reaction} from "./Reaction"
 import {StateDumper} from "./StateDumper"
 import {Query} from "./Query"
+import {QueryNotifyAt} from "./Types"
+import {PendingQueryNotifications} from "./PendingQueryNotifications"
 
 export interface StateManagerConfig {
   entities?: EntitiesDefinitionTree
@@ -38,8 +40,11 @@ export class StateManager {
   serviceStates: Array<ServiceState> = []
   currentSelector: Selector<any> | null = null
   currentChangeSubscriber: ChangeSubscriber | null = null
+  // FIXME - remove this
   queuedChangeNotifications: Array<ChangeSubscriber> | null = null
   pendingEffects: Array<EntityState<any>> | null = null
+  pendingQueryNotificationsTransactionEnd = new PendingQueryNotifications()
+  pendingQueryNotificationsAfterTransaction = new PendingQueryNotifications()
 
   constructor(config: StateManagerConfig) {
     if (config.listener != null) {
@@ -116,10 +121,13 @@ export class StateManager {
         // Notify change subscribers (i.e., reactions) while still
         // in the transaction
         this.notifyChangeSubscribers()
+        this.pendingQueryNotificationsTransactionEnd.notify()
         return ret
       })
 
       // We are now "outside" of the transaction
+      this.pendingQueryNotificationsAfterTransaction.notify()
+
       // Apply any effects
       this.applyPendingEffects()
       // Pass the transaction to any listeners
@@ -147,7 +155,7 @@ export class StateManager {
 
   checkMutable() {
     if (this.transaction == null) {
-      throw new Error(`Attempt to mutate state outside of an @action`)
+      throw new Error(`Attempt to mutate state outside of an action`)
     }
   }
 
@@ -224,6 +232,7 @@ export class StateManager {
     }
   }
 
+  // FIXME - remove this
   queueChangeSubscriber(
     publisher: ChangePublisher,
     subscriber: ChangeSubscriber
@@ -237,6 +246,7 @@ export class StateManager {
     }
   }
 
+  // FIXME - remove this
   notifyChangeSubscribers() {
     const notified: Array<ChangeSubscriber> = []
     try {
@@ -270,6 +280,17 @@ export class StateManager {
     }
   }
 
+  addPendingQueryNotification(query: Query<any>) {
+    switch (query.notifyAt) {
+      case "transactionEnd":
+        this.pendingQueryNotificationsTransactionEnd.add(query)
+        break
+      case "afterTransaction":
+        this.pendingQueryNotificationsAfterTransaction.add(query)
+        break
+    }
+  }
+
   dumpChangeSubscribers() {
     return new ChangeSubscriberDumper(this).dumpChangeSubscribers()
   }
@@ -284,9 +305,10 @@ export class StateManager {
   createQuery<T>(
     query: () => T,
     name: string = "UnnamedQuery",
-    onInvalidate: (() => void) | null = null
+    onInvalidate: (() => void) | null = null,
+    notifyAt: QueryNotifyAt = "afterTransaction"
   ) {
-    return new Query(this, query, name, onInvalidate)
+    return new Query(this, query, name, onInvalidate, notifyAt)
   }
 
   dumpState() {
