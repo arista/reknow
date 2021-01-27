@@ -285,6 +285,9 @@ export class EntitiesState<E extends Entity>
       // Add the reactions
       this.addReactions(entityState)
 
+      // Add the queries
+      this.addQueries(entityState)
+
       this.invalidateProxy()
       this.addEntityToEntitiesById(entityId, entityState)
       this.notifySubscribersOfChange()
@@ -473,6 +476,18 @@ export class EntitiesState<E extends Entity>
       )
       entityState.reactions.push(reaction)
       reaction.evaluate()
+    }
+  }
+
+  addQueries(entityState: EntityState<E>) {
+    for (const cdecl of this.entityDeclarations.queries) {
+      const f = () => cdecl.f.apply(entityState.proxy)
+      const query = this.stateManager.createQuery(
+        f,
+        `${this.name}.${cdecl.name}`
+      )
+      entityState.queries.push(query)
+      entityState.queriesByName[cdecl.name] = query
     }
   }
 

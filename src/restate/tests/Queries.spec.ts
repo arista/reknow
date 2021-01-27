@@ -71,6 +71,38 @@ describe("Query", () => {
     }
     const I3Entities = new _I3Entities(I3)
 
+    // I4 entity - for testing @query
+    class I4 extends R.Entity {
+      static get entities() {
+        return I4Entities
+      }
+      constructor(public name: string, public age: number) {
+        super()
+      }
+
+      @R.query get age2() {
+        i4age2Count++
+        return this.age * 2
+      }
+
+      static get age2Count() {
+        return i4age2Count
+      }
+
+      @R.query get age4() {
+        i4age4Count++
+        return this.age2 * 2
+      }
+
+      static get age4Count() {
+        return i4age4Count
+      }
+    }
+    class _I4Entities extends R.Entities<I4> {}
+    const I4Entities = new _I4Entities(I4)
+    let i4age2Count = 0
+    let i4age4Count = 0
+
     // StateManager
     const stateManager = new R.StateManager({
       entities: {
@@ -79,6 +111,7 @@ describe("Query", () => {
         I1: I1.entities,
         I2: I2.entities,
         I3: I3.entities,
+        I4: I4.entities,
       },
     })
 
@@ -94,6 +127,7 @@ describe("Query", () => {
       I1,
       I2,
       I3,
+      I4,
     }
   }
   let state!: ReturnType<typeof createState>
@@ -102,6 +136,7 @@ describe("Query", () => {
   let I1!: typeof state.I1
   let I2!: typeof state.I2
   let I3!: typeof state.I3
+  let I4!: typeof state.I4
   beforeEach(() => {
     state = createState()
     User = state.User
@@ -109,6 +144,7 @@ describe("Query", () => {
     I1 = state.I1
     I2 = state.I2
     I3 = state.I3
+    I4 = state.I4
   })
 
   function testInvalidation<T>(
@@ -983,6 +1019,63 @@ describe("Query", () => {
           "Circular dependency detected while executing these queries: q1, q2"
         )
       )
+    })
+  })
+  describe("@query declarations", () => {
+    describe("on an Entity class", () => {
+      it("should return the expected value", () => {
+        const u1 = state.action(() => I4.entities.add(new I4("a", 10), "id1"))
+        expect(u1.age2).toBe(20)
+        expect(I4.age2Count).toBe(1)
+      })
+      it("should not be re-evaluated if the dependencies don't change", () => {
+        const u1 = state.action(() => I4.entities.add(new I4("a", 10), "id1"))
+        expect(u1.age2).toBe(20)
+        expect(u1.age2).toBe(20)
+        expect(I4.age2Count).toBe(1)
+      })
+      it("should be re-evaluated if the dependency changes", () => {
+        const u1 = state.action(() => I4.entities.add(new I4("a", 10), "id1"))
+        expect(u1.age2).toBe(20)
+        state.action(() => u1.age++)
+        expect(I4.age2Count).toBe(1)
+        expect(u1.age2).toBe(22)
+        expect(I4.age2Count).toBe(2)
+      })
+      it("should trigger other @queries that depend on it", () => {
+        const u1 = state.action(() => I4.entities.add(new I4("a", 10), "id1"))
+        expect(u1.age4).toBe(40)
+        state.action(() => u1.age++)
+        expect(I4.age4Count).toBe(1)
+        expect(u1.age4).toBe(44)
+        expect(I4.age4Count).toBe(2)
+      })
+      it("should trigger Queries that depend on it", () => {
+        const u1 = state.action(() => I4.entities.add(new I4("a", 10), "id1"))
+        let callCount = 0
+        const q1 = state.stateManager.createQuery(
+          () => u1.age4 + 1,
+          "q1",
+          () => callCount++
+        )
+        expect(callCount).toBe(0)
+        expect(q1.value).toBe(41)
+        expect(callCount).toBe(0)
+        state.action(() => u1.age++)
+        expect(callCount).toBe(1)
+        state.action(() => u1.age++)
+        expect(callCount).toBe(1)
+        expect(q1.value).toBe(49)
+        state.action(() => u1.age++)
+        expect(callCount).toBe(2)
+        expect(q1.value).toBe(53)
+      })
+      it("should remove Queries when the Entity is removed", () => {
+        // FIXME - implement this
+      })
+    })
+    describe("on an Entities class", () => {
+      // FIXME - implement this
     })
   })
 })

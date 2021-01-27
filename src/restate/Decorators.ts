@@ -15,6 +15,7 @@ import {HasManyOptions} from "./Types"
 import {HasOneOptions} from "./Types"
 import {BelongsToOptions} from "./Types"
 import {EntityClass} from "./Types"
+import {Entities} from "./Entities"
 
 export function action(target: any, name: string, pd: PropertyDescriptor) {
   // FIXME - error if not declared on an Entity, Entities, or Selector class
@@ -111,6 +112,39 @@ export function reaction(target: any, name: string, pd: PropertyDescriptor) {
   } else {
     throw new Error(
       `@reaction may only be specified for non-static functions that are not getters or setters`
+    )
+  }
+}
+
+export function query(target: any, name: string, pd: PropertyDescriptor) {
+  if (typeof target === "object" && typeof pd.get === "function") {
+    if (target instanceof Entity) {
+      EntityDeclarations.addQuery(target, {name, f: pd.get})
+      replaceFunction(
+        target,
+        name,
+        pd,
+        (f: Function, name: string, type: FunctionType) => {
+          return function (this: Entity, ...args: Array<any>) {
+            const entityState = this.entityState
+            const query = entityState.queriesByName[name]
+            return query.value
+          }
+        }
+      )
+    } else if (target instanceof Entities) {
+      EntitiesDeclarations.addQuery(target, {name, f: pd.get})
+      // FIXME - replace the function
+    }
+    // FIXME - allow this for services too?
+    else {
+      throw new Error(
+        `@query may only be specified for non-static getters of an Entity or Entities class`
+      )
+    }
+  } else {
+    throw new Error(
+      `@query may only be specified for non-static getters of an Entity or Entities class`
     )
   }
 }

@@ -1,5 +1,6 @@
 import {Relationship} from "./Relationship"
 import {ReactionDecorator} from "./Types"
+import {QueryDecorator} from "./Types"
 import {AfterAddDecorator} from "./Types"
 import {AfterRemoveDecorator} from "./Types"
 import {AfterChangeDecorator} from "./Types"
@@ -13,6 +14,7 @@ import {AfterPropertyChangeDecorator} from "./Types"
 export class EntityDeclarations {
   relationships: Array<Relationship> = []
   reactions: Array<ReactionDecorator> = []
+  queries: Array<QueryDecorator> = []
   afterAdds: Array<AfterAddDecorator> = []
   afterRemoves: Array<AfterRemoveDecorator> = []
   afterChanges: Array<AfterChangeDecorator> = []
@@ -27,6 +29,10 @@ export class EntityDeclarations {
 
   static addReaction(proto: Object, c: ReactionDecorator) {
     EntityDeclarations.forPrototype(proto).reactions.push(c)
+  }
+
+  static addQuery(proto: Object, c: QueryDecorator) {
+    EntityDeclarations.forPrototype(proto).queries.push(c)
   }
 
   static addAfterAdd(proto: Object, c: AfterAddDecorator) {

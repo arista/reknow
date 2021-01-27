@@ -4,6 +4,7 @@ import {EntitiesState} from "./EntitiesState"
 import {ManagedState} from "./ManagedState"
 import {Action} from "./Types"
 import {Reaction} from "./Reaction"
+import {Query} from "./Query"
 import {ChangePublisher} from "./ChangePublisher"
 import {isNonInheritedProperty} from "./Utils"
 import {PendingEffects} from "./PendingEffects"
@@ -12,6 +13,8 @@ export class EntityState<E extends Entity>
   extends Proxied<E, E>
   implements ManagedState {
   reactions: Array<Reaction> = []
+  queries: Array<Query<any>> = []
+  queriesByName: {[name: string]: Query<any>} = {}
 
   // Tracks the @afterAdd, @afterRemove, and @afterChange calls that
   // need to be made after the current transaction ends

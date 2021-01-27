@@ -175,6 +175,11 @@ export interface ReactionDecorator {
   f: () => void
 }
 
+export interface QueryDecorator {
+  name: string
+  f: () => void
+}
+
 export type HasManySort = HasManySortElement | Array<HasManySortElement>
 export type HasManySortElement = string | SortDirective
 
