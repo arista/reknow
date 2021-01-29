@@ -1149,7 +1149,43 @@ describe("Query", () => {
       })
     })
     describe("on an Entities class", () => {
-      it("should implement Query behavior", () => {
+      it("should implement Query behavior of caching its value", () => {
+        expect(I4.entities.firstName == null).toBe(true)
+        expect(I4.entities.firstNameCount).toBe(1)
+        expect(I4.entities.firstName == null).toBe(true)
+        expect(I4.entities.firstNameCount).toBe(1)
+
+        const u1 = state.action(() => I4.entities.add(new I4("m", 10), "id1"))
+        expect(I4.entities.firstName).toBe("m")
+        expect(I4.entities.firstNameCount).toBe(2)
+        expect(I4.entities.firstName).toBe("m")
+        expect(I4.entities.firstNameCount).toBe(2)
+
+        const u2 = state.action(() => I4.entities.add(new I4("b", 20), "id2"))
+        expect(I4.entities.firstName).toBe("b")
+        expect(I4.entities.firstNameCount).toBe(3)
+        expect(I4.entities.firstName).toBe("b")
+        expect(I4.entities.firstNameCount).toBe(3)
+
+        state.action(() => (u1.name = "a"))
+        expect(I4.entities.firstName).toBe("a")
+        expect(I4.entities.firstNameCount).toBe(4)
+        expect(I4.entities.firstName).toBe("a")
+        expect(I4.entities.firstNameCount).toBe(4)
+
+        state.action(() => u1.removeEntity())
+        expect(I4.entities.firstName).toBe("b")
+        expect(I4.entities.firstNameCount).toBe(5)
+        expect(I4.entities.firstName).toBe("b")
+        expect(I4.entities.firstNameCount).toBe(5)
+
+        state.action(() => u2.age++)
+        expect(I4.entities.firstName).toBe("b")
+        expect(I4.entities.firstNameCount).toBe(5)
+        expect(I4.entities.firstName).toBe("b")
+        expect(I4.entities.firstNameCount).toBe(5)
+      })
+      it("should implement Query behavior of relaying invalidations to other queries", () => {
         let callCount = 0
         const q1 = state.stateManager.createQuery(
           () => I4.entities.firstName,
@@ -1187,7 +1223,20 @@ describe("Query", () => {
       })
     })
     describe("on a Service instance", () => {
-      it("should implement Query behavior", () => {
+      it("should implement Query behavior of caching its value", () => {
+        expect(S1.i4Count).toBe(0)
+        expect(S1.i4CountCount).toBe(1)
+        expect(S1.i4Count).toBe(0)
+        expect(S1.i4CountCount).toBe(1)
+
+        const u1 = state.action(() => I4.entities.add(new I4("m", 10), "id1"))
+
+        expect(S1.i4Count).toBe(1)
+        expect(S1.i4CountCount).toBe(2)
+        expect(S1.i4Count).toBe(1)
+        expect(S1.i4CountCount).toBe(2)
+      })
+      it("should implement Query behavior of relaying invalidations to other queries", () => {
         let callCount = 0
         const q1 = state.stateManager.createQuery(
           () => S1.i4Count,
@@ -1204,8 +1253,6 @@ describe("Query", () => {
         state.action(() => u1.removeEntity())
         expect(q1.value).toBe(0)
         expect(callCount).toBe(2)
-
-        // FIXME - test that the query on the service actually exists and is being invalidated
       })
     })
   })

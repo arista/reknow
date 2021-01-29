@@ -25,6 +25,7 @@ import {isPlainObject} from "./Utils"
 import {plainObjectToInstance} from "./Utils"
 import {ChangePublisher} from "./ChangePublisher"
 import {copyProperties} from "./Utils"
+import {Query} from "./Query"
 import {ENTITY_STATE_KEY} from "./Entity"
 
 export type EntityStateById<E extends Entity> = {[id: string]: EntityState<E>}
@@ -49,6 +50,9 @@ export class EntitiesState<E extends Entity>
   // Flag if the proxy is being mutated internally, vs. from the
   // application
   mutatingProxyInternally: boolean = false
+
+  queries: Array<Query<any>> = []
+  queriesByName: {[name: string]: Query<any>} = {}
 
   constructor(
     public name: string,
@@ -109,6 +113,7 @@ export class EntitiesState<E extends Entity>
     for (const d of entitiesDeclarations.indexDecorators) {
       this.addIndexFromDecorator(d)
     }
+    this.addEntitiesQueries(entitiesDeclarations)
   }
 
   addPropertyToEntitiesInstance<T>(
@@ -285,7 +290,7 @@ export class EntitiesState<E extends Entity>
       // Add the reactions
       this.addReactions(entityState)
 
-      // Add the queries
+      // Add the queries defined on the Entity class
       this.addQueries(entityState)
 
       this.invalidateProxy()
@@ -491,6 +496,18 @@ export class EntitiesState<E extends Entity>
       )
       entityState.queries.push(query)
       entityState.queriesByName[cdecl.name] = query
+    }
+  }
+
+  addEntitiesQueries(entitiesDeclarations: EntitiesDeclarations) {
+    for (const cdecl of entitiesDeclarations.queries) {
+      const f = () => cdecl.f.apply(this.entities)
+      const query = this.stateManager.createQuery(
+        f,
+        `${this.name}.${cdecl.name}`
+      )
+      this.queries.push(query)
+      this.queriesByName[cdecl.name] = query
     }
   }
 
