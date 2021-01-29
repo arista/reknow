@@ -97,11 +97,21 @@ describe("Query", () => {
       static get age4Count() {
         return i4age4Count
       }
+
+      @R.query get entitiesCount() {
+        entitiesCountCount++
+        return Object.keys(I4.entities.entitiesById).length
+      }
+
+      static get entitiesCountCount() {
+        return entitiesCountCount
+      }
     }
     class _I4Entities extends R.Entities<I4> {}
     const I4Entities = new _I4Entities(I4)
     let i4age2Count = 0
     let i4age4Count = 0
+    let entitiesCountCount = 0
 
     // StateManager
     const stateManager = new R.StateManager({
@@ -1071,7 +1081,30 @@ describe("Query", () => {
         expect(q1.value).toBe(53)
       })
       it("should remove Queries when the Entity is removed", () => {
-        // FIXME - implement this
+        // Since we're going to be removing the entity, we use a query
+        // that is dependent on properties of the Entities, not the
+        // Entity itself.
+        const u1 = state.action(() => I4.entities.add(new I4("a", 10), "id1"))
+        let callCount = 0
+        const q1 = state.stateManager.createQuery(
+          () => u1.entitiesCount,
+          "q1",
+          () => callCount++
+        )
+        expect(q1.value).toBe(1)
+        expect(callCount).toBe(0)
+
+        const u2 = state.action(() => I4.entities.add(new I4("b", 20), "id2"))
+        expect(callCount).toBe(1)
+        expect(q1.value).toBe(2)
+
+        state.action(() => u1.removeEntity())
+        expect(callCount).toBe(1)
+        expect(q1.value).toBe(2)
+
+        const u3 = state.action(() => I4.entities.add(new I4("c", 30), "id3"))
+        expect(callCount).toBe(1)
+        expect(q1.value).toBe(2)
       })
     })
     describe("on an Entities class", () => {

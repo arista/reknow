@@ -67,6 +67,12 @@ export class EntityState<E extends Entity>
     }
   }
 
+  removeQueries() {
+    for (const query of this.queries) {
+      query.remove()
+    }
+  }
+
   checkMutable() {
     this.stateManager.checkMutable()
   }

@@ -404,11 +404,14 @@ export class EntitiesState<E extends Entity>
       )
     }
     entityState.isRemoved = true
+
+    entityState.removeReactions()
+    entityState.removeQueries()
+    entityState.removeChangePublishers()
+
     this.invalidateProxy()
     this.deleteEntityFromEntitiesById(id)
     this.notifySubscribersOfChange()
-    entityState.removeReactions()
-    entityState.removeChangePublishers()
     this.removeRelationships(entity)
     this.updateIndexesOnEntityRemoved(entityState)
     this.stateManager.recordEntityRemoved(entityState)
