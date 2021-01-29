@@ -107,11 +107,22 @@ describe("Query", () => {
         return entitiesCountCount
       }
     }
-    class _I4Entities extends R.Entities<I4> {}
+    class _I4Entities extends R.Entities<I4> {
+      @R.query get firstName() {
+        firstNameCount++
+        return this.byName[0]?.name
+      }
+      @R.index("+name") byName!: R.SortIndex<I4>
+
+      static get firstNameCount() {
+        return firstNameCount
+      }
+    }
     const I4Entities = new _I4Entities(I4)
     let i4age2Count = 0
     let i4age4Count = 0
     let entitiesCountCount = 0
+    let firstNameCount = 0
 
     // StateManager
     const stateManager = new R.StateManager({
@@ -1108,7 +1119,41 @@ describe("Query", () => {
       })
     })
     describe("on an Entities class", () => {
-      // FIXME - implement this
+      it("should implement Query behavior", () => {
+        let callCount = 0
+        const q1 = state.stateManager.createQuery(
+          () => I4.entities.firstName,
+          "q1",
+          () => callCount++
+        )
+        expect(q1.value == null).toBe(true)
+        expect(callCount).toBe(0)
+
+        const u1 = state.action(() => I4.entities.add(new I4("m", 10), "id1"))
+        expect(q1.value).toBe("m")
+        expect(callCount).toBe(1)
+
+        const u2 = state.action(() => I4.entities.add(new I4("b", 20), "id2"))
+        expect(q1.value).toBe("b")
+        expect(callCount).toBe(2)
+
+        state.action(() => (u1.name = "a"))
+        expect(q1.value).toBe("a")
+        expect(callCount).toBe(3)
+
+        state.action(() => u2.removeEntity())
+        expect(q1.value).toBe("a")
+        expect(callCount).toBe(4)
+
+        state.action(() => u1.age++)
+        expect(q1.value).toBe("a")
+        expect(callCount).toBe(4)
+      })
+    })
+    describe("on a Service instance", () => {
+      it("should implement Query behavior", () => {
+        // FIXME - implement this
+      })
     })
   })
 })
