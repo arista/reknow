@@ -114,7 +114,7 @@ describe("Query", () => {
       }
       @R.index("+name") byName!: R.SortIndex<I4>
 
-      static get firstNameCount() {
+      get firstNameCount() {
         return firstNameCount
       }
     }
@@ -123,6 +123,19 @@ describe("Query", () => {
     let i4age4Count = 0
     let entitiesCountCount = 0
     let firstNameCount = 0
+
+    class _S1 extends R.Service {
+      @R.query get i4Count() {
+        i4CountCount++
+        return Object.keys(I4.entities.entitiesById).length
+      }
+      get i4CountCount() {
+        return i4CountCount
+      }
+    }
+    const S1 = new _S1()
+
+    let i4CountCount = 0
 
     // StateManager
     const stateManager = new R.StateManager({
@@ -133,6 +146,9 @@ describe("Query", () => {
         I2: I2.entities,
         I3: I3.entities,
         I4: I4.entities,
+      },
+      services: {
+        S1,
       },
     })
 
@@ -149,6 +165,7 @@ describe("Query", () => {
       I2,
       I3,
       I4,
+      S1,
     }
   }
   let state!: ReturnType<typeof createState>
@@ -158,6 +175,7 @@ describe("Query", () => {
   let I2!: typeof state.I2
   let I3!: typeof state.I3
   let I4!: typeof state.I4
+  let S1!: typeof state.S1
   beforeEach(() => {
     state = createState()
     User = state.User
@@ -166,6 +184,7 @@ describe("Query", () => {
     I2 = state.I2
     I3 = state.I3
     I4 = state.I4
+    S1 = state.S1
   })
 
   function testInvalidation<T>(
@@ -1080,15 +1099,22 @@ describe("Query", () => {
           () => callCount++
         )
         expect(callCount).toBe(0)
+        expect(I4.age4Count).toBe(0)
         expect(q1.value).toBe(41)
         expect(callCount).toBe(0)
+
         state.action(() => u1.age++)
         expect(callCount).toBe(1)
+        expect(I4.age4Count).toBe(1)
+
         state.action(() => u1.age++)
         expect(callCount).toBe(1)
+        expect(I4.age4Count).toBe(1)
         expect(q1.value).toBe(49)
+
         state.action(() => u1.age++)
         expect(callCount).toBe(2)
+        expect(I4.age4Count).toBe(2)
         expect(q1.value).toBe(53)
       })
       it("should remove Queries when the Entity is removed", () => {
@@ -1103,19 +1129,23 @@ describe("Query", () => {
           () => callCount++
         )
         expect(q1.value).toBe(1)
+        expect(I4.entitiesCountCount).toBe(1)
         expect(callCount).toBe(0)
 
         const u2 = state.action(() => I4.entities.add(new I4("b", 20), "id2"))
-        expect(callCount).toBe(1)
         expect(q1.value).toBe(2)
+        expect(callCount).toBe(1)
+        expect(I4.entitiesCountCount).toBe(2)
 
         state.action(() => u1.removeEntity())
-        expect(callCount).toBe(1)
         expect(q1.value).toBe(2)
+        expect(callCount).toBe(1)
+        expect(I4.entitiesCountCount).toBe(2)
 
         const u3 = state.action(() => I4.entities.add(new I4("c", 30), "id3"))
-        expect(callCount).toBe(1)
         expect(q1.value).toBe(2)
+        expect(callCount).toBe(1)
+        expect(I4.entitiesCountCount).toBe(2)
       })
     })
     describe("on an Entities class", () => {
@@ -1128,31 +1158,54 @@ describe("Query", () => {
         )
         expect(q1.value == null).toBe(true)
         expect(callCount).toBe(0)
+        expect(I4.entities.firstNameCount).toBe(1)
 
         const u1 = state.action(() => I4.entities.add(new I4("m", 10), "id1"))
         expect(q1.value).toBe("m")
         expect(callCount).toBe(1)
+        expect(I4.entities.firstNameCount).toBe(2)
 
         const u2 = state.action(() => I4.entities.add(new I4("b", 20), "id2"))
         expect(q1.value).toBe("b")
         expect(callCount).toBe(2)
+        expect(I4.entities.firstNameCount).toBe(3)
 
         state.action(() => (u1.name = "a"))
         expect(q1.value).toBe("a")
         expect(callCount).toBe(3)
+        expect(I4.entities.firstNameCount).toBe(4)
 
         state.action(() => u2.removeEntity())
         expect(q1.value).toBe("a")
         expect(callCount).toBe(4)
+        expect(I4.entities.firstNameCount).toBe(5)
 
         state.action(() => u1.age++)
         expect(q1.value).toBe("a")
         expect(callCount).toBe(4)
+        expect(I4.entities.firstNameCount).toBe(5)
       })
     })
     describe("on a Service instance", () => {
       it("should implement Query behavior", () => {
-        // FIXME - implement this
+        let callCount = 0
+        const q1 = state.stateManager.createQuery(
+          () => S1.i4Count,
+          "q1",
+          () => callCount++
+        )
+        expect(q1.value).toBe(0)
+        expect(callCount).toBe(0)
+
+        const u1 = state.action(() => I4.entities.add(new I4("m", 10), "id1"))
+        expect(q1.value).toBe(1)
+        expect(callCount).toBe(1)
+
+        state.action(() => u1.removeEntity())
+        expect(q1.value).toBe(0)
+        expect(callCount).toBe(2)
+
+        // FIXME - test that the query on the service actually exists and is being invalidated
       })
     })
   })

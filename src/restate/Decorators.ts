@@ -5,6 +5,7 @@ import {toMemberName} from "./Utils"
 import {Entity} from "./Entity"
 import {EntityDeclarations} from "./EntityDeclarations"
 import {EntitiesDeclarations} from "./EntitiesDeclarations"
+import {ServiceDeclarations} from "./ServiceDeclarations"
 import {HasMany} from "./HasMany"
 import {HasOne} from "./HasOne"
 import {BelongsTo} from "./BelongsTo"
@@ -16,6 +17,7 @@ import {HasOneOptions} from "./Types"
 import {BelongsToOptions} from "./Types"
 import {EntityClass} from "./Types"
 import {Entities} from "./Entities"
+import {Service} from "./Service"
 
 export function action(target: any, name: string, pd: PropertyDescriptor) {
   // FIXME - error if not declared on an Entity, Entities, or Selector class
@@ -134,12 +136,11 @@ export function query(target: any, name: string, pd: PropertyDescriptor) {
       )
     } else if (target instanceof Entities) {
       EntitiesDeclarations.addQuery(target, {name, f: pd.get})
-      // FIXME - replace the function
-    }
-    // FIXME - allow this for services too?
-    else {
+    } else if (target instanceof Service) {
+      ServiceDeclarations.addQuery(target, {name, f: pd.get})
+    } else {
       throw new Error(
-        `@query may only be specified for non-static getters of an Entity or Entities class`
+        `@query may only be specified for non-static getters of an Entity, Entities, or Service class`
       )
     }
   } else {
