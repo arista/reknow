@@ -1,5 +1,6 @@
 import {IndexDecorator} from "./Types"
 import {QueryDecorator} from "./Types"
+import {ReactionDecorator} from "./Types"
 
 /** Stores the declarations, typically made with @ decorators,
  * specified in an Entities class.  The declarations are associated
@@ -9,6 +10,7 @@ import {QueryDecorator} from "./Types"
 export class EntitiesDeclarations {
   indexDecorators: Array<IndexDecorator> = []
   queries: Array<QueryDecorator> = []
+  reactions: Array<ReactionDecorator> = []
 
   static addIndexDecorator(proto: Object, d: IndexDecorator) {
     EntitiesDeclarations.forPrototype(proto).indexDecorators.push(d)
@@ -16,6 +18,10 @@ export class EntitiesDeclarations {
 
   static addQuery(proto: Object, c: QueryDecorator) {
     EntitiesDeclarations.forPrototype(proto).queries.push(c)
+  }
+
+  static addReaction(proto: Object, c: ReactionDecorator) {
+    EntitiesDeclarations.forPrototype(proto).reactions.push(c)
   }
 
   static forPrototype(proto: Object): EntitiesDeclarations {

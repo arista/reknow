@@ -1,4 +1,5 @@
 import {QueryDecorator} from "./Types"
+import {ReactionDecorator} from "./Types"
 
 /** Stores the declarations, typically made with @ decorators,
  * specified in a Services class.  The declarations are associated
@@ -7,9 +8,14 @@ import {QueryDecorator} from "./Types"
  */
 export class ServiceDeclarations {
   queries: Array<QueryDecorator> = []
+  reactions: Array<ReactionDecorator> = []
 
   static addQuery(proto: Object, c: QueryDecorator) {
     ServiceDeclarations.forPrototype(proto).queries.push(c)
+  }
+
+  static addReaction(proto: Object, c: ReactionDecorator) {
+    ServiceDeclarations.forPrototype(proto).reactions.push(c)
   }
 
   static forPrototype(proto: Object): ServiceDeclarations {

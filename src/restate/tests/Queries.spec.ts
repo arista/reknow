@@ -1017,15 +1017,36 @@ describe("Query", () => {
       expect(u.name).toBe("b")
       expect(callCount2).toBe(1)
     })
-    it("should detect circular query callbacks", () => {
+    it("should detect a circular reference using a single query", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
 
-      let callCount1 = 0
+      // This is the pattern we would see in a @reaction, where the
+      // query is itself a mutator.
+      const query1 = () => u.age *= 2
+      const callback1 = () => {
+        q1.value
+      }
+      const q1 = state.stateManager.createQuery(
+        query1,
+        "q1",
+        callback1,
+        "transactionEnd"
+      )
+      expect(() => {
+        state.action(()=>q1.value)
+      }).toThrow(
+        new Error(
+          "Possible circular dependency detected: q1's onInvalidate called more than 20 times while resolving transaction"
+        )
+      )
+    })
+    it("should detect circular query callbacks between two queries", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+
       const query1 = () => u.age * 2
       const callback1 = () => {
         const value = q1.value
-        u.name = "b"
-        callCount1++
+        u.name = u.name + "b"
       }
       const q1 = state.stateManager.createQuery(
         query1,
@@ -1035,11 +1056,9 @@ describe("Query", () => {
       )
       expect(q1.value).toBe(20)
 
-      let callCount2 = 0
       const query2 = () => u.name + "!"
       const callback2 = () => {
         const value = q2.value
-        callCount2++
         u.age++
       }
       const q2 = state.stateManager.createQuery(
@@ -1056,9 +1075,55 @@ describe("Query", () => {
         })
       }).toThrow(
         new Error(
-          "Circular dependency detected while executing these queries: q1, q2"
+          "Possible circular dependency detected: q1's onInvalidate called more than 20 times while resolving transaction"
         )
       )
+    })
+    it("should not trigger a circular query if a callback triggers an already-triggered query in its callback", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+
+      let callCount1 = 0
+      const query1 = () => u.name + "!"
+      const callback1 = () => {
+        const value = q1.value
+        u.name = "b"
+        u.age++
+        callCount1++
+      }
+      const q1 = state.stateManager.createQuery(
+        query1,
+        "q1",
+        callback1,
+        "transactionEnd"
+      )
+      expect(q1.value).toBe("a!")
+
+      let callCount2 = 0
+      const query2 = () => u.age * 2
+      const callback2 = () => {
+        const value = q2.value
+        callCount2++
+      }
+      const q2 = state.stateManager.createQuery(
+        query2,
+        "q2",
+        callback2,
+        "transactionEnd"
+      )
+      expect(q2.value).toBe(20)
+
+      // q2 will be invalidated first, then q1, which will modify age
+      // and trigger q2 again.  This has the potential to be
+      // considered a circular dependency, but isn't actually one.
+      state.action(()=>{
+        u.age++
+        u.name = "b"
+      })
+    })
+    it("should trigger a circular reference if a query references itself", () => {
+      const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
+      const q1:R.Query<number> = state.stateManager.createQuery(()=>q1.value + 1, "q1")
+      expect(()=>q1.value).toThrow("Circular reference - q1 directly or indirectly references itself")
     })
   })
   describe("@query declarations", () => {
@@ -1256,4 +1321,5 @@ describe("Query", () => {
       })
     })
   })
+  // FIXME - add tests for relationships?
 })

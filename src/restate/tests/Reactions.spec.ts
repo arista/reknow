@@ -1,6 +1,12 @@
 import * as R from "../Restate"
 
-xdescribe("Reactions", () => {
+// FIXME - All of this was written before Reactions were reimplemented
+// using Queries.  All of this can probably be simplified since most
+// of the invalidation behavior is tested with Queries.  This should
+// also add tests for @reactions declared on Entities and Service
+// classes.
+
+describe("Reactions", () => {
   class User extends R.Entity {
     constructor(public name: string, public age: number) {
       super()
@@ -45,15 +51,15 @@ xdescribe("Reactions", () => {
       let u1!: User
       let r1count!: number
       let r1val!: string | null
-      let r1!: R.Reaction
+      let r1!: R.Query<any>
       beforeEach(() => {
         u1 = action(() => Users.add(new User("u1", 10), "user1"))
         r1count = 0
         r1val = null
-        r1 = AppModel.addReaction(() => {
+        r1 = AppModel.createReaction(() => {
           r1count++
           r1val = `name: ${u1.name}`
-        })
+        }, "r1")
       })
       it("should be triggered when first created", () => {
         expect(r1count).toBe(1)
@@ -107,15 +113,15 @@ xdescribe("Reactions", () => {
       let u1!: User
       let r1count!: number
       let r1val!: string | null
-      let r1!: R.Reaction
+      let r1!: R.Query<any>
       beforeEach(() => {
         u1 = action(() => Users.add(new User("u1", 10), "user1"))
         r1count = 0
         r1val = null
-        r1 = AppModel.addReaction(() => {
+        r1 = AppModel.createReaction(() => {
           r1count++
           r1val = `name: ${u1.name} = ${u1.age}`
-        })
+        }, "r1")
       })
       it("should be triggered when first created", () => {
         expect(r1count).toBe(1)
@@ -140,19 +146,19 @@ xdescribe("Reactions", () => {
       let u1!: User
       let r1count!: number
       let r1val!: string | null
-      let r1!: R.Reaction
+      let r1!: R.Query<any>
       beforeEach(() => {
         u1 = action(() => Users.add(new User("u1", 10), "user1"))
         r1count = 0
         r1val = null
-        r1 = AppModel.addReaction(() => {
+        r1 = AppModel.createReaction(() => {
           r1count++
           if (u1.name == "noage") {
             r1val = `name: ${u1.name}`
           } else {
             r1val = `name: ${u1.name} = ${u1.age}`
           }
-        })
+        }, "r1")
       })
       it("should be triggered when first created", () => {
         expect(r1count).toBe(1)
@@ -175,15 +181,15 @@ xdescribe("Reactions", () => {
       let u1!: User
       let r1count!: number
       let r1val!: string | null
-      let r1!: R.Reaction
+      let r1!: R.Query<any>
       beforeEach(() => {
         u1 = action(() => Users.add(new User("u1", 10), "user1"))
         r1count = 0
         r1val = null
-        r1 = AppModel.addReaction(() => {
+        r1 = AppModel.createReaction(() => {
           r1count++
           r1val = `v: ${(u1 as any).noval}`
-        })
+        }, "r1")
       })
       it("should be triggered when first created", () => {
         expect(r1count).toBe(1)
@@ -218,18 +224,18 @@ xdescribe("Reactions", () => {
       let u1!: User
       let r1count!: number
       let r1val!: string | null
-      let r1!: R.Reaction
+      let r1!: R.Query<any>
       beforeEach(() => {
         u1 = action(() => Users.add(new User("u1", 10), "user1"))
         r1count = 0
         r1val = null
-        r1 = AppModel.addReaction(() => {
+        r1 = AppModel.createReaction(() => {
           r1count++
           const pd = Object.getOwnPropertyDescriptor(u1, "name")
           if (pd != null) {
             r1val = pd.value
           }
-        })
+        }, "r1")
       })
       it("should be triggered when first created", () => {
         expect(r1count).toBe(1)
@@ -250,15 +256,15 @@ xdescribe("Reactions", () => {
       let u1!: User
       let r1count!: number
       let r1val!: string | null
-      let r1!: R.Reaction
+      let r1!: R.Query<any>
       beforeEach(() => {
         u1 = action(() => Users.add(new User("u1", 10), "user1"))
         r1count = 0
         r1val = null
-        r1 = AppModel.addReaction(() => {
+        r1 = AppModel.createReaction(() => {
           r1count++
           r1val = u1.hasOwnProperty("name2") ? "yes" : "no"
-        })
+        }, "r1")
       })
       it("should be triggered when first created", () => {
         expect(r1count).toBe(1)
@@ -298,12 +304,12 @@ xdescribe("Reactions", () => {
       let u1!: User
       let r1count!: number
       let r1val!: boolean | null
-      let r1!: R.Reaction
+      let r1!: R.Query<any>
       beforeEach(() => {
         u1 = action(() => Users.add(new User("u1", 10), "user1"))
         r1count = 0
         r1val = null
-        r1 = AppModel.addReaction(() => {
+        r1 = AppModel.createReaction(() => {
           r1count++
           r1val = false
           for (const key of Object.keys(u1)) {
@@ -312,7 +318,7 @@ xdescribe("Reactions", () => {
               break
             }
           }
-        })
+        }, "r1")
       })
       it("should be triggered when first created", () => {
         expect(r1count).toBe(1)
@@ -356,49 +362,49 @@ xdescribe("Reactions", () => {
     describe("depending on Entities properties", () => {
       describe("entitiesById", () => {
         let r1count!: number
-        let r1!: R.Reaction
+        let r1!: R.Query<any>
         beforeEach(() => {
           r1count = 0
-          r1 = AppModel.addReaction(() => {
+          r1 = AppModel.createReaction(() => {
             r1count++
             const u = Users.entitiesById.u1
-          })
+          }, "r1")
         })
         it("should be triggered when first created", () => {
           expect(r1count).toBe(1)
         })
         it("should be triggered if a User is added", () => {
-          const u1 = action(() => Users.add(new User("u1", 10), "user1"))
+          const u1 = action(() => Users.add(new User("u1", 10), "u1"))
           expect(r1count).toBe(2)
         })
-        it("should be triggered if a User is added then changed", () => {
-          const u1 = action(() => Users.add(new User("u1", 10), "user1"))
+        it("should not be triggered if a User is added then changed", () => {
+          const u1 = action(() => Users.add(new User("u1", 10), "u1"))
           expect(r1count).toBe(2)
           action(() => u1.age++)
-          expect(r1count).toBe(3)
+          expect(r1count).toBe(2)
         })
         it("should be triggered if a User is added then removed", () => {
-          const u1 = action(() => Users.add(new User("u1", 10), "user1"))
+          const u1 = action(() => Users.add(new User("u1", 10), "u1"))
           expect(r1count).toBe(2)
           action(() => u1.removeEntity())
           expect(r1count).toBe(3)
         })
         it("should not be triggered if a Job is added", () => {
-          const u1 = action(() => Users.add(new User("u1", 10), "user1"))
+          const u1 = action(() => Users.add(new User("u1", 10), "u1"))
           expect(r1count).toBe(2)
           action(() => Jobs.add(new Job("bartender", "u1"), "job1"))
           expect(r1count).toBe(2)
         })
       })
-      describe("byName index", () => {
+      describe("byName index keys", () => {
         let r1count!: number
-        let r1!: R.Reaction
+        let r1!: R.Query<any>
         beforeEach(() => {
           r1count = 0
-          r1 = AppModel.addReaction(() => {
+          r1 = AppModel.createReaction(() => {
             r1count++
-            const u = Users.byUniqueName
-          })
+            const u = Object.keys(Users.byUniqueName)
+          }, "r1")
         })
         it("should be triggered when first created", () => {
           expect(r1count).toBe(1)
@@ -407,11 +413,11 @@ xdescribe("Reactions", () => {
           const u1 = action(() => Users.add(new User("u1", 10), "user1"))
           expect(r1count).toBe(2)
         })
-        it("should be triggered if a User is added then changed", () => {
+        it("should not be triggered if a User is added then changed", () => {
           const u1 = action(() => Users.add(new User("u1", 10), "user1"))
           expect(r1count).toBe(2)
           action(() => u1.age++)
-          expect(r1count).toBe(3)
+          expect(r1count).toBe(2)
         })
         it("should be triggered if a User is added then removed", () => {
           const u1 = action(() => Users.add(new User("u1", 10), "user1"))
@@ -428,15 +434,15 @@ xdescribe("Reactions", () => {
       })
       describe("relationship", () => {
         let r1count!: number
-        let r1!: R.Reaction
+        let r1!: R.Query<any>
         let u1!: User
         beforeEach(() => {
           u1 = action(() => Users.add(new User("u1", 10), "user1"))
           r1count = 0
-          r1 = AppModel.addReaction(() => {
+          r1 = AppModel.createReaction(() => {
             r1count++
             const u = u1.jobs
-          })
+          }, "r1")
         })
         it("should be triggered when first created", () => {
           expect(r1count).toBe(1)
@@ -452,12 +458,12 @@ xdescribe("Reactions", () => {
           expect(u1.jobs).toEqual([j1])
           expect(r1count).toBe(2)
         })
-        it("should be triggered if a Job is added even for a different user", () => {
+        it("should not be triggered if a Job is added even for a different user", () => {
           const j1 = action(() =>
             Jobs.add(new Job("bartender", "user2"), "job1")
           )
           expect(u1.jobs).toEqual([])
-          expect(r1count).toBe(2)
+          expect(r1count).toBe(1)
         })
       })
     })
@@ -488,12 +494,12 @@ xdescribe("Reactions", () => {
     it("should be detected as errors", () => {
       const u1 = action(() => Users.add(new User("u1", 10), "u1"))
       expect(() => {
-        AppModel.addReaction(() => {
+        AppModel.createReaction(() => {
           u1.name = `${u1.name}:${u1.age}`
         }, "cdef")
       }).toThrow(
         new Error(
-          `Circular dependency detected while executing these reactions: Users#u1.r1, cdef`
+          `Possible circular dependency detected: Users#u1.r1's onInvalidate called more than 20 times while resolving transaction`
         )
       )
     })

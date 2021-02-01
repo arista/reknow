@@ -118,14 +118,16 @@ export class StateManager {
       const transaction = {action, stateChanges: []}
       const ret = this.withTransaction(transaction, () => {
         const ret = f()
-        // Notify change subscribers (i.e., reactions) while still
-        // in the transaction
-        this.notifyChangeSubscribers()
+        // Call onInvalidate() on any queries/reactions that were
+        // invalidated during the transaction and want to be notified
+        // before the transaction ends (typically @reactions)
         this.pendingQueryNotificationsTransactionEnd.notify()
         return ret
       })
 
-      // We are now "outside" of the transaction
+      // Call onInvalidate() on any queries/reactions that were
+      // invalidated during the transaction, and want to be notified
+      // after the transaction ends
       this.pendingQueryNotificationsAfterTransaction.notify()
 
       // Apply any effects
@@ -232,54 +234,6 @@ export class StateManager {
     }
   }
 
-  // FIXME - remove this
-  queueChangeSubscriber(
-    publisher: ChangePublisher,
-    subscriber: ChangeSubscriber
-  ) {
-    if (!subscriber.queued) {
-      if (this.queuedChangeNotifications == null) {
-        this.queuedChangeNotifications = []
-      }
-      subscriber.queued = true
-      this.queuedChangeNotifications.push(subscriber)
-    }
-  }
-
-  // FIXME - remove this
-  notifyChangeSubscribers() {
-    const notified: Array<ChangeSubscriber> = []
-    try {
-      // Executing a reaction could trigger more reactions, so keep
-      // flushing the queue until it's empty
-      while (
-        this.queuedChangeNotifications != null &&
-        this.queuedChangeNotifications.length > 0
-      ) {
-        const notifications = this.queuedChangeNotifications
-        this.queuedChangeNotifications = null
-        for (const subscriber of notifications) {
-          if (subscriber.notified) {
-            throw new Error(
-              `Circular dependency detected while executing these reactions: ${notified
-                .map((n) => n.name)
-                .join(", ")}`
-            )
-          }
-          subscriber.queued = false
-          subscriber.notified = true
-          notified.push(subscriber)
-          subscriber.notifyChangeSubscriber()
-        }
-      }
-    } finally {
-      // Clear the "notified" flag that was used to detect circular references
-      for (const subscriber of notified) {
-        subscriber.notified = false
-      }
-    }
-  }
-
   addPendingQueryNotification(query: Query<any>) {
     switch (query.notifyAt) {
       case "transactionEnd":
@@ -295,10 +249,13 @@ export class StateManager {
     return new ChangeSubscriberDumper(this).dumpChangeSubscribers()
   }
 
-  addReaction(f: () => any, name: string = "UnnamedReaction") {
-    const reaction = new Reaction(this, null, name, f)
+  createReaction(f: () => any, name: string = "UnnamedReaction") {
+    const reaction:Query<any> = this.createQuery(f, name, ()=>{
+      reaction.value
+    }, "transactionEnd")
+
     // Run this in an action in case it modifies any state
-    this.whileInAction({type: "NoAction"}, () => reaction.evaluate())
+    this.whileInAction({type: "NoAction"}, () => reaction.value)
     return reaction
   }
 

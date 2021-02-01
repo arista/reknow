@@ -12,7 +12,8 @@ import {PendingEffects} from "./PendingEffects"
 export class EntityState<E extends Entity>
   extends Proxied<E, E>
   implements ManagedState {
-  reactions: Array<Reaction> = []
+  reactions: Array<Query<any>> = []
+  reactionsByName: {[name: string]: Query<any>} = {}
   queries: Array<Query<any>> = []
   queriesByName: {[name: string]: Query<any>} = {}
 

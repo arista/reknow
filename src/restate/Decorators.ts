@@ -107,6 +107,62 @@ export function uniqueIndex(...terms: Array<string>) {
 }
 
 export function reaction(target: any, name: string, pd: PropertyDescriptor) {
+  if (typeof target === "object" && typeof pd.value === "function") {
+    if (target instanceof Entity) {
+      EntityDeclarations.addReaction(target, {name, f: pd.value})
+      replaceFunction(
+        target,
+        name,
+        pd,
+        (f: Function, name: string, type: FunctionType) => {
+          return function (this: Entity, ...args: Array<any>) {
+            const entityState = this.entityState
+            const query = entityState.reactionsByName[name]
+            return query.value
+          }
+        }
+      )
+    } else if (target instanceof Entities) {
+      EntitiesDeclarations.addReaction(target, {name, f: pd.value})
+      replaceFunction(
+        target,
+        name,
+        pd,
+        (f: Function, name: string, type: FunctionType) => {
+          return function (this: Entities<any>, ...args: Array<any>) {
+            const entitiesState = this.entitiesState
+            const query = entitiesState.reactionsByName[name]
+            return query.value
+          }
+        }
+      )
+    } else if (target instanceof Service) {
+      ServiceDeclarations.addReaction(target, {name, f: pd.value})
+      replaceFunction(
+        target,
+        name,
+        pd,
+        (f: Function, name: string, type: FunctionType) => {
+          return function (this: Service, ...args: Array<any>) {
+            const serviceState = this.serviceState
+            const query = serviceState.reactionsByName[name]
+            return query.value
+          }
+        }
+      )
+    } else {
+      throw new Error(
+        `@reaction may only be specified for non-static non-getter/setter methods of an Entity, Entities, or Service class`
+      )
+    }
+  } else {
+    throw new Error(
+      `@reaction may only be specified for non-static non-getter/setter methods of an Entity, Entities, or Service class`
+    )
+  }
+
+
+
   // FIXME - should this also be implemented for Entities and Service
   // classes?  Or should it detect and throw an error?
   if (typeof target === "object" && typeof pd.value === "function") {

@@ -6,6 +6,8 @@ import {Query} from "./Query"
 import {ServiceDeclarations} from "./ServiceDeclarations"
 
 export class ServiceState implements ManagedState {
+  reactions: Array<Query<any>> = []
+  reactionsByName: {[name: string]: Query<any>} = {}
   queries: Array<Query<any>> = []
   queriesByName: {[name: string]: Query<any>} = {}
   serviceDeclarations = ServiceDeclarations.forClass(this.service.constructor)
@@ -16,6 +18,7 @@ export class ServiceState implements ManagedState {
     public service: Service
   ) {
     this.addQueries()
+    this.addReactions()
   }
 
   toAction(name: string, args: Array<any>): Action {
@@ -40,6 +43,18 @@ export class ServiceState implements ManagedState {
       )
       this.queries.push(query)
       this.queriesByName[cdecl.name] = query
+    }
+  }
+
+  addReactions() {
+    for (const cdecl of this.serviceDeclarations.reactions) {
+      const f = () => cdecl.f.apply(this)
+      const query:Query<any> = this.stateManager.createReaction(
+        f,
+        `${this.name}.${cdecl.name}`
+      )
+      this.reactions.push(query)
+      this.reactionsByName[cdecl.name] = query
     }
   }
 

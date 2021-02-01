@@ -51,6 +51,8 @@ export class EntitiesState<E extends Entity>
   // application
   mutatingProxyInternally: boolean = false
 
+  reactions: Array<Query<any>> = []
+  reactionsByName: {[name: string]: Query<any>} = {}
   queries: Array<Query<any>> = []
   queriesByName: {[name: string]: Query<any>} = {}
 
@@ -77,6 +79,7 @@ export class EntitiesState<E extends Entity>
     this.applyEntitiesDeclarations()
   }
 
+  // FIXME - remove this concept, fix the tests to no longer need it
   clearState() {
     super.clearState()
     this.idGenerator = 1
@@ -114,6 +117,7 @@ export class EntitiesState<E extends Entity>
       this.addIndexFromDecorator(d)
     }
     this.addEntitiesQueries(entitiesDeclarations)
+    this.addEntitiesReactions(entitiesDeclarations)
   }
 
   addPropertyToEntitiesInstance<T>(
@@ -476,26 +480,37 @@ export class EntitiesState<E extends Entity>
 
   addReactions(entityState: EntityState<E>) {
     for (const cdecl of this.entityDeclarations.reactions) {
-      const reaction = new Reaction(
-        this.stateManager,
-        () => entityState.proxy,
-        entityState.toReactionName(cdecl.name),
-        cdecl.f
+      const f = () => cdecl.f.apply(entityState.proxy)
+      const query:Query<any> = this.stateManager.createReaction(
+        f,
+        `${this.name}#${entityState.id}.${cdecl.name}`
       )
-      entityState.reactions.push(reaction)
-      reaction.evaluate()
+      entityState.reactions.push(query)
+      entityState.reactionsByName[cdecl.name] = query
     }
   }
 
   addQueries(entityState: EntityState<E>) {
     for (const cdecl of this.entityDeclarations.queries) {
       const f = () => cdecl.f.apply(entityState.proxy)
-      const query = this.stateManager.createQuery(
+      const query:Query<any> = this.stateManager.createQuery(
         f,
-        `${this.name}.${cdecl.name}`
+        `${this.name}#${entityState.id}.${cdecl.name}`
       )
       entityState.queries.push(query)
       entityState.queriesByName[cdecl.name] = query
+    }
+  }
+
+  addEntitiesReactions(entitiesDeclarations: EntitiesDeclarations) {
+    for (const cdecl of entitiesDeclarations.reactions) {
+      const f = () => cdecl.f.apply(this.entities)
+      const query:Query<any> = this.stateManager.createReaction(
+        f,
+        `${this.name}.${cdecl.name}`
+      )
+      this.reactions.push(query)
+      this.reactionsByName[cdecl.name] = query
     }
   }
 

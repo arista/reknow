@@ -23,7 +23,6 @@ export class ChangePublisher {
       this.subscribers = []
       for (const subscriber of subscribers) {
         subscriber.notifyChangeSubscriber()
-        //this.stateManager.queueChangeSubscriber(this, subscriber)
       }
     }
   }
