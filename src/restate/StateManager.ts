@@ -53,6 +53,15 @@ export class StateManager {
     this.initializeServices(config.services)
   }
 
+  initialize() {
+    for(const entitiesState of this.entitiesStates) {
+      entitiesState.entities.initialize()
+    }
+    for(const serviceState of this.serviceStates) {
+      serviceState.service.initialize()
+    }
+  }
+
   clearState() {
     for (const entitiesState of this.entitiesStates) {
       entitiesState.clearState()
