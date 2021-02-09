@@ -1,1 +1,1 @@
-export * as Restate from "./restate/Restate"
+export * from "./restate/Restate"
