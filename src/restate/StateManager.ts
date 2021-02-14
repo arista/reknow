@@ -51,15 +51,19 @@ export class StateManager {
     }
     this.initializeEntities(config.entities)
     this.initializeServices(config.services)
+    this.initialize()
   }
 
   initialize() {
-    for(const entitiesState of this.entitiesStates) {
-      entitiesState.entities.initialize()
-    }
-    for(const serviceState of this.serviceStates) {
-      serviceState.service.initialize()
-    }
+    const action:Action = {type: "InitializeAction"}
+    this.whileInAction(action, ()=>{
+      for(const entitiesState of this.entitiesStates) {
+        entitiesState.entities.initialize()
+      }
+      for(const serviceState of this.serviceStates) {
+        serviceState.service.initialize()
+      }
+    })
   }
 
   clearState() {
