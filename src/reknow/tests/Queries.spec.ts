@@ -1,4 +1,4 @@
-import * as R from "../Restate"
+import * as R from "../Reknow"
 
 describe("Query", () => {
   function createState() {

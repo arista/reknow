@@ -1,4 +1,4 @@
-import * as R from "../Restate"
+import * as R from "../Reknow"
 
 // FIXME - All of this was written before Reactions were reimplemented
 // using Queries.  All of this can probably be simplified since most

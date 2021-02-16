@@ -1,4 +1,4 @@
-import * as R from "../Restate"
+import * as R from "../Reknow"
 
 describe("Basic entity functions", () => {
   class User extends R.Entity {
