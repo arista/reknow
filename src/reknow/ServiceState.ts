@@ -4,6 +4,8 @@ import {Service} from "./Service"
 import {Action} from "./Types"
 import {Query} from "./Query"
 import {ServiceDeclarations} from "./ServiceDeclarations"
+import {FunctionType} from "./Types"
+import {toMemberName} from "./Utils"
 
 export class ServiceState implements ManagedState {
   reactions: Array<Query<any>> = []
@@ -28,6 +30,12 @@ export class ServiceState implements ManagedState {
       name,
       args,
     }
+  }
+
+  applyAction(name: string, type: FunctionType, f:Function, args: Array<any>) {
+    const actionName = toMemberName(name, type)
+    const action = this.toAction(actionName, args)
+    return this.stateManager.whileInAction(action, () => f.apply(this.service, args))
   }
 
   toSelectorName(name: string) {

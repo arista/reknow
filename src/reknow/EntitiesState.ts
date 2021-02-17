@@ -25,6 +25,8 @@ import {plainObjectToInstance} from "./Utils"
 import {ChangePublisher} from "./ChangePublisher"
 import {copyProperties} from "./Utils"
 import {Query} from "./Query"
+import {FunctionType} from "./Types"
+import {toMemberName} from "./Utils"
 import {ENTITY_STATE_KEY} from "./Entity"
 
 export type EntityStateById<E extends Entity> = {[id: string]: EntityState<E>}
@@ -170,6 +172,12 @@ export class EntitiesState<E extends Entity>
       name,
       args,
     }
+  }
+
+  applyAction(name: string, type: FunctionType, f:Function, args: Array<any>) {
+    const actionName = toMemberName(name, type)
+    const action = this.toAction(actionName, args)
+    return this.stateManager.whileInAction(action, () => f.apply(this.entities, args))
   }
 
   toSelectorName(name: string) {

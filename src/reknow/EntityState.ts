@@ -7,6 +7,8 @@ import {Query} from "./Query"
 import {ChangePublisher} from "./ChangePublisher"
 import {isNonInheritedProperty} from "./Utils"
 import {PendingEffects} from "./PendingEffects"
+import {FunctionType} from "./Types"
+import {toMemberName} from "./Utils"
 
 export class EntityState<E extends Entity>
   extends Proxied<E, E>
@@ -51,6 +53,12 @@ export class EntityState<E extends Entity>
       name,
       args,
     }
+  }
+
+  applyAction(name: string, type: FunctionType, f:Function, args: Array<any>) {
+    const actionName = toMemberName(name, type)
+    const action = this.toAction(actionName, args)
+    return this.stateManager.whileInAction(action, () => f.apply(this.proxy, args))
   }
 
   toSelectorName(name: string) {

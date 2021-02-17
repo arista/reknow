@@ -20,28 +20,50 @@ import {Entities} from "./Entities"
 import {Service} from "./Service"
 
 export function action(target: any, name: string, pd: PropertyDescriptor) {
-  // FIXME - error if not declared on an Entity, Entities, or Selector class
-  replaceFunction(
-    target,
-    name,
-    pd,
-    (f: Function, name: string, type: FunctionType) => {
-      return function (this: Manageable, ...args: Array<any>) {
-        const managedState = this.managedState
-        if (this.managedState == null) {
-          throw new Error(
-            `@action has been used on a class that doesn't extend Entity, Entities, or Service, or has not been added to a StateManager`
-          )
+  if (typeof target === "object" && (typeof pd.value === "function" || typeof pd.set === "function")) {
+    if (target instanceof Entity) {
+      replaceFunction(
+        target,
+        name,
+        pd,
+        (f: Function, name: string, type: FunctionType) => {
+          return function (this: Entity, ...args: Array<any>) {
+            return this.entityState.applyAction(name, type, f, args)
+          }
         }
-        const actionName = toMemberName(name, type)
-        const action = managedState.toAction(actionName, args)
-        const self = this
-        return managedState.stateManager.whileInAction(action, () => {
-          return f.apply(self, args)
-        })
-      }
+      )
+    } else if (target instanceof Entities) {
+      replaceFunction(
+        target,
+        name,
+        pd,
+        (f: Function, name: string, type: FunctionType) => {
+          return function (this: Entities<any>, ...args: Array<any>) {
+            return this.entitiesState.applyAction(name, type, f, args)
+          }
+        }
+      )
+    } else if (target instanceof Service) {
+      replaceFunction(
+        target,
+        name,
+        pd,
+        (f: Function, name: string, type: FunctionType) => {
+          return function (this: Service, ...args: Array<any>) {
+            return this.serviceState.applyAction(name, type, f, args)
+          }
+        }
+      )
+    } else {
+      throw new Error(
+        `@action may only be specified for non-static setters or methods of an Entity, Entities, or Service class`
+      )
     }
-  )
+  } else {
+    throw new Error(
+      `@action may only be specified for non-static setters or methods of an Entity, Entities, or Service class`
+    )
+  }
 }
 
 export function selector(target: any, name: string, pd: PropertyDescriptor) {
@@ -117,8 +139,8 @@ export function reaction(target: any, name: string, pd: PropertyDescriptor) {
         (f: Function, name: string, type: FunctionType) => {
           return function (this: Entity, ...args: Array<any>) {
             const entityState = this.entityState
-            const query = entityState.reactionsByName[name]
-            return query.value
+            const reaction = entityState.reactionsByName[name]
+            return reaction.value
           }
         }
       )
@@ -131,8 +153,8 @@ export function reaction(target: any, name: string, pd: PropertyDescriptor) {
         (f: Function, name: string, type: FunctionType) => {
           return function (this: Entities<any>, ...args: Array<any>) {
             const entitiesState = this.entitiesState
-            const query = entitiesState.reactionsByName[name]
-            return query.value
+            const reaction = entitiesState.reactionsByName[name]
+            return reaction.value
           }
         }
       )
@@ -145,8 +167,8 @@ export function reaction(target: any, name: string, pd: PropertyDescriptor) {
         (f: Function, name: string, type: FunctionType) => {
           return function (this: Service, ...args: Array<any>) {
             const serviceState = this.serviceState
-            const query = serviceState.reactionsByName[name]
-            return query.value
+            const reaction = serviceState.reactionsByName[name]
+            return reaction.value
           }
         }
       )

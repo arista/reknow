@@ -28,7 +28,7 @@ describe("Transactions", () => {
     @R.action deleteUser() {
       this.remove(this.entitiesById.user1)
     }
-    @R.action setName(name: string) {
+    @R.action set name(name: string) {
       this.entitiesById.user1.name = name
     }
     @R.action setGender(gender: string) {
@@ -210,13 +210,13 @@ describe("Transactions", () => {
         transactions = []
       })
       it("changing an existing property should report the change", () => {
-        Users.setName("thalia")
+        Users.name = "thalia"
         const expected = [
           {
             action: {
               type: "EntitiesAction",
               entityType: "Users",
-              name: "setName",
+              name: "set#name",
               args: ["thalia"],
             },
             stateChanges: [
@@ -234,13 +234,13 @@ describe("Transactions", () => {
         expect(transactions).toEqual(expected)
       })
       it("changing an existing property to the same value should not report any state changes", () => {
-        Users.setName("brad")
+        Users.name = "brad"
         const expected = [
           {
             action: {
               type: "EntitiesAction",
               entityType: "Users",
-              name: "setName",
+              name: "set#name",
               args: ["brad"],
             },
             stateChanges: [],
