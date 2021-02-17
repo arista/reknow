@@ -160,18 +160,6 @@ export function reaction(target: any, name: string, pd: PropertyDescriptor) {
       `@reaction may only be specified for non-static non-getter/setter methods of an Entity, Entities, or Service class`
     )
   }
-
-
-
-  // FIXME - should this also be implemented for Entities and Service
-  // classes?  Or should it detect and throw an error?
-  if (typeof target === "object" && typeof pd.value === "function") {
-    EntityDeclarations.addReaction(target, {name, f: pd.value})
-  } else {
-    throw new Error(
-      `@reaction may only be specified for non-static functions that are not getters or setters`
-    )
-  }
 }
 
 export function query(target: any, name: string, pd: PropertyDescriptor) {
@@ -225,7 +213,7 @@ export function query(target: any, name: string, pd: PropertyDescriptor) {
     }
   } else {
     throw new Error(
-      `@query may only be specified for non-static getters of an Entity or Entities class`
+      `@query may only be specified for non-static getters of an Entity, Entities, or Service class`
     )
   }
 }
