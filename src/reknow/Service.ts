@@ -1,10 +1,9 @@
-import {Manageable} from "./Manageable"
 import {ServiceState} from "./ServiceState"
 
 /** Superclass for classes that aren't Entities, but still want to use
  * the various decorators (@action, @selector, etc.)
  **/
-export class Service extends Manageable {
+export class Service {
   _serviceState: ServiceState | null = null
 
   get serviceState() {

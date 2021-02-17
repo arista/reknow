@@ -1,10 +1,9 @@
-import {Manageable} from "./Manageable"
 import {notNull} from "./Utils"
 import {EntityState} from "./EntityState"
 
 export const ENTITY_STATE_KEY = Symbol("ENTITY_STATE_KEY")
 
-export abstract class Entity extends Manageable {
+export abstract class Entity {
   [ENTITY_STATE_KEY]: EntityState<any> | null = null
   get entityState() {
     return notNull(this[ENTITY_STATE_KEY])

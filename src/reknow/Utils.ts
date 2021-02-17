@@ -14,9 +14,7 @@ import {SortedList} from "./Types"
 import {Entity} from "./Entity"
 import {EntityState} from "./EntityState"
 import {IndexSchema} from "./Types"
-import {ManagedState} from "./ManagedState"
 import {Selector} from "./Selector"
-import {Manageable} from "./Manageable"
 import {ManyHashIndexEntries} from "./ManyHashIndexEntries"
 import {UniqueHashIndexEntries} from "./UniqueHashIndexEntries"
 import {SortIndexEntries} from "./SortIndexEntries"
@@ -553,45 +551,6 @@ export function matchesSortDirection(
     d2 = "asc"
   }
   return d1 === d2
-}
-
-export function selectorize(
-  f: Function,
-  name: string,
-  type: FunctionType
-): Function {
-  const selectorByThis = new WeakMap<ManagedState, Selector<any>>()
-  return function (this: Manageable, ...args: Array<any>) {
-    if (args != null && args.length !== 0) {
-      throw new Error(`No arguments may be passed to a @selector function`)
-    }
-    const managedState = this.managedState
-    if (managedState == null) {
-      throw new Error(
-        `@selector has been used on a class that doesn't extend Entity, Entities, or Service, or has not been added to a StateManager`
-      )
-    }
-
-    // Find or create the Selector associated with the stable
-    // ManagedState associated with this (since "this" could be a
-    // changing Proxy instance that still refers to the same
-    // underlying state object)
-    let selector = selectorByThis.get(managedState)
-    if (selector == null) {
-      const selectorName = managedState.toSelectorName(toMemberName(name, type))
-      const stateManager = managedState.stateManager
-      const selectorFunc = () => f.call(this, ...args)
-      selector = new Selector(stateManager, selectorName, selectorFunc)
-      // If this is a selector on an Entity instance, then set it
-      // up to re-evaluate if the instance's Proxy changes
-      // (indicating that the instance has changed state)
-      if (managedState instanceof EntityState) {
-        selector.setAsEntitySelector(managedState)
-      }
-      selectorByThis.set(managedState, selector)
-    }
-    return selector.evaluate()
-  }
 }
 
 export function createIndexEntries<E extends Entity>(

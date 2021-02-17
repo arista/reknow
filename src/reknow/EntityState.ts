@@ -1,7 +1,6 @@
 import {Entity} from "./Entity"
 import {Proxied} from "./Proxied"
 import {EntitiesState} from "./EntitiesState"
-import {ManagedState} from "./ManagedState"
 import {Action} from "./Types"
 import {Query} from "./Query"
 import {ChangePublisher} from "./ChangePublisher"
@@ -11,8 +10,7 @@ import {FunctionType} from "./Types"
 import {toMemberName} from "./Utils"
 
 export class EntityState<E extends Entity>
-  extends Proxied<E, E>
-  implements ManagedState {
+  extends Proxied<E, E> {
   reactions: Array<Query<any>> = []
   reactionsByName: {[name: string]: Query<any>} = {}
   queries: Array<Query<any>> = []

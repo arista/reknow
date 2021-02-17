@@ -2,7 +2,6 @@ import {Entity} from "./Entity"
 import {EntityState} from "./EntityState"
 import {StateManager} from "./StateManager"
 import {Entities} from "./Entities"
-import {ManagedState} from "./ManagedState"
 import {StateChange} from "./Types"
 import {Action} from "./Types"
 import {notNull} from "./Utils"
@@ -32,8 +31,7 @@ import {ENTITY_STATE_KEY} from "./Entity"
 export type EntityStateById<E extends Entity> = {[id: string]: EntityState<E>}
 
 export class EntitiesState<E extends Entity>
-  extends Proxied<ById<E>, EntityStateById<E>>
-  implements ManagedState {
+  extends Proxied<ById<E>, EntityStateById<E>> {
   idPropertyName: string | null = null
 
   indexes: Array<Index<E>> = []

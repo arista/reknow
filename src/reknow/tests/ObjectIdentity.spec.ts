@@ -447,7 +447,7 @@ describe("Changing Object Identities", () => {
       expect(u2.jobs).toBe(u2j)
     })
   })
-  describe("identity of selector results", () => {
+  describe("identity of query results", () => {
     it("should change if recomputed", () => {
       class E1 extends R.Entity {
         constructor(public v1: number, public v2: number) {
@@ -456,7 +456,7 @@ describe("Changing Object Identities", () => {
       }
       class _E1s extends R.Entities<E1> {
         @R.index("+v2") byV2!: R.SortIndex<E1>
-        @R.selector v2s() {
+        @R.query get v2s() {
           v2scalled++
           return this.byV2.map((e) => e.v2)
         }
@@ -470,19 +470,19 @@ describe("Changing Object Identities", () => {
         E1s.add(new E1(20, 20), "id2")
         E1s.add(new E1(30, 10), "id3")
       })
-      const r1 = E1s.v2s()
+      const r1 = E1s.v2s
       expect(r1).toEqual([10, 20, 30])
       expect(v2scalled).toBe(1)
 
-      // Changing a value that doesn't change the result should still
+      // Changing a value that doesn't change the result should not
       // return a new result
       m.action(() => (E1s.entitiesById.id1.v1 = 15))
-      const r2 = E1s.v2s()
+      const r2 = E1s.v2s
       expect(r2).toEqual([10, 20, 30])
-      expect(v2scalled).toBe(2)
+      expect(v2scalled).toBe(1)
 
       expect(r1).toEqual(r2)
-      expect(r1).not.toBe(r2)
+      expect(r1).toBe(r2)
     })
   })
 })

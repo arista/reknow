@@ -1,15 +1,12 @@
 import {Entity} from "./Entity"
 import {EntitiesState} from "./EntitiesState"
-import {Manageable} from "./Manageable"
 import {EntityClass} from "./Types"
 import {ById} from "./Types"
 
-export class Entities<E extends Entity> extends Manageable {
+export class Entities<E extends Entity> {
   _entitiesState: EntitiesState<E> | null = null
 
-  constructor(public entityClass: EntityClass<E>) {
-    super()
-  }
+  constructor(public entityClass: EntityClass<E>) {}
 
   get entitiesState() {
     if (this._entitiesState == null) {

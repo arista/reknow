@@ -1,4 +1,3 @@
-import {ManagedState} from "./ManagedState"
 import {StateManager} from "./StateManager"
 import {Service} from "./Service"
 import {Action} from "./Types"
@@ -7,7 +6,7 @@ import {ServiceDeclarations} from "./ServiceDeclarations"
 import {FunctionType} from "./Types"
 import {toMemberName} from "./Utils"
 
-export class ServiceState implements ManagedState {
+export class ServiceState {
   reactions: Array<Query<any>> = []
   reactionsByName: {[name: string]: Query<any>} = {}
   queries: Array<Query<any>> = []

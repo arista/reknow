@@ -1,6 +1,5 @@
 import {FunctionType} from "./Types"
 import {replaceFunction} from "./Utils"
-import {Manageable} from "./Manageable"
 import {toMemberName} from "./Utils"
 import {Entity} from "./Entity"
 import {EntityDeclarations} from "./EntityDeclarations"
@@ -9,7 +8,6 @@ import {ServiceDeclarations} from "./ServiceDeclarations"
 import {HasMany} from "./HasMany"
 import {HasOne} from "./HasOne"
 import {BelongsTo} from "./BelongsTo"
-import {selectorize} from "./Utils"
 import {indexTermsToSchema} from "./Utils"
 import {uniqueIndexTermsToSchema} from "./Utils"
 import {HasManyOptions} from "./Types"
@@ -64,11 +62,6 @@ export function action(target: any, name: string, pd: PropertyDescriptor) {
       `@action may only be specified for non-static setters or methods of an Entity, Entities, or Service class`
     )
   }
-}
-
-export function selector(target: any, name: string, pd: PropertyDescriptor) {
-  // FIXME - error if not declared on an Entity, Entities, or Selector class
-  replaceFunction(target, name, pd, selectorize)
 }
 
 export function hasMany<E extends Entity>(
