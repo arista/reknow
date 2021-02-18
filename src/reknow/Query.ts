@@ -48,7 +48,9 @@ export class Query<T> extends ChangeSubscriber {
 
   get value(): T {
     if (this.isEvaluating) {
-      throw new Error(`Circular reference - ${this.name} directly or indirectly references itself`)
+      throw new Error(
+        `Circular reference - ${this.name} directly or indirectly references itself`
+      )
     }
 
     if (this.isRemoved) {
@@ -56,7 +58,7 @@ export class Query<T> extends ChangeSubscriber {
         `Attempt to evaluate Query "${this.name}" after it has been removed`
       )
     }
-    
+
     this.wasNotifiedWhileEvaluating = false
     this.isEvaluating = true
     try {
@@ -66,12 +68,10 @@ export class Query<T> extends ChangeSubscriber {
           this.cachedValue = new CachedValue(value)
         }
         return value
-      }
-      else  {
+      } else {
         return this.cachedValue.value
       }
-    }
-    finally {
+    } finally {
       this.isEvaluating = false
     }
   }

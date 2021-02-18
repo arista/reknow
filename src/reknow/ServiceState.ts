@@ -31,10 +31,12 @@ export class ServiceState {
     }
   }
 
-  applyAction(name: string, type: FunctionType, f:Function, args: Array<any>) {
+  applyAction(name: string, type: FunctionType, f: Function, args: Array<any>) {
     const actionName = toMemberName(name, type)
     const action = this.toAction(actionName, args)
-    return this.stateManager.whileInAction(action, () => f.apply(this.service, args))
+    return this.stateManager.whileInAction(action, () =>
+      f.apply(this.service, args)
+    )
   }
 
   toSelectorName(name: string) {
@@ -56,7 +58,7 @@ export class ServiceState {
   addReactions() {
     for (const cdecl of this.serviceDeclarations.reactions) {
       const f = () => cdecl.f.apply(this)
-      const query:Query<any> = this.stateManager.createReaction(
+      const query: Query<any> = this.stateManager.createReaction(
         f,
         `${this.name}.${cdecl.name}`
       )

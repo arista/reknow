@@ -1022,7 +1022,7 @@ describe("Query", () => {
 
       // This is the pattern we would see in a @reaction, where the
       // query is itself a mutator.
-      const query1 = () => u.age *= 2
+      const query1 = () => (u.age *= 2)
       const callback1 = () => {
         q1.value
       }
@@ -1033,7 +1033,7 @@ describe("Query", () => {
         "transactionEnd"
       )
       expect(() => {
-        state.action(()=>q1.value)
+        state.action(() => q1.value)
       }).toThrow(
         new Error(
           "Possible circular dependency detected: q1's onInvalidate called more than 20 times while resolving transaction"
@@ -1115,15 +1115,20 @@ describe("Query", () => {
       // q2 will be invalidated first, then q1, which will modify age
       // and trigger q2 again.  This has the potential to be
       // considered a circular dependency, but isn't actually one.
-      state.action(()=>{
+      state.action(() => {
         u.age++
         u.name = "b"
       })
     })
     it("should trigger a circular reference if a query references itself", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
-      const q1:R.Query<number> = state.stateManager.createQuery(()=>q1.value + 1, "q1")
-      expect(()=>q1.value).toThrow("Circular reference - q1 directly or indirectly references itself")
+      const q1: R.Query<number> = state.stateManager.createQuery(
+        () => q1.value + 1,
+        "q1"
+      )
+      expect(() => q1.value).toThrow(
+        "Circular reference - q1 directly or indirectly references itself"
+      )
     })
   })
   describe("@query declarations", () => {

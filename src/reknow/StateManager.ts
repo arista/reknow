@@ -55,12 +55,12 @@ export class StateManager {
   }
 
   initialize() {
-    const action:Action = {type: "InitializeAction"}
-    this.whileInAction(action, ()=>{
-      for(const entitiesState of this.entitiesStates) {
+    const action: Action = {type: "InitializeAction"}
+    this.whileInAction(action, () => {
+      for (const entitiesState of this.entitiesStates) {
         entitiesState.entities.initialize()
       }
-      for(const serviceState of this.serviceStates) {
+      for (const serviceState of this.serviceStates) {
         serviceState.service.initialize()
       }
     })
@@ -262,9 +262,14 @@ export class StateManager {
   }
 
   createReaction(f: () => any, name: string = "UnnamedReaction") {
-    const reaction:Query<any> = this.createQuery(f, name, ()=>{
-      reaction.value
-    }, "transactionEnd")
+    const reaction: Query<any> = this.createQuery(
+      f,
+      name,
+      () => {
+        reaction.value
+      },
+      "transactionEnd"
+    )
 
     // Run this in an action in case it modifies any state
     this.whileInAction({type: "NoAction"}, () => reaction.value)

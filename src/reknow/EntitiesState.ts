@@ -30,8 +30,10 @@ import {ENTITY_STATE_KEY} from "./Entity"
 
 export type EntityStateById<E extends Entity> = {[id: string]: EntityState<E>}
 
-export class EntitiesState<E extends Entity>
-  extends Proxied<ById<E>, EntityStateById<E>> {
+export class EntitiesState<E extends Entity> extends Proxied<
+  ById<E>,
+  EntityStateById<E>
+> {
   idPropertyName: string | null = null
 
   indexes: Array<Index<E>> = []
@@ -172,10 +174,12 @@ export class EntitiesState<E extends Entity>
     }
   }
 
-  applyAction(name: string, type: FunctionType, f:Function, args: Array<any>) {
+  applyAction(name: string, type: FunctionType, f: Function, args: Array<any>) {
     const actionName = toMemberName(name, type)
     const action = this.toAction(actionName, args)
-    return this.stateManager.whileInAction(action, () => f.apply(this.entities, args))
+    return this.stateManager.whileInAction(action, () =>
+      f.apply(this.entities, args)
+    )
   }
 
   toSelectorName(name: string) {
@@ -486,7 +490,7 @@ export class EntitiesState<E extends Entity>
   addReactions(entityState: EntityState<E>) {
     for (const cdecl of this.entityDeclarations.reactions) {
       const f = () => cdecl.f.apply(entityState.proxy)
-      const query:Query<any> = this.stateManager.createReaction(
+      const query: Query<any> = this.stateManager.createReaction(
         f,
         `${this.name}#${entityState.id}.${cdecl.name}`
       )
@@ -498,7 +502,7 @@ export class EntitiesState<E extends Entity>
   addQueries(entityState: EntityState<E>) {
     for (const cdecl of this.entityDeclarations.queries) {
       const f = () => cdecl.f.apply(entityState.proxy)
-      const query:Query<any> = this.stateManager.createQuery(
+      const query: Query<any> = this.stateManager.createQuery(
         f,
         `${this.name}#${entityState.id}.${cdecl.name}`
       )
@@ -510,7 +514,7 @@ export class EntitiesState<E extends Entity>
   addEntitiesReactions(entitiesDeclarations: EntitiesDeclarations) {
     for (const cdecl of entitiesDeclarations.reactions) {
       const f = () => cdecl.f.apply(this.entities)
-      const query:Query<any> = this.stateManager.createReaction(
+      const query: Query<any> = this.stateManager.createReaction(
         f,
         `${this.name}.${cdecl.name}`
       )

@@ -9,8 +9,7 @@ import {PendingEffects} from "./PendingEffects"
 import {FunctionType} from "./Types"
 import {toMemberName} from "./Utils"
 
-export class EntityState<E extends Entity>
-  extends Proxied<E, E> {
+export class EntityState<E extends Entity> extends Proxied<E, E> {
   reactions: Array<Query<any>> = []
   reactionsByName: {[name: string]: Query<any>} = {}
   queries: Array<Query<any>> = []
@@ -53,10 +52,12 @@ export class EntityState<E extends Entity>
     }
   }
 
-  applyAction(name: string, type: FunctionType, f:Function, args: Array<any>) {
+  applyAction(name: string, type: FunctionType, f: Function, args: Array<any>) {
     const actionName = toMemberName(name, type)
     const action = this.toAction(actionName, args)
-    return this.stateManager.whileInAction(action, () => f.apply(this.proxy, args))
+    return this.stateManager.whileInAction(action, () =>
+      f.apply(this.proxy, args)
+    )
   }
 
   toSelectorName(name: string) {

@@ -19,7 +19,7 @@ export class PendingQueryNotifications {
     if (this.queue.length > 0) {
       // Keep track of Queries on which onInvalidate was called at
       // least once, so we can go back and clear them all at the end
-      const onInvalidateCalled:Array<Query<any>> = []
+      const onInvalidateCalled: Array<Query<any>> = []
       try {
         for (let i = 0; i < this.queue.length; i++) {
           const query = this.queue[i]
@@ -49,9 +49,8 @@ export class PendingQueryNotifications {
             query.onInvalidate()
           }
         }
-      }
-      finally {
-        for(const query of onInvalidateCalled) {
+      } finally {
+        for (const query of onInvalidateCalled) {
           query.wasOnInvalidateCalled = false
           query.onInvalidateCallCount = 0
         }

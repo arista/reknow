@@ -18,7 +18,10 @@ import {Entities} from "./Entities"
 import {Service} from "./Service"
 
 export function action(target: any, name: string, pd: PropertyDescriptor) {
-  if (typeof target === "object" && (typeof pd.value === "function" || typeof pd.set === "function")) {
+  if (
+    typeof target === "object" &&
+    (typeof pd.value === "function" || typeof pd.set === "function")
+  ) {
     if (target instanceof Entity) {
       replaceFunction(
         target,
