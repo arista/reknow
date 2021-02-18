@@ -5,6 +5,9 @@ import {AfterAddDecorator} from "./Types"
 import {AfterRemoveDecorator} from "./Types"
 import {AfterChangeDecorator} from "./Types"
 import {AfterPropertyChangeDecorator} from "./Types"
+import {replaceFunction} from "./Utils"
+import {Entity} from "./Entity"
+import {FunctionType} from "./Types"
 
 /** Stores the declarations, typically made with @ decorators,
  * specified in an Entity class.  The declarations are associated with
@@ -23,6 +26,19 @@ export class EntityDeclarations {
   } = {}
   idPropertyName: string | null = null
 
+  static addAction(proto: Object, name: string, pd: PropertyDescriptor) {
+    replaceFunction(
+      proto,
+      name,
+      pd,
+      (f: Function, name: string, type: FunctionType) => {
+        return function (this: Entity, ...args: Array<any>) {
+          return this.entityState.applyAction(name, type, f, args)
+        }
+      }
+    )
+  }
+
   static addRelationship(proto: Object, r: Relationship) {
     EntityDeclarations.forPrototype(proto).relationships.push(r)
   }
@@ -31,7 +47,27 @@ export class EntityDeclarations {
     EntityDeclarations.forPrototype(proto).reactions.push(c)
   }
 
-  static addQuery(proto: Object, c: QueryDecorator) {
+  static addQuery(proto: Object, name: string, pd: PropertyDescriptor) {
+    const getter = pd.get
+    if (getter == null) {
+      throw new Error(
+        `@query may only be specified for non-static getters of an Entity, Entities, or Service class`
+      )
+    }
+    const c: QueryDecorator = {name, f: getter}
+    replaceFunction(
+      proto,
+      name,
+      pd,
+      (f: Function, name: string, type: FunctionType) => {
+        return function (this: Entity, ...args: Array<any>) {
+          const entityState = this.entityState
+          const query = entityState.queriesByName[name]
+          return query.value
+        }
+      }
+    )
+
     EntityDeclarations.forPrototype(proto).queries.push(c)
   }
 

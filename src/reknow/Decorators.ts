@@ -23,16 +23,7 @@ export function action(target: any, name: string, pd: PropertyDescriptor) {
     (typeof pd.value === "function" || typeof pd.set === "function")
   ) {
     if (target instanceof Entity) {
-      replaceFunction(
-        target,
-        name,
-        pd,
-        (f: Function, name: string, type: FunctionType) => {
-          return function (this: Entity, ...args: Array<any>) {
-            return this.entityState.applyAction(name, type, f, args)
-          }
-        }
-      )
+      EntityDeclarations.addAction(target, name, pd)
     } else if (target instanceof Entities) {
       replaceFunction(
         target,
@@ -183,19 +174,7 @@ export function reaction(target: any, name: string, pd: PropertyDescriptor) {
 export function query(target: any, name: string, pd: PropertyDescriptor) {
   if (typeof target === "object" && typeof pd.get === "function") {
     if (target instanceof Entity) {
-      EntityDeclarations.addQuery(target, {name, f: pd.get})
-      replaceFunction(
-        target,
-        name,
-        pd,
-        (f: Function, name: string, type: FunctionType) => {
-          return function (this: Entity, ...args: Array<any>) {
-            const entityState = this.entityState
-            const query = entityState.queriesByName[name]
-            return query.value
-          }
-        }
-      )
+      EntityDeclarations.addQuery(target, name, pd)
     } else if (target instanceof Entities) {
       EntitiesDeclarations.addQuery(target, {name, f: pd.get})
       replaceFunction(

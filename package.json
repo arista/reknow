@@ -44,7 +44,8 @@
     ],
     "rootDir": "./src",
     "testMatch": [
-      "**/*.spec.ts"
+      "**/*.spec.ts",
+      "**/*.spec.js"
     ]
   }
 }

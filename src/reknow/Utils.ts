@@ -105,12 +105,25 @@ export function replaceFunction(
   // prototype, not the constructor Function)
   if (typeof target !== "function") {
     // FIXME - how can we get rid of those "as any"
-    if (typeof pd.value === "function") {
-      pd.value = replacer(pd.value, name, "method") as any
-    } else if (typeof pd.set === "function") {
-      pd.set = replacer(pd.set, name, "setter") as any
-    } else if (typeof pd.get === "function") {
-      pd.get = replacer(pd.get, name, "getter") as any
+    if (
+      typeof pd.value === "function" ||
+      typeof pd.set === "function" ||
+      typeof pd.get === "function"
+    ) {
+      if (typeof pd.value === "function") {
+        pd.value = replacer(pd.value, name, "method") as any
+      } else if (typeof pd.set === "function") {
+        pd.set = replacer(pd.set, name, "setter") as any
+      } else if (typeof pd.get === "function") {
+        pd.get = replacer(pd.get, name, "getter") as any
+      }
+
+      // If the pd was provided in a decorator, then modifying it
+      // get/set/value in place would be enough.  But if the pd was
+      // found later, then it needs to be assigned explicitly.  So
+      // just assigning it explicitly all the time seems to work, and
+      // is safest.
+      Object.defineProperty(target, name, pd)
     } else {
       throw new Error(
         `Unexpected placement for decorator.  Make sure the decorator is on a non-static method, getter, or setter`
