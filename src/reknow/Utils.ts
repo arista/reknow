@@ -836,3 +836,12 @@ export function getOwnProperty<T>(
   const pd = Object.getOwnPropertyDescriptor(obj, name)
   return pd != null && pd.value != null ? pd.value : defaultValue
 }
+
+export function currentEntity<T>(val:T):T {
+  if (val instanceof Entity) {
+    return val.currentEntity
+  }
+  else {
+    return val
+  }
+}

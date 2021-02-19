@@ -44,9 +44,17 @@ describe("JavaScript interface", () => {
         counts.entitiesAgeName++
         return this.user1.ageName
       }
+
+      updateAge3() {
+        const u = this.user1
+        if (u) {
+          u.age3 = u.age * 3
+        }
+      }
     }
     _UserEntities.action("createUser1")
     _UserEntities.query("ageName")
+    _UserEntities.reaction("updateAge3")
 
     const UserEntities = new _UserEntities(User)
 
@@ -188,7 +196,12 @@ describe("JavaScript interface", () => {
         expect(User.entities.ageName).toBe("name1 is 11")
         expect(counts.entitiesAgeName).toBe(2)
       })
-      // reaction
+      it("should declare a reaction", () => {
+        const u1 = User.entities.createUser1()
+        expect(u1.age3).toBe(30)
+        u1.incrementAge()
+        expect(u1.age3).toBe(33)
+      })
       // index
       // uniqueIndex
     })

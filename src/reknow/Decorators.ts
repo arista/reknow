@@ -102,19 +102,7 @@ export function reaction(target: any, name: string, pd: PropertyDescriptor) {
     if (target instanceof Entity) {
       EntityDeclarations.addReaction(target, name, pd)
     } else if (target instanceof Entities) {
-      EntitiesDeclarations.addReaction(target, {name, f: pd.value})
-      replaceFunction(
-        target,
-        name,
-        pd,
-        (f: Function, name: string, type: FunctionType) => {
-          return function (this: Entities<any>, ...args: Array<any>) {
-            const entitiesState = this.entitiesState
-            const reaction = entitiesState.reactionsByName[name]
-            return reaction.value
-          }
-        }
-      )
+      EntitiesDeclarations.addReaction(target, name, pd)
     } else if (target instanceof Service) {
       ServiceDeclarations.addReaction(target, {name, f: pd.value})
       replaceFunction(

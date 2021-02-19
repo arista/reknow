@@ -3,6 +3,7 @@ import {flattenEntitiesDefinitionTree} from "./Utils"
 import {EntitiesState} from "./EntitiesState"
 import {ServiceDefinitionTree} from "./Types"
 import {flattenServiceDefinitionTree} from "./Utils"
+import {currentEntity} from "./Utils"
 import {ServiceState} from "./ServiceState"
 import {Transaction} from "./Types"
 import {Action} from "./Types"
@@ -146,7 +147,13 @@ export class StateManager {
       this.applyPendingEffects()
       // Pass the transaction to any listeners
       this.transactionListeners.notify(transaction)
-      return ret
+
+      // If this is the outermost transaction and it's returning an
+      // Entity, make sure we're returning the latest Proxy.
+      // Otherwise, query notifications that modify the Entity after
+      // the original function f() returned it could already have
+      // rendered that Entity proxy stale.
+      return currentEntity(ret)
     } else {
       return f()
     }
