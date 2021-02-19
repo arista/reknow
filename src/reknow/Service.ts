@@ -35,4 +35,9 @@ export class Service {
     const pd = this.getPropertyDescriptor(name)
     ServiceDeclarations.addAction(this.prototype, name, pd)
   }
+
+  static query(name: string) {
+    const pd = this.getPropertyDescriptor(name)
+    ServiceDeclarations.addQuery(this.prototype, name, pd)
+  }
 }

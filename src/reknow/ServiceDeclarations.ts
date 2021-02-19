@@ -26,7 +26,27 @@ export class ServiceDeclarations {
     )
   }
 
-  static addQuery(proto: Object, c: QueryDecorator) {
+  static addQuery(proto: Object, name: string, pd:PropertyDescriptor) {
+    const getter = pd.get
+    if (getter == null) {
+      throw new Error(
+        `@query may only be specified for non-static getters of an Entity, Entities, or Service class`
+      )
+    }
+    const c: QueryDecorator = {name, f: getter}
+    replaceFunction(
+      proto,
+      name,
+      pd,
+      (f: Function, name: string, type: FunctionType) => {
+        return function (this: Service, ...args: Array<any>) {
+          const serviceState = this.serviceState
+          const query = serviceState.queriesByName[name]
+          return query.value
+        }
+      }
+    )
+
     ServiceDeclarations.forPrototype(proto).queries.push(c)
   }
 

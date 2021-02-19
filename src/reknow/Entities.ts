@@ -69,4 +69,9 @@ export class Entities<E extends Entity> {
     const pd = this.getPropertyDescriptor(name)
     EntitiesDeclarations.addAction(this.prototype, name, pd)
   }
+
+  static query(name: string) {
+    const pd = this.getPropertyDescriptor(name)
+    EntitiesDeclarations.addQuery(this.prototype, name, pd)
+  }
 }

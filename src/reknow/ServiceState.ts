@@ -45,7 +45,7 @@ export class ServiceState {
 
   addQueries() {
     for (const cdecl of this.serviceDeclarations.queries) {
-      const f = () => cdecl.f.apply(this)
+      const f = () => cdecl.f.apply(this.service)
       const query = this.stateManager.createQuery(
         f,
         `${this.name}.${cdecl.name}`

@@ -35,8 +35,18 @@ describe("JavaScript interface", () => {
       createUser1() {
         return this.add(new User("name1", 10), "u1")
       }
+
+      get user1() {
+        return this.entitiesById.u1
+      }
+
+      get ageName() {
+        counts.entitiesAgeName++
+        return this.user1.ageName
+      }
     }
     _UserEntities.action("createUser1")
+    _UserEntities.query("ageName")
 
     const UserEntities = new _UserEntities(User)
 
@@ -44,8 +54,18 @@ describe("JavaScript interface", () => {
       createUser1() {
         return User.entities.add(new User("name1", 10), "u1")
       }
+
+      get user1() {
+        return User.entities.entitiesById.u1
+      }
+
+      get ageName() {
+        counts.serviceAgeName++
+        return this.user1.ageName
+      }
     }
     _UserService.action("createUser1")
+    _UserService.query("ageName")
 
     const UserService = new _UserService()
 
@@ -77,6 +97,8 @@ describe("JavaScript interface", () => {
 
     const counts = {
       ageName: 0,
+      entitiesAgeName: 0,
+      serviceAgeName: 0,
     }
 
     return {
@@ -153,7 +175,19 @@ describe("JavaScript interface", () => {
         const u1 = User.entities.createUser1()
         expect(User.entities.entitiesById.u1).toBe(u1)
       })
-      // query
+      it("should declare a query", () => {
+        const u1 = User.entities.createUser1()
+        expect(counts.entitiesAgeName).toBe(0)
+        expect(User.entities.ageName).toBe("name1 is 10")
+        expect(counts.entitiesAgeName).toBe(1)
+        expect(User.entities.ageName).toBe("name1 is 10")
+        expect(counts.entitiesAgeName).toBe(1)
+
+        u1.incrementAge()
+
+        expect(User.entities.ageName).toBe("name1 is 11")
+        expect(counts.entitiesAgeName).toBe(2)
+      })
       // reaction
       // index
       // uniqueIndex
@@ -163,7 +197,19 @@ describe("JavaScript interface", () => {
         const u1 = UserService.createUser1()
         expect(User.entities.entitiesById.u1).toBe(u1)
       })
-      // query
+      it("should declare a query", () => {
+        const u1 = User.entities.createUser1()
+        expect(counts.serviceAgeName).toBe(0)
+        expect(UserService.ageName).toBe("name1 is 10")
+        expect(counts.serviceAgeName).toBe(1)
+        expect(UserService.ageName).toBe("name1 is 10")
+        expect(counts.serviceAgeName).toBe(1)
+
+        u1.incrementAge()
+
+        expect(UserService.ageName).toBe("name1 is 11")
+        expect(counts.serviceAgeName).toBe(2)
+      })
       // reaction
     })
   })

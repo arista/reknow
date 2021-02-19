@@ -146,33 +146,9 @@ export function query(target: any, name: string, pd: PropertyDescriptor) {
     if (target instanceof Entity) {
       EntityDeclarations.addQuery(target, name, pd)
     } else if (target instanceof Entities) {
-      EntitiesDeclarations.addQuery(target, {name, f: pd.get})
-      replaceFunction(
-        target,
-        name,
-        pd,
-        (f: Function, name: string, type: FunctionType) => {
-          return function (this: Entities<any>, ...args: Array<any>) {
-            const entitiesState = this.entitiesState
-            const query = entitiesState.queriesByName[name]
-            return query.value
-          }
-        }
-      )
+      EntitiesDeclarations.addQuery(target, name, pd)
     } else if (target instanceof Service) {
-      ServiceDeclarations.addQuery(target, {name, f: pd.get})
-      replaceFunction(
-        target,
-        name,
-        pd,
-        (f: Function, name: string, type: FunctionType) => {
-          return function (this: Service, ...args: Array<any>) {
-            const serviceState = this.serviceState
-            const query = serviceState.queriesByName[name]
-            return query.value
-          }
-        }
-      )
+      ServiceDeclarations.addQuery(target, name, pd)
     } else {
       throw new Error(
         `@query may only be specified for non-static getters of an Entity, Entities, or Service class`
