@@ -25,27 +25,9 @@ export function action(target: any, name: string, pd: PropertyDescriptor) {
     if (target instanceof Entity) {
       EntityDeclarations.addAction(target, name, pd)
     } else if (target instanceof Entities) {
-      replaceFunction(
-        target,
-        name,
-        pd,
-        (f: Function, name: string, type: FunctionType) => {
-          return function (this: Entities<any>, ...args: Array<any>) {
-            return this.entitiesState.applyAction(name, type, f, args)
-          }
-        }
-      )
+      EntitiesDeclarations.addAction(target, name, pd)
     } else if (target instanceof Service) {
-      replaceFunction(
-        target,
-        name,
-        pd,
-        (f: Function, name: string, type: FunctionType) => {
-          return function (this: Service, ...args: Array<any>) {
-            return this.serviceState.applyAction(name, type, f, args)
-          }
-        }
-      )
+      ServiceDeclarations.addAction(target, name, pd)
     } else {
       throw new Error(
         `@action may only be specified for non-static setters or methods of an Entity, Entities, or Service class`
@@ -118,19 +100,7 @@ export function uniqueIndex(...terms: Array<string>) {
 export function reaction(target: any, name: string, pd: PropertyDescriptor) {
   if (typeof target === "object" && typeof pd.value === "function") {
     if (target instanceof Entity) {
-      EntityDeclarations.addReaction(target, {name, f: pd.value})
-      replaceFunction(
-        target,
-        name,
-        pd,
-        (f: Function, name: string, type: FunctionType) => {
-          return function (this: Entity, ...args: Array<any>) {
-            const entityState = this.entityState
-            const reaction = entityState.reactionsByName[name]
-            return reaction.value
-          }
-        }
-      )
+      EntityDeclarations.addReaction(target, name, pd)
     } else if (target instanceof Entities) {
       EntitiesDeclarations.addReaction(target, {name, f: pd.value})
       replaceFunction(

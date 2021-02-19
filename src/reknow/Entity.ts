@@ -59,4 +59,9 @@ export abstract class Entity {
     const pd = this.getPropertyDescriptor(name)
     EntityDeclarations.addQuery(this.prototype, name, pd)
   }
+
+  static reaction(name: string) {
+    const pd = this.getPropertyDescriptor(name)
+    EntityDeclarations.addReaction(this.prototype, name, pd)
+  }
 }

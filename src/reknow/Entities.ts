@@ -1,6 +1,7 @@
 import {Entity} from "./Entity"
 import {EntitiesState} from "./EntitiesState"
 import {EntityClass} from "./Types"
+import {EntitiesDeclarations} from "./EntitiesDeclarations"
 import {ById} from "./Types"
 
 export class Entities<E extends Entity> {
@@ -54,4 +55,18 @@ export class Entities<E extends Entity> {
   }
 
   initialize() {}
+
+  // FIXME - factor this out into Utils of Entity, Entities, and Service
+  static getPropertyDescriptor(name: string): PropertyDescriptor {
+    const pd = Object.getOwnPropertyDescriptor(this.prototype, name)
+    if (pd == null) {
+      throw new Error(`property or method "${name}" not found`)
+    }
+    return pd
+  }
+
+  static action(name: string) {
+    const pd = this.getPropertyDescriptor(name)
+    EntitiesDeclarations.addAction(this.prototype, name, pd)
+  }
 }

@@ -1,6 +1,9 @@
 import {IndexDecorator} from "./Types"
 import {QueryDecorator} from "./Types"
 import {ReactionDecorator} from "./Types"
+import {replaceFunction} from "./Utils"
+import {FunctionType} from "./Types"
+import {Entities} from "./Entities"
 
 /** Stores the declarations, typically made with @ decorators,
  * specified in an Entities class.  The declarations are associated
@@ -11,6 +14,19 @@ export class EntitiesDeclarations {
   indexDecorators: Array<IndexDecorator> = []
   queries: Array<QueryDecorator> = []
   reactions: Array<ReactionDecorator> = []
+
+  static addAction(proto: Object, name: string, pd: PropertyDescriptor) {
+    replaceFunction(
+      proto,
+      name,
+      pd,
+      (f: Function, name: string, type: FunctionType) => {
+        return function (this: Entities<any>, ...args: Array<any>) {
+          return this.entitiesState.applyAction(name, type, f, args)
+        }
+      }
+    )
+  }
 
   static addIndexDecorator(proto: Object, d: IndexDecorator) {
     EntitiesDeclarations.forPrototype(proto).indexDecorators.push(d)

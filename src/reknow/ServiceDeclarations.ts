@@ -1,5 +1,8 @@
 import {QueryDecorator} from "./Types"
 import {ReactionDecorator} from "./Types"
+import {replaceFunction} from "./Utils"
+import {Service} from "./Service"
+import {FunctionType} from "./Types"
 
 /** Stores the declarations, typically made with @ decorators,
  * specified in a Services class.  The declarations are associated
@@ -9,6 +12,19 @@ import {ReactionDecorator} from "./Types"
 export class ServiceDeclarations {
   queries: Array<QueryDecorator> = []
   reactions: Array<ReactionDecorator> = []
+
+  static addAction(proto: Object, name: string, pd: PropertyDescriptor) {
+    replaceFunction(
+      proto,
+      name,
+      pd,
+      (f: Function, name: string, type: FunctionType) => {
+        return function (this: Service, ...args: Array<any>) {
+          return this.serviceState.applyAction(name, type, f, args)
+        }
+      }
+    )
+  }
 
   static addQuery(proto: Object, c: QueryDecorator) {
     ServiceDeclarations.forPrototype(proto).queries.push(c)

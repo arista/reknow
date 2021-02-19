@@ -43,8 +43,27 @@ export class EntityDeclarations {
     EntityDeclarations.forPrototype(proto).relationships.push(r)
   }
 
-  static addReaction(proto: Object, c: ReactionDecorator) {
+  static addReaction(proto: Object, name: string, pd: PropertyDescriptor) {
+    const method = pd.value
+    if (method == null) {
+      throw new Error(
+        `@reaction may only be specified for non-static non-getter/setter methods of an Entity, Entities, or Service class`
+      )
+    }
+    const c: ReactionDecorator = {name, f: pd.value}
     EntityDeclarations.forPrototype(proto).reactions.push(c)
+    replaceFunction(
+      proto,
+      name,
+      pd,
+      (f: Function, name: string, type: FunctionType) => {
+        return function (this: Entity, ...args: Array<any>) {
+          const entityState = this.entityState
+          const reaction = entityState.reactionsByName[name]
+          return reaction.value
+        }
+      }
+    )
   }
 
   static addQuery(proto: Object, name: string, pd: PropertyDescriptor) {
