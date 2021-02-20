@@ -57,7 +57,7 @@ export class ServiceState {
 
   addReactions() {
     for (const cdecl of this.serviceDeclarations.reactions) {
-      const f = () => cdecl.f.apply(this)
+      const f = () => cdecl.f.apply(this.service)
       const query: Query<any> = this.stateManager.createReaction(
         f,
         `${this.name}.${cdecl.name}`

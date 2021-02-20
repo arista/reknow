@@ -84,16 +84,14 @@ export function id(target: any, name: string) {
 export function index(...terms: Array<string>) {
   // FIXME - error if not declared on an Entities
   return function (target: any, name: string) {
-    const schema = indexTermsToSchema(terms)
-    EntitiesDeclarations.addIndexDecorator(target, {name, schema})
+    EntitiesDeclarations.addIndexDecorator(target, name, terms)
   }
 }
 
 export function uniqueIndex(...terms: Array<string>) {
   // FIXME - error if not declared on an Entity class
   return function (target: any, name: string) {
-    const schema = uniqueIndexTermsToSchema(terms)
-    EntitiesDeclarations.addIndexDecorator(target, {name, schema})
+    EntitiesDeclarations.addUniqueIndexDecorator(target, name, terms)
   }
 }
 
@@ -104,19 +102,7 @@ export function reaction(target: any, name: string, pd: PropertyDescriptor) {
     } else if (target instanceof Entities) {
       EntitiesDeclarations.addReaction(target, name, pd)
     } else if (target instanceof Service) {
-      ServiceDeclarations.addReaction(target, {name, f: pd.value})
-      replaceFunction(
-        target,
-        name,
-        pd,
-        (f: Function, name: string, type: FunctionType) => {
-          return function (this: Service, ...args: Array<any>) {
-            const serviceState = this.serviceState
-            const reaction = serviceState.reactionsByName[name]
-            return reaction.value
-          }
-        }
-      )
+      ServiceDeclarations.addReaction(target, name, pd)
     } else {
       throw new Error(
         `@reaction may only be specified for non-static non-getter/setter methods of an Entity, Entities, or Service class`

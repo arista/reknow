@@ -4,6 +4,8 @@ import {ReactionDecorator} from "./Types"
 import {replaceFunction} from "./Utils"
 import {FunctionType} from "./Types"
 import {Entities} from "./Entities"
+import {indexTermsToSchema} from "./Utils"
+import {uniqueIndexTermsToSchema} from "./Utils"
 
 /** Stores the declarations, typically made with @ decorators,
  * specified in an Entities class.  The declarations are associated
@@ -28,11 +30,23 @@ export class EntitiesDeclarations {
     )
   }
 
-  static addIndexDecorator(proto: Object, d: IndexDecorator) {
+  static addIndexDecorator(proto: Object, name: string, terms: Array<string>) {
+    const schema = indexTermsToSchema(terms)
+    const d: IndexDecorator = {name, schema}
     EntitiesDeclarations.forPrototype(proto).indexDecorators.push(d)
   }
 
-  static addQuery(proto: Object, name: string, pd:PropertyDescriptor) {
+  static addUniqueIndexDecorator(
+    proto: Object,
+    name: string,
+    terms: Array<string>
+  ) {
+    const schema = uniqueIndexTermsToSchema(terms)
+    const d: IndexDecorator = {name, schema}
+    EntitiesDeclarations.forPrototype(proto).indexDecorators.push(d)
+  }
+
+  static addQuery(proto: Object, name: string, pd: PropertyDescriptor) {
     const getter = pd.get
     if (getter == null) {
       throw new Error(

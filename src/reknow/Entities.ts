@@ -79,4 +79,12 @@ export class Entities<E extends Entity> {
     const pd = this.getPropertyDescriptor(name)
     EntitiesDeclarations.addReaction(this.prototype, name, pd)
   }
+
+  static index(name: string, ...terms: Array<string>) {
+    EntitiesDeclarations.addIndexDecorator(this.prototype, name, terms)
+  }
+
+  static uniqueIndex(name: string, ...terms: Array<string>) {
+    EntitiesDeclarations.addUniqueIndexDecorator(this.prototype, name, terms)
+  }
 }

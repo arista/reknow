@@ -26,7 +26,7 @@ export class ServiceDeclarations {
     )
   }
 
-  static addQuery(proto: Object, name: string, pd:PropertyDescriptor) {
+  static addQuery(proto: Object, name: string, pd: PropertyDescriptor) {
     const getter = pd.get
     if (getter == null) {
       throw new Error(
@@ -34,6 +34,7 @@ export class ServiceDeclarations {
       )
     }
     const c: QueryDecorator = {name, f: getter}
+    ServiceDeclarations.forPrototype(proto).queries.push(c)
     replaceFunction(
       proto,
       name,
@@ -46,12 +47,29 @@ export class ServiceDeclarations {
         }
       }
     )
-
-    ServiceDeclarations.forPrototype(proto).queries.push(c)
   }
 
-  static addReaction(proto: Object, c: ReactionDecorator) {
+  static addReaction(proto: Object, name: string, pd: PropertyDescriptor) {
+    const method = pd.value
+    if (method == null) {
+      throw new Error(
+        `@reaction may only be specified for non-static non-getter/setter methods of an Entity, Entities, or Service class`
+      )
+    }
+    const c: ReactionDecorator = {name, f: pd.value}
     ServiceDeclarations.forPrototype(proto).reactions.push(c)
+    replaceFunction(
+      proto,
+      name,
+      pd,
+      (f: Function, name: string, type: FunctionType) => {
+        return function (this: Service, ...args: Array<any>) {
+          const serviceState = this.serviceState
+          const reaction = serviceState.reactionsByName[name]
+          return reaction.value
+        }
+      }
+    )
   }
 
   static forPrototype(proto: Object): ServiceDeclarations {

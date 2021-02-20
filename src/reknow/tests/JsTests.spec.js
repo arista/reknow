@@ -55,6 +55,8 @@ describe("JavaScript interface", () => {
     _UserEntities.action("createUser1")
     _UserEntities.query("ageName")
     _UserEntities.reaction("updateAge3")
+    _UserEntities.index("byAge", "+age")
+    _UserEntities.uniqueIndex("byName", "=name")
 
     const UserEntities = new _UserEntities(User)
 
@@ -71,9 +73,17 @@ describe("JavaScript interface", () => {
         counts.serviceAgeName++
         return this.user1.ageName
       }
+
+      updateAge4() {
+        const u = this.user1
+        if (u) {
+          u.age4 = u.age * 4
+        }
+      }
     }
     _UserService.action("createUser1")
     _UserService.query("ageName")
+    _UserService.reaction("updateAge4")
 
     const UserService = new _UserService()
 
@@ -202,8 +212,32 @@ describe("JavaScript interface", () => {
         u1.incrementAge()
         expect(u1.age3).toBe(33)
       })
-      // index
-      // uniqueIndex
+      it("should declare an index", () => {
+        const u1 = action(() => User.entities.add(new User("name1", 10), "u1"))
+        const u2 = action(() => User.entities.add(new User("name2", 5), "u2"))
+
+        expect(User.entities.byAge[0]).toBe(User.entities.entitiesById.u2)
+        expect(User.entities.byAge[1]).toBe(User.entities.entitiesById.u1)
+
+        action(() => (u2.age = 15))
+
+        expect(User.entities.byAge[0]).toBe(User.entities.entitiesById.u1)
+        expect(User.entities.byAge[1]).toBe(User.entities.entitiesById.u2)
+      })
+      it("should declare a unique index", () => {
+        const u1 = action(() => User.entities.add(new User("name1", 10), "u1"))
+        const u2 = action(() => User.entities.add(new User("name2", 5), "u2"))
+
+        expect(User.entities.byName.name1).toBe(User.entities.entitiesById.u1)
+        expect(User.entities.byName.name2).toBe(User.entities.entitiesById.u2)
+
+        action(() => (u2.name = "namename2"))
+
+        expect(User.entities.byName.name2 == null).toBe(true)
+        expect(User.entities.byName.namename2).toBe(
+          User.entities.entitiesById.u2
+        )
+      })
     })
     describe("on Service class", () => {
       it("should declare an action", () => {
@@ -223,7 +257,12 @@ describe("JavaScript interface", () => {
         expect(UserService.ageName).toBe("name1 is 11")
         expect(counts.serviceAgeName).toBe(2)
       })
-      // reaction
+      it("should declare a reaction", () => {
+        const u1 = User.entities.createUser1()
+        expect(u1.age4).toBe(40)
+        u1.incrementAge()
+        expect(u1.age4).toBe(44)
+      })
     })
   })
 })

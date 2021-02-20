@@ -40,4 +40,9 @@ export class Service {
     const pd = this.getPropertyDescriptor(name)
     ServiceDeclarations.addQuery(this.prototype, name, pd)
   }
+
+  static reaction(name: string) {
+    const pd = this.getPropertyDescriptor(name)
+    ServiceDeclarations.addReaction(this.prototype, name, pd)
+  }
 }

@@ -300,18 +300,18 @@ export class EntitiesState<E extends Entity> extends Proxied<
     } else {
       addNonEnumerableProperty(entity, ENTITY_STATE_KEY, entityState)
 
-      // Add the reactions
-      this.addReactions(entityState)
-
-      // Add the queries defined on the Entity class
-      this.addQueries(entityState)
-
       this.invalidateProxy()
       this.addEntityToEntitiesById(entityId, entityState)
       this.notifySubscribersOfChange()
       this.updateIndexesOnEntityAdded(entityState)
       this.stateManager.recordEntityAdded(entityState)
       entityState.addPendingAfterAdd()
+
+      // Add the reactions
+      this.addReactions(entityState)
+
+      // Add the queries defined on the Entity class
+      this.addQueries(entityState)
     }
 
     // Keep track of the added entity, to handle adding a graph of
