@@ -30,10 +30,15 @@ describe("JavaScript interface", () => {
     User.action("incrementAge")
     User.query("ageName")
     User.reaction("updateAge2")
+    User.hasMany("i1s", () => I1, "userId", {sort: "name"})
+    User.hasOne("i2", () => I2, "userId")
 
     class _UserEntities extends R.Entities {
       createUser1() {
         return this.add(new User("name1", 10), "u1")
+      }
+      createUser2() {
+        return this.add(new User("name2", 20), "u2")
       }
 
       get user1() {
@@ -53,6 +58,7 @@ describe("JavaScript interface", () => {
       }
     }
     _UserEntities.action("createUser1")
+    _UserEntities.action("createUser2")
     _UserEntities.query("ageName")
     _UserEntities.reaction("updateAge3")
     _UserEntities.index("byAge", "+age")
@@ -87,24 +93,42 @@ describe("JavaScript interface", () => {
 
     const UserService = new _UserService()
 
-    // Job entity
-    class Job extends R.Entity {
+    // I1 entity
+    class I1 extends R.Entity {
       static get entities() {
-        return JobEntities
+        return I1Entities
       }
-      constructor(name) {
+      constructor(userId, name) {
         super()
+        this.userId = userId
         this.name = name
       }
     }
-    class _JobEntities extends R.Entities {}
-    const JobEntities = new _JobEntities(Job)
+    I1.belongsTo("user", () => User, "userId")
+
+    class _I1Entities extends R.Entities {}
+    const I1Entities = new _I1Entities(I1)
+
+    // I2 entity
+    class I2 extends R.Entity {
+      static get entities() {
+        return I2Entities
+      }
+      constructor(userId, name) {
+        super()
+        this.userId = userId
+        this.name = name
+      }
+    }
+    class _I2Entities extends R.Entities {}
+    const I2Entities = new _I2Entities(I2)
 
     // StateManager
     const stateManager = new R.StateManager({
       entities: {
         User: User.entities,
-        Job: Job.entities,
+        I1: I1.entities,
+        I2: I2.entities,
       },
       services: {
         UserService,
@@ -123,7 +147,8 @@ describe("JavaScript interface", () => {
       stateManager,
       action,
       User,
-      Job,
+      I1,
+      I2,
       UserService,
       counts,
     }
@@ -131,14 +156,16 @@ describe("JavaScript interface", () => {
   let state
   let action
   let User
-  let Job
+  let I1
+  let I2
   let UserService
   let counts
   beforeEach(() => {
     state = createState()
     action = state.action
     User = state.User
-    Job = state.Job
+    I1 = state.I1
+    I2 = state.I2
     UserService = state.UserService
     counts = state.counts
   })
@@ -180,9 +207,65 @@ describe("JavaScript interface", () => {
         u1.incrementAge()
         expect(u1.age2).toBe(22)
       })
-      // hasMany
-      // hasOne
-      // belongsTo
+      it("should declare a hasMany relationship", () => {
+        const u1 = User.entities.createUser1()
+        const u2 = User.entities.createUser2()
+        const i1 = action(() =>
+          I1.entities.add(new I1(u1.entityId, "s1"), "i1-1")
+        )
+        const i2 = action(() =>
+          I1.entities.add(new I1(u1.entityId, "s2"), "i1-2")
+        )
+        const i3 = action(() =>
+          I1.entities.add(new I1(u2.entityId, "s3"), "i1-3")
+        )
+
+        expect(u1.i1s).toEqual([i1, i2])
+        expect(u2.i1s).toEqual([i3])
+
+        action(() => (i1.name = "s4"))
+        expect(u1.i1s).toEqual([i2, i1])
+
+        action(() => (i3.userId = u1.entityId))
+        expect(u1.i1s).toEqual([i2, i3, i1])
+        expect(u2.i1s).toEqual([])
+      })
+      it("should declare a hasOne relationship", () => {
+        const u1 = User.entities.createUser1()
+        const u2 = User.entities.createUser2()
+        const i1 = action(() =>
+          I2.entities.add(new I2(u1.entityId, "s1"), "i1-1")
+        )
+
+        expect(u1.i2).toEqual(i1)
+        expect(u2.i2 == null).toBe(true)
+
+        action(() => (i1.userId = u2.entityId))
+        expect(u1.i2 == null).toBe(true)
+        expect(u2.i2).toEqual(i1)
+      })
+      it("should declare a BelongsTo relationship", () => {
+        const u1 = User.entities.createUser1()
+        const u2 = User.entities.createUser2()
+        const i1 = action(() =>
+          I1.entities.add(new I1(u1.entityId, "s1"), "i1-1")
+        )
+        const i2 = action(() =>
+          I1.entities.add(new I1(u1.entityId, "s2"), "i1-2")
+        )
+        const i3 = action(() =>
+          I1.entities.add(new I1(u2.entityId, "s3"), "i1-3")
+        )
+
+        expect(i1.user).toEqual(u1)
+        expect(i2.user).toEqual(u1)
+        expect(i3.user).toEqual(u2)
+
+        action(() => (i3.userId = u1.entityId))
+        expect(i1.user).toEqual(u1)
+        expect(i2.user).toEqual(u1)
+        expect(i3.user).toEqual(u1)
+      })
       // afterAdd
       // afterRemove
       // afterChange

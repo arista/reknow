@@ -1,6 +1,10 @@
 import {notNull} from "./Utils"
 import {EntityState} from "./EntityState"
 import {EntityDeclarations} from "./EntityDeclarations"
+import {EntityClass} from "./Types"
+import {HasManyOptions} from "./Types"
+import {HasOneOptions} from "./Types"
+import {BelongsToOptions} from "./Types"
 
 export const ENTITY_STATE_KEY = Symbol("ENTITY_STATE_KEY")
 
@@ -63,5 +67,50 @@ export abstract class Entity {
   static reaction(name: string) {
     const pd = this.getPropertyDescriptor(name)
     EntityDeclarations.addReaction(this.prototype, name, pd)
+  }
+
+  static hasMany<E extends Entity>(
+    name: string,
+    foreignEntityFunc: () => EntityClass<E>,
+    foreignKey: string,
+    options: HasManyOptions | null
+  ) {
+    EntityDeclarations.addHasMany(
+      this.prototype,
+      name,
+      foreignEntityFunc,
+      foreignKey,
+      options
+    )
+  }
+
+  static hasOne<E extends Entity>(
+    name: string,
+    foreignEntityFunc: () => EntityClass<E>,
+    foreignKey: string,
+    options: HasOneOptions | null
+  ) {
+    EntityDeclarations.addHasOne(
+      this.prototype,
+      name,
+      foreignEntityFunc,
+      foreignKey,
+      options
+    )
+  }
+
+  static belongsTo<E extends Entity>(
+    name: string,
+    foreignEntityFunc: () => EntityClass<E>,
+    primaryKey: string,
+    options: BelongsToOptions | null
+  ) {
+    EntityDeclarations.addBelongsTo(
+      this.prototype,
+      name,
+      foreignEntityFunc,
+      primaryKey,
+      options
+    )
   }
 }

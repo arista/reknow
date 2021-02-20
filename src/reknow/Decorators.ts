@@ -47,8 +47,13 @@ export function hasMany<E extends Entity>(
 ) {
   // FIXME - error if not declared on an Entity class
   return function (target: any, name: string) {
-    const r = new HasMany(name, foreignEntityFunc, foreignKey, options)
-    EntityDeclarations.addRelationship(target, r)
+    EntityDeclarations.addHasMany(
+      target,
+      name,
+      foreignEntityFunc,
+      foreignKey,
+      options
+    )
   }
 }
 
@@ -59,8 +64,13 @@ export function hasOne<E extends Entity>(
 ) {
   // FIXME - error if not declared on an Entity class
   return function (target: any, name: string) {
-    const r = new HasOne(name, foreignEntityFunc, foreignKey, options)
-    EntityDeclarations.addRelationship(target, r)
+    EntityDeclarations.addHasOne(
+      target,
+      name,
+      foreignEntityFunc,
+      foreignKey,
+      options
+    )
   }
 }
 
@@ -71,8 +81,13 @@ export function belongsTo<E extends Entity>(
 ) {
   // FIXME - error if not declared on an Entity class
   return function (target: any, name: string) {
-    const r = new BelongsTo(name, foreignEntityFunc, primaryKey, options)
-    EntityDeclarations.addRelationship(target, r)
+    EntityDeclarations.addBelongsTo(
+      target,
+      name,
+      foreignEntityFunc,
+      primaryKey,
+      options
+    )
   }
 }
 

@@ -8,6 +8,13 @@ import {AfterPropertyChangeDecorator} from "./Types"
 import {replaceFunction} from "./Utils"
 import {Entity} from "./Entity"
 import {FunctionType} from "./Types"
+import {HasMany} from "./HasMany"
+import {HasOne} from "./HasOne"
+import {BelongsTo} from "./BelongsTo"
+import {HasManyOptions} from "./Types"
+import {HasOneOptions} from "./Types"
+import {BelongsToOptions} from "./Types"
+import {EntityClass} from "./Types"
 
 /** Stores the declarations, typically made with @ decorators,
  * specified in an Entity class.  The declarations are associated with
@@ -37,6 +44,39 @@ export class EntityDeclarations {
         }
       }
     )
+  }
+
+  static addHasMany<E extends Entity>(
+    proto: Object,
+    name: string,
+    foreignEntityFunc: () => EntityClass<E>,
+    foreignKey: string,
+    options: HasManyOptions | null
+  ) {
+    const r = new HasMany(name, foreignEntityFunc, foreignKey, options)
+    this.addRelationship(proto, r)
+  }
+
+  static addHasOne<E extends Entity>(
+    proto: Object,
+    name: string,
+    foreignEntityFunc: () => EntityClass<E>,
+    foreignKey: string,
+    options: HasOneOptions | null
+  ) {
+    const r = new HasOne(name, foreignEntityFunc, foreignKey, options)
+    this.addRelationship(proto, r)
+  }
+
+  static addBelongsTo<E extends Entity>(
+    proto: Object,
+    name: string,
+    foreignEntityFunc: () => EntityClass<E>,
+    primaryKey: string,
+    options: BelongsToOptions | null
+  ) {
+    const r = new BelongsTo(name, foreignEntityFunc, primaryKey, options)
+    this.addRelationship(proto, r)
   }
 
   static addRelationship(proto: Object, r: Relationship) {
