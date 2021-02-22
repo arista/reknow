@@ -113,4 +113,24 @@ export abstract class Entity {
       options
     )
   }
+
+  static afterAdd(name: string) {
+    const pd = this.getPropertyDescriptor(name)
+    EntityDeclarations.addAfterAdd(this.prototype, name, pd)
+  }
+
+  static afterRemove(name: string) {
+    const pd = this.getPropertyDescriptor(name)
+    EntityDeclarations.addAfterRemove(this.prototype, name, pd)
+  }
+
+  static afterChange(name: string) {
+    const pd = this.getPropertyDescriptor(name)
+    EntityDeclarations.addAfterChange(this.prototype, name, pd)
+  }
+
+  static afterPropertyChange(prop: string, name: string) {
+    const pd = this.getPropertyDescriptor(name)
+    EntityDeclarations.addAfterPropertyChange(this.prototype, name, prop, pd)
+  }
 }

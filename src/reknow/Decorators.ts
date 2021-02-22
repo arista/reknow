@@ -151,27 +151,18 @@ export function query(target: any, name: string, pd: PropertyDescriptor) {
 }
 
 export function afterAdd(target: any, name: string, pd: PropertyDescriptor) {
-  if (typeof target === "object" && typeof pd.value === "function") {
-    EntityDeclarations.addAfterAdd(target, {name, f: pd.value})
-  } else {
-    throw new Error(
-      `@afterAdd may only be specified for non-static functions that are not getters or setters`
-    )
-  }
+  // FIXME - only allow on Entity classes
+  EntityDeclarations.addAfterAdd(target, name, pd)
 }
 
 export function afterRemove(target: any, name: string, pd: PropertyDescriptor) {
-  if (typeof target === "object" && typeof pd.value === "function") {
-    EntityDeclarations.addAfterRemove(target, {name, f: pd.value})
-  } else {
-    throw new Error(
-      `@afterRemove may only be specified for non-static functions that are not getters or setters`
-    )
-  }
+  // FIXME - only allow on Entity classes
+  EntityDeclarations.addAfterRemove(target, name, pd)
 }
 
 export function afterChange(target: any, name: string, pd: PropertyDescriptor) {
-  addAfterChange(target, name, pd, null)
+  // FIXME - only allow on Entity classes
+  EntityDeclarations.addAfterChange(target, name, pd)
 }
 
 export function afterPropertyChange(property: string) {
@@ -188,13 +179,9 @@ function addAfterChange(
 ) {
   if (typeof target === "object" && typeof pd.value === "function") {
     if (property != null) {
-      EntityDeclarations.addAfterPropertyChange(target, {
-        name,
-        property,
-        f: pd.value,
-      })
+      EntityDeclarations.addAfterPropertyChange(target, name, property, pd)
     } else {
-      EntityDeclarations.addAfterChange(target, {name, f: pd.value})
+      EntityDeclarations.addAfterChange(target, name, pd)
     }
   } else {
     throw new Error(

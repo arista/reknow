@@ -25,6 +25,26 @@ describe("JavaScript interface", () => {
       updateAge2() {
         this.age2 = this.age * 2
       }
+
+      afterAdd() {
+        counts.afterAdd++
+      }
+
+      afterRemove() {
+        counts.afterRemove++
+      }
+
+      afterChange() {
+        counts.afterChange++
+      }
+
+      afterNameChange() {
+        counts.afterNameChange++
+      }
+
+      afterAgeChange() {
+        counts.afterAgeChange++
+      }
     }
     User.id("idProp")
     User.action("incrementAge")
@@ -32,6 +52,11 @@ describe("JavaScript interface", () => {
     User.reaction("updateAge2")
     User.hasMany("i1s", () => I1, "userId", {sort: "name"})
     User.hasOne("i2", () => I2, "userId")
+    User.afterAdd("afterAdd")
+    User.afterRemove("afterRemove")
+    User.afterChange("afterChange")
+    User.afterPropertyChange("name", "afterNameChange")
+    User.afterPropertyChange("age", "afterAgeChange")
 
     class _UserEntities extends R.Entities {
       createUser1() {
@@ -141,6 +166,13 @@ describe("JavaScript interface", () => {
       ageName: 0,
       entitiesAgeName: 0,
       serviceAgeName: 0,
+      afterAdd: 0,
+      afterRemove: 0,
+      afterChange: 0,
+      afterNameChange: 0,
+      afterAgeChange: 0,
+      oldName: null,
+      oldAge: null,
     }
 
     return {
@@ -266,9 +298,31 @@ describe("JavaScript interface", () => {
         expect(i2.user).toEqual(u1)
         expect(i3.user).toEqual(u1)
       })
-      // afterAdd
-      // afterRemove
-      // afterChange
+      it("should declare afterAdd", () => {
+        action(() => {
+          User.entities.add(new User("name1", "user1"), "u1")
+          expect(counts.afterAdd).toBe(0)
+        })
+        expect(counts.afterAdd).toBe(1)
+      })
+      it("should declare afterRemove", () => {
+        const u1 = User.entities.createUser1()
+        action(() => {
+          u1.removeEntity()
+          expect(counts.afterRemove).toBe(0)
+        })
+        expect(counts.afterRemove).toBe(1)
+      })
+      it("should declare afterChange", () => {
+        const u1 = User.entities.createUser1()
+        expect(counts.afterChange).toBe(1)
+        action(() => {
+          u1.name = "name1-1"
+          u1.age++
+          expect(counts.afterChange).toBe(1)
+        })
+        expect(counts.afterChange).toBe(2)
+      })
       // afterPropertyChange
     })
     describe("on Entities class", () => {

@@ -130,22 +130,52 @@ export class EntityDeclarations {
     EntityDeclarations.forPrototype(proto).queries.push(c)
   }
 
-  static addAfterAdd(proto: Object, c: AfterAddDecorator) {
+  static addAfterAdd(proto: Object, name: string, pd: PropertyDescriptor) {
+    const method = pd.value
+    if (method == null) {
+      throw new Error(
+        `@afterAdd may only be specified for non-static functions that are not getters or setters`
+      )
+    }
+    const c: AfterAddDecorator = {name, f: method}
     EntityDeclarations.forPrototype(proto).afterAdds.push(c)
   }
 
-  static addAfterRemove(proto: Object, c: AfterRemoveDecorator) {
+  static addAfterRemove(proto: Object, name: string, pd: PropertyDescriptor) {
+    const method = pd.value
+    if (method == null) {
+      throw new Error(
+        `@afterRemove may only be specified for non-static functions that are not getters or setters`
+      )
+    }
+    const c: AfterRemoveDecorator = {name, f: method}
     EntityDeclarations.forPrototype(proto).afterRemoves.push(c)
   }
 
-  static addAfterChange(proto: Object, c: AfterChangeDecorator) {
+  static addAfterChange(proto: Object, name: string, pd: PropertyDescriptor) {
+    const method = pd.value
+    if (method == null) {
+      throw new Error(
+        `@afterChange may only be specified for non-static functions that are not getters or setters`
+      )
+    }
+    const c: AfterChangeDecorator = {name, f: method}
     EntityDeclarations.forPrototype(proto).afterChanges.push(c)
   }
 
   static addAfterPropertyChange(
     proto: Object,
-    c: AfterPropertyChangeDecorator
+    name: string,
+    property: string,
+    pd: PropertyDescriptor
   ) {
+    const method = pd.value
+    if (method == null) {
+      throw new Error(
+        `@afterRemove may only be specified for non-static functions that are not getters or setters`
+      )
+    }
+    const c: AfterPropertyChangeDecorator = {name, property, f: method}
     const apcs = EntityDeclarations.forPrototype(proto).afterPropertyChanges
     let a = apcs[c.property]
     if (a == null) {
