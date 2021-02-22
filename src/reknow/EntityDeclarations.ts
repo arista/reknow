@@ -15,6 +15,12 @@ import {HasManyOptions} from "./Types"
 import {HasOneOptions} from "./Types"
 import {BelongsToOptions} from "./Types"
 import {EntityClass} from "./Types"
+import {REACTION_USAGE} from "./Decorators"
+import {QUERY_USAGE} from "./Decorators"
+import {AFTER_ADD_USAGE} from "./Decorators"
+import {AFTER_REMOVE_USAGE} from "./Decorators"
+import {AFTER_CHANGE_USAGE} from "./Decorators"
+import {AFTER_PROPERTY_CHANGE_USAGE} from "./Decorators"
 
 /** Stores the declarations, typically made with @ decorators,
  * specified in an Entity class.  The declarations are associated with
@@ -84,12 +90,7 @@ export class EntityDeclarations {
   }
 
   static addReaction(proto: Object, name: string, pd: PropertyDescriptor) {
-    const method = pd.value
-    if (method == null) {
-      throw new Error(
-        `@reaction may only be specified for non-static non-getter/setter methods of an Entity, Entities, or Service class`
-      )
-    }
+    const method = this.getMethod(pd, REACTION_USAGE)
     const c: ReactionDecorator = {name, f: pd.value}
     EntityDeclarations.forPrototype(proto).reactions.push(c)
     replaceFunction(
@@ -107,12 +108,7 @@ export class EntityDeclarations {
   }
 
   static addQuery(proto: Object, name: string, pd: PropertyDescriptor) {
-    const getter = pd.get
-    if (getter == null) {
-      throw new Error(
-        `@query may only be specified for non-static getters of an Entity, Entities, or Service class`
-      )
-    }
+    const getter = this.getGetter(pd, QUERY_USAGE)
     const c: QueryDecorator = {name, f: getter}
     replaceFunction(
       proto,
@@ -131,36 +127,37 @@ export class EntityDeclarations {
   }
 
   static addAfterAdd(proto: Object, name: string, pd: PropertyDescriptor) {
-    const method = pd.value
-    if (method == null) {
-      throw new Error(
-        `@afterAdd may only be specified for non-static functions that are not getters or setters`
-      )
-    }
+    const method = this.getMethod(pd, AFTER_ADD_USAGE)
     const c: AfterAddDecorator = {name, f: method}
     EntityDeclarations.forPrototype(proto).afterAdds.push(c)
   }
 
   static addAfterRemove(proto: Object, name: string, pd: PropertyDescriptor) {
-    const method = pd.value
-    if (method == null) {
-      throw new Error(
-        `@afterRemove may only be specified for non-static functions that are not getters or setters`
-      )
-    }
+    const method = this.getMethod(pd, AFTER_REMOVE_USAGE)
     const c: AfterRemoveDecorator = {name, f: method}
     EntityDeclarations.forPrototype(proto).afterRemoves.push(c)
   }
 
   static addAfterChange(proto: Object, name: string, pd: PropertyDescriptor) {
-    const method = pd.value
-    if (method == null) {
-      throw new Error(
-        `@afterChange may only be specified for non-static functions that are not getters or setters`
-      )
-    }
+    const method = this.getMethod(pd, AFTER_CHANGE_USAGE)
     const c: AfterChangeDecorator = {name, f: method}
     EntityDeclarations.forPrototype(proto).afterChanges.push(c)
+  }
+
+  static getMethod(pd: PropertyDescriptor, message: string) {
+    const method = pd.value
+    if (method == null) {
+      throw new Error(message)
+    }
+    return method
+  }
+
+  static getGetter(pd: PropertyDescriptor, message: string) {
+    const getter = pd.get
+    if (getter == null) {
+      throw new Error(message)
+    }
+    return getter
   }
 
   static addAfterPropertyChange(
@@ -171,9 +168,7 @@ export class EntityDeclarations {
   ) {
     const method = pd.value
     if (method == null) {
-      throw new Error(
-        `@afterRemove may only be specified for non-static functions that are not getters or setters`
-      )
+      throw new Error(AFTER_PROPERTY_CHANGE_USAGE)
     }
     const c: AfterPropertyChangeDecorator = {name, property, f: method}
     const apcs = EntityDeclarations.forPrototype(proto).afterPropertyChanges

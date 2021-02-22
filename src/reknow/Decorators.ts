@@ -17,6 +17,21 @@ import {EntityClass} from "./Types"
 import {Entities} from "./Entities"
 import {Service} from "./Service"
 
+export const ACTION_USAGE =
+  "@action may only be specified for non-static setters or methods of an Entity, Entities, or Service class"
+export const REACTION_USAGE =
+  "@reaction may only be specified for non-static non-getter/setter methods of an Entity, Entities, or Service class"
+export const QUERY_USAGE =
+  "@query may only be specified for non-static getters of an Entity, Entities, or Service class"
+export const AFTER_ADD_USAGE =
+  "@afterAdd may only be specified for non-static non-getter/setter methods of an Entity"
+export const AFTER_REMOVE_USAGE =
+  "@afterRemove may only be specified for non-static non-getter/setter methods of an Entity"
+export const AFTER_CHANGE_USAGE =
+  "@afterChange may only be specified for non-static non-getter/setter methods of an Entity"
+export const AFTER_PROPERTY_CHANGE_USAGE =
+  "@afterPropertyChange may only be specified for non-static non-getter/setter methods of an Entity"
+
 export function action(target: any, name: string, pd: PropertyDescriptor) {
   if (
     typeof target === "object" &&
@@ -29,14 +44,10 @@ export function action(target: any, name: string, pd: PropertyDescriptor) {
     } else if (target instanceof Service) {
       ServiceDeclarations.addAction(target, name, pd)
     } else {
-      throw new Error(
-        `@action may only be specified for non-static setters or methods of an Entity, Entities, or Service class`
-      )
+      throw new Error(ACTION_USAGE)
     }
   } else {
-    throw new Error(
-      `@action may only be specified for non-static setters or methods of an Entity, Entities, or Service class`
-    )
+    throw new Error(ACTION_USAGE)
   }
 }
 
@@ -119,14 +130,10 @@ export function reaction(target: any, name: string, pd: PropertyDescriptor) {
     } else if (target instanceof Service) {
       ServiceDeclarations.addReaction(target, name, pd)
     } else {
-      throw new Error(
-        `@reaction may only be specified for non-static non-getter/setter methods of an Entity, Entities, or Service class`
-      )
+      throw new Error(REACTION_USAGE)
     }
   } else {
-    throw new Error(
-      `@reaction may only be specified for non-static non-getter/setter methods of an Entity, Entities, or Service class`
-    )
+    throw new Error(REACTION_USAGE)
   }
 }
 
@@ -139,14 +146,10 @@ export function query(target: any, name: string, pd: PropertyDescriptor) {
     } else if (target instanceof Service) {
       ServiceDeclarations.addQuery(target, name, pd)
     } else {
-      throw new Error(
-        `@query may only be specified for non-static getters of an Entity, Entities, or Service class`
-      )
+      throw new Error(QUERY_USAGE)
     }
   } else {
-    throw new Error(
-      `@query may only be specified for non-static getters of an Entity, Entities, or Service class`
-    )
+    throw new Error(QUERY_USAGE)
   }
 }
 
@@ -166,6 +169,7 @@ export function afterChange(target: any, name: string, pd: PropertyDescriptor) {
 }
 
 export function afterPropertyChange(property: string) {
+  // FIXME - only allow on Entity classes
   return (target: any, name: string, pd: PropertyDescriptor) => {
     addAfterChange(target, name, pd, property)
   }
@@ -184,8 +188,6 @@ function addAfterChange(
       EntityDeclarations.addAfterChange(target, name, pd)
     }
   } else {
-    throw new Error(
-      `@afterChange may only be specified for non-static functions that are not getters or setters`
-    )
+    throw new Error(AFTER_CHANGE_USAGE)
   }
 }

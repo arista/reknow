@@ -47,6 +47,7 @@ export abstract class Entity {
   }
 
   static getPropertyDescriptor(name: string): PropertyDescriptor {
+    // FIXME - search up the inheritance chain
     const pd = Object.getOwnPropertyDescriptor(this.prototype, name)
     if (pd == null) {
       throw new Error(`property or method "${name}" not found`)
