@@ -1,4 +1,5 @@
 import {Query} from "./Query"
+import {StateManager} from "./StateManager"
 
 const MAX_INVALIDATE_CALL_COUNT = 20
 
@@ -10,6 +11,8 @@ const MAX_INVALIDATE_CALL_COUNT = 20
  **/
 export class PendingQueryNotifications {
   queue: Array<Query<any>> = []
+
+  constructor(public stateManager: StateManager) {}
 
   add(query: Query<any>) {
     this.queue.push(query)
@@ -45,8 +48,19 @@ export class PendingQueryNotifications {
             )
           }
 
-          if (query.onInvalidate) {
-            query.onInvalidate()
+          const onInvalidate = query.onInvalidate
+          if (onInvalidate) {
+            this.stateManager.withDebugEvent(
+              () => {
+                return {
+                  type: "RunQueryOnInvalidateDebugEvent",
+                  query: query.name,
+                }
+              },
+              () => {
+                onInvalidate()
+              }
+            )
           }
         }
       } finally {

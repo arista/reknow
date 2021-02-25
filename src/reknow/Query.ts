@@ -111,22 +111,32 @@ export class Query<T> extends ChangeSubscriber {
   }
 
   notifyChangeSubscriber() {
-    this.cachedValue = null
+    this.stateManager.withDebugEvent(
+      () => {
+        return {
+          type: "InvalidateQueryDebugEvent",
+          query: this.name,
+        }
+      },
+      () => {
+        this.cachedValue = null
 
-    if (this.isEvaluating) {
-      this.wasNotifiedWhileEvaluating = true
-    }
+        if (this.isEvaluating) {
+          this.wasNotifiedWhileEvaluating = true
+        }
 
-    // If this has an invalidation handler, then queue it for
-    // notification (unless it's already queued)
-    if (this.onInvalidate && !this.isQueuedToCallOnInvalidate) {
-      this.isQueuedToCallOnInvalidate = true
-      this.stateManager.addPendingQueryNotification(this)
-    }
+        // If this has an invalidation handler, then queue it for
+        // notification (unless it's already queued)
+        if (this.onInvalidate && !this.isQueuedToCallOnInvalidate) {
+          this.isQueuedToCallOnInvalidate = true
+          this.stateManager.addPendingQueryNotification(this)
+        }
 
-    // If other subscribers depend on the result of this Query, notify
-    // them of a change
-    this.publisher.notifyChangeSubscribers()
+        // If other subscribers depend on the result of this Query, notify
+        // them of a change
+        this.publisher.notifyChangeSubscribers()
+      }
+    )
   }
 
   get hasCachedValue() {

@@ -85,19 +85,31 @@ export class EntityState<E extends Entity> extends Proxied<E, E> {
   }
 
   propertySet(prop: string, value: any) {
-    this.checkMutable()
+    return this.stateManager.withDebugEvent(
+      () => {
+        return {
+          type: "ChangePropertyDebugEvent",
+          entity: this.changePublisherName,
+          property: prop,
+          value,
+        }
+      },
+      () => {
+        this.checkMutable()
 
-    if (prop === this.entitiesState.idPropertyName) {
-      throw new Error(
-        `An @id property may not be modified after an Entity has been added`
-      )
-    }
+        if (prop === this.entitiesState.idPropertyName) {
+          throw new Error(
+            `An @id property may not be modified after an Entity has been added`
+          )
+        }
 
-    if (this.isRemoved) {
-      throw new Error(`A removed entity may not be mutated`)
-    }
+        if (this.isRemoved) {
+          throw new Error(`A removed entity may not be mutated`)
+        }
 
-    return super.propertySet(prop, value)
+        return super.propertySet(prop, value)
+      }
+    )
   }
 
   propertyChanged(prop: string, hadValue: boolean, oldValue: any, value: any) {
@@ -122,19 +134,30 @@ export class EntityState<E extends Entity> extends Proxied<E, E> {
   }
 
   propertyDelete(prop: string) {
-    this.checkMutable()
+    return this.stateManager.withDebugEvent(
+      () => {
+        return {
+          type: "DeletePropertyDebugEvent",
+          entity: this.changePublisherName,
+          property: prop,
+        }
+      },
+      () => {
+        this.checkMutable()
 
-    if (prop === this.entitiesState.idPropertyName) {
-      throw new Error(
-        `An @id property may not be deleted after an Entity has been added`
-      )
-    }
+        if (prop === this.entitiesState.idPropertyName) {
+          throw new Error(
+            `An @id property may not be deleted after an Entity has been added`
+          )
+        }
 
-    if (this.isRemoved) {
-      throw new Error(`A removed entity may not be mutated`)
-    }
+        if (this.isRemoved) {
+          throw new Error(`A removed entity may not be mutated`)
+        }
 
-    return super.propertyDelete(prop)
+        return super.propertyDelete(prop)
+      }
+    )
   }
 
   propertyDeleted(prop: string, hadValue: boolean, oldValue: any) {

@@ -294,39 +294,49 @@ export class EntitiesState<E extends Entity> extends Proxied<
       ? this.byId[entityId]
       : new EntityState(this, entity, entityId)
 
-    if (isExistingEntity) {
-      const esproxy = entityState.proxy
-      copyProperties(entity, esproxy)
-    } else {
-      addNonEnumerableProperty(entity, ENTITY_STATE_KEY, entityState)
+    return this.stateManager.withDebugEvent(
+      () => {
+        return {
+          type: "AddDebugEvent",
+          entity: entityState.changePublisherName,
+        }
+      },
+      () => {
+        if (isExistingEntity) {
+          const esproxy = entityState.proxy
+          copyProperties(entity, esproxy)
+        } else {
+          addNonEnumerableProperty(entity, ENTITY_STATE_KEY, entityState)
 
-      this.invalidateProxy()
-      this.addEntityToEntitiesById(entityId, entityState)
-      this.notifySubscribersOfChange()
-      this.updateIndexesOnEntityAdded(entityState)
-      this.stateManager.recordEntityAdded(entityState)
-      entityState.addPendingAfterAdd()
+          this.invalidateProxy()
+          this.addEntityToEntitiesById(entityId, entityState)
+          this.notifySubscribersOfChange()
+          this.updateIndexesOnEntityAdded(entityState)
+          this.stateManager.recordEntityAdded(entityState)
+          entityState.addPendingAfterAdd()
 
-      // Add the reactions
-      this.addReactions(entityState)
+          // Add the queries defined on the Entity class
+          this.addQueries(entityState)
 
-      // Add the queries defined on the Entity class
-      this.addQueries(entityState)
-    }
+          // Add the reactions
+          this.addReactions(entityState)
+        }
 
-    // Keep track of the added entity, to handle adding a graph of
-    // objects
-    addedEntities.set(entitySource, entityState.proxy)
+        // Keep track of the added entity, to handle adding a graph of
+        // objects
+        addedEntities.set(entitySource, entityState.proxy)
 
-    // Now go back and add the relationships that were extracted
-    this.addEntityRelationships(
-      addedEntities,
-      entityState.proxy,
-      entityRelationships,
-      update
+        // Now go back and add the relationships that were extracted
+        this.addEntityRelationships(
+          addedEntities,
+          entityState.proxy,
+          entityRelationships,
+          update
+        )
+
+        return entityState.proxy
+      }
     )
-
-    return entityState.proxy
   }
 
   addEntityToEntitiesById(entityId: string, entityState: EntityState<E>) {
@@ -423,17 +433,27 @@ export class EntitiesState<E extends Entity> extends Proxied<
     }
     entityState.isRemoved = true
 
-    entityState.removeReactions()
-    entityState.removeQueries()
-    entityState.removeChangePublishers()
+    return this.stateManager.withDebugEvent(
+      () => {
+        return {
+          type: "RemoveDebugEvent",
+          entity: entityState.changePublisherName,
+        }
+      },
+      () => {
+        entityState.removeReactions()
+        entityState.removeQueries()
+        entityState.removeChangePublishers()
 
-    this.invalidateProxy()
-    this.deleteEntityFromEntitiesById(id)
-    this.notifySubscribersOfChange()
-    this.removeRelationships(entity)
-    this.updateIndexesOnEntityRemoved(entityState)
-    this.stateManager.recordEntityRemoved(entityState)
-    entityState.addPendingAfterRemove()
+        this.invalidateProxy()
+        this.deleteEntityFromEntitiesById(id)
+        this.notifySubscribersOfChange()
+        this.removeRelationships(entity)
+        this.updateIndexesOnEntityRemoved(entityState)
+        this.stateManager.recordEntityRemoved(entityState)
+        entityState.addPendingAfterRemove()
+      }
+    )
   }
 
   removeRelationships(entity: E) {

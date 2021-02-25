@@ -26,16 +26,19 @@ import {StateDumper} from "./StateDumper"
 import {Query} from "./Query"
 import {QueryNotifyAt} from "./Types"
 import {PendingQueryNotifications} from "./PendingQueryNotifications"
+import {DebugEvent} from "./DebugEvents"
 
 export interface StateManagerConfig {
   entities?: EntitiesDefinitionTree
   services?: ServiceDefinitionTree
   listener?: Listener<Transaction>
+  debugListener?: Listener<DebugEvent>
 }
 
 export class StateManager {
   transaction: Transaction | null = null
   transactionListeners = new Listeners<Transaction>()
+  debugListener: Listener<DebugEvent> | null
   entitiesStates: Array<EntitiesState<any>> = []
   serviceStates: Array<ServiceState> = []
   currentSelector: Selector<any> | null = null
@@ -43,13 +46,17 @@ export class StateManager {
   // FIXME - remove this
   queuedChangeNotifications: Array<ChangeSubscriber> | null = null
   pendingEffects: Array<EntityState<any>> | null = null
-  pendingQueryNotificationsTransactionEnd = new PendingQueryNotifications()
-  pendingQueryNotificationsAfterTransaction = new PendingQueryNotifications()
+  pendingQueryNotificationsTransactionEnd = new PendingQueryNotifications(this)
+  pendingQueryNotificationsAfterTransaction = new PendingQueryNotifications(
+    this
+  )
+  debugEventStack: Array<DebugEvent> = []
 
   constructor(config: StateManagerConfig) {
     if (config.listener != null) {
       this.transactionListeners.add(config.listener)
     }
+    this.debugListener = config.debugListener || null
     this.initializeEntities(config.entities)
     this.initializeServices(config.services)
     this.initialize()
@@ -127,36 +134,43 @@ export class StateManager {
   }
 
   whileInAction<T>(action: Action, f: () => T): T {
-    if (this.transaction == null) {
-      const transaction = {action, stateChanges: []}
-      const ret = this.withTransaction(transaction, () => {
-        const ret = f()
-        // Call onInvalidate() on any queries/reactions that were
-        // invalidated during the transaction and want to be notified
-        // before the transaction ends (typically @reactions)
-        this.pendingQueryNotificationsTransactionEnd.notify()
-        return ret
-      })
+    return this.withDebugEvent(
+      () => {
+        return {type: "ActionDebugEvent", action}
+      },
+      () => {
+        if (this.transaction == null) {
+          const transaction = {action, stateChanges: []}
+          const ret = this.withTransaction(transaction, () => {
+            const ret = f()
+            // Call onInvalidate() on any queries/reactions that were
+            // invalidated during the transaction and want to be notified
+            // before the transaction ends (typically @reactions)
+            this.pendingQueryNotificationsTransactionEnd.notify()
+            return ret
+          })
 
-      // Call onInvalidate() on any queries/reactions that were
-      // invalidated during the transaction, and want to be notified
-      // after the transaction ends
-      this.pendingQueryNotificationsAfterTransaction.notify()
+          // Call onInvalidate() on any queries/reactions that were
+          // invalidated during the transaction, and want to be notified
+          // after the transaction ends
+          this.pendingQueryNotificationsAfterTransaction.notify()
 
-      // Apply any effects
-      this.applyPendingEffects()
-      // Pass the transaction to any listeners
-      this.transactionListeners.notify(transaction)
+          // Apply any effects
+          this.applyPendingEffects()
+          // Pass the transaction to any listeners
+          this.transactionListeners.notify(transaction)
 
-      // If this is the outermost transaction and it's returning an
-      // Entity, make sure we're returning the latest Proxy.
-      // Otherwise, query notifications that modify the Entity after
-      // the original function f() returned it could already have
-      // rendered that Entity proxy stale.
-      return currentEntity(ret)
-    } else {
-      return f()
-    }
+          // If this is the outermost transaction and it's returning an
+          // Entity, make sure we're returning the latest Proxy.
+          // Otherwise, query notifications that modify the Entity after
+          // the original function f() returned it could already have
+          // rendered that Entity proxy stale.
+          return currentEntity(ret)
+        } else {
+          return f()
+        }
+      }
+    )
   }
 
   action<T>(f: () => T): T {
@@ -273,7 +287,17 @@ export class StateManager {
       f,
       name,
       () => {
-        reaction.value
+        this.withDebugEvent(
+          () => {
+            return {
+              type: "RunReactionDebugEvent",
+              reaction: reaction.name,
+            }
+          },
+          () => {
+            reaction.value
+          }
+        )
       },
       "transactionEnd"
     )
@@ -311,5 +335,41 @@ export class StateManager {
       this.pendingEffects = []
     }
     this.pendingEffects.push(e)
+  }
+
+  withDebugEvent<T>(e: () => DebugEvent, f: () => T): T {
+    if (this.debugListener != null) {
+      const event = e()
+      // If the event stack is empty, then we'll report this event
+      // when it's done
+      if (this.debugEventStack.length == 0) {
+        this.debugEventStack.push(event)
+        try {
+          return f()
+        } finally {
+          const topEvent = this.debugEventStack.pop()
+          if (topEvent != null) {
+            this.debugListener(topEvent)
+          }
+        }
+      }
+      // If the event stack is not empty, then push the event onto the
+      // stack and onto the top-most event's children
+      else {
+        const topEvent = this.debugEventStack[this.debugEventStack.length - 1]
+        if (topEvent.children == null) {
+          topEvent.children = []
+        }
+        topEvent.children.push(event)
+        this.debugEventStack.push(event)
+        try {
+          return f()
+        } finally {
+          this.debugEventStack.pop()
+        }
+      }
+    } else {
+      return f()
+    }
   }
 }

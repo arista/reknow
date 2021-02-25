@@ -14,7 +14,17 @@ export class PendingEffects<E extends Entity> {
 
   apply() {
     for (const effect of this.effects) {
-      effect.apply(this.entityState)
+      this.entityState.stateManager.withDebugEvent(
+        () => {
+          return {
+            type: "RunEffectDebugEvent",
+            effect: `${this.entityState.changePublisherName}.${effect.name}`,
+          }
+        },
+        () => {
+          effect.apply(this.entityState)
+        }
+      )
     }
   }
 
@@ -53,11 +63,16 @@ export class PendingEffects<E extends Entity> {
 
 abstract class PendingEffect {
   abstract apply<E extends Entity>(entityState: EntityState<E>): void
+  abstract get name(): string
 }
 
 class PendingAddEffect extends PendingEffect {
   constructor(public e: AfterAddDecorator) {
     super()
+  }
+
+  get name() {
+    return this.e.name
   }
 
   apply<E extends Entity>(entityState: EntityState<E>): void {
@@ -70,6 +85,10 @@ class PendingRemoveEffect extends PendingEffect {
     super()
   }
 
+  get name() {
+    return this.e.name
+  }
+
   apply<E extends Entity>(entityState: EntityState<E>): void {
     this.e.f.call(entityState.proxy)
   }
@@ -80,6 +99,10 @@ class PendingChangeEffect extends PendingEffect {
     super()
   }
 
+  get name() {
+    return this.e.name
+  }
+
   apply<E extends Entity>(entityState: EntityState<E>): void {
     this.e.f.call(entityState.proxy)
   }
@@ -88,6 +111,10 @@ class PendingChangeEffect extends PendingEffect {
 class PendingChangePropertyEffect extends PendingEffect {
   constructor(public e: AfterPropertyChangeDecorator, public oldValue: any) {
     super()
+  }
+
+  get name() {
+    return this.e.name
   }
 
   apply<E extends Entity>(entityState: EntityState<E>): void {

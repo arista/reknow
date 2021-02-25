@@ -7,14 +7,36 @@ export class ChangePublisher {
   constructor(public name: string, public stateManager: StateManager) {}
 
   addChangeSubscriber(s: ChangeSubscriber) {
-    this.subscribers.push(s)
+    this.stateManager.withDebugEvent(
+      () => {
+        return {
+          type: "AddSubscriberDebugEvent",
+          publisher: this.name,
+          subscriber: s.name,
+        }
+      },
+      () => {
+        this.subscribers.push(s)
+      }
+    )
   }
 
   removeChangeSubscriber(s: ChangeSubscriber) {
-    const ix = this.subscribers.indexOf(s)
-    if (ix >= 0) {
-      this.subscribers.splice(ix, 1)
-    }
+    this.stateManager.withDebugEvent(
+      () => {
+        return {
+          type: "RemoveSubscriberDebugEvent",
+          publisher: this.name,
+          subscriber: s.name,
+        }
+      },
+      () => {
+        const ix = this.subscribers.indexOf(s)
+        if (ix >= 0) {
+          this.subscribers.splice(ix, 1)
+        }
+      }
+    )
   }
 
   notifyChangeSubscribers() {
@@ -22,7 +44,18 @@ export class ChangePublisher {
       const subscribers = this.subscribers
       this.subscribers = []
       for (const subscriber of subscribers) {
-        subscriber.notifyChangeSubscriber()
+        this.stateManager.withDebugEvent(
+          () => {
+            return {
+              type: "NotifySubscriberDebugEvent",
+              publisher: this.name,
+              subscriber: subscriber.name,
+            }
+          },
+          () => {
+            subscriber.notifyChangeSubscriber()
+          }
+        )
       }
     }
   }
