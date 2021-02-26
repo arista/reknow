@@ -13,6 +13,7 @@ export type DebugEvent =
   | RunQueryOnInvalidateDebugEvent
   | RunReactionDebugEvent
   | RunEffectDebugEvent
+  | RunQueryDebugEvent
 
 export interface DebugEventBase {
   children?: Array<DebugEvent>
@@ -84,6 +85,11 @@ export interface RunEffectDebugEvent extends DebugEventBase {
   effect: string
 }
 
+export interface RunQueryDebugEvent extends DebugEventBase {
+  type: "RunQueryDebugEvent"
+  query: string
+}
+
 export function stringifyDebugEvent(event: DebugEvent) {
   return stringifyDebugEventWithIndent(event, 0)
 }
@@ -132,6 +138,8 @@ function toEventString(event: DebugEvent): string {
       return `Run reaction for query "${event.reaction}"`
     case "RunEffectDebugEvent":
       return `Run effect "${event.effect}"`
+    case "RunQueryDebugEvent":
+      return `Run query "${event.query}"`
   }
 }
 

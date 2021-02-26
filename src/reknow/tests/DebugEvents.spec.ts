@@ -304,16 +304,20 @@ describe("DebugEvents", () => {
         `Action EntitiesAction "E1.create()"\n` +
         `  Add Entity "E1#v1"\n` +
         `    Action "NoAction"\n` +
-        `      Add subscriber "E1#v1.reaction1" to "E1#v1.combine2"\n` +
-        `      Add subscriber "E1#v1.combine2" to "E1#v1.v1"\n` +
-        `      Add subscriber "E1#v1.combine2" to "E1#v1.v2"\n` +
-        `      Set Entity property "E1#v1.v3" to abc:10\n` +
+        `      Run query "E1#v1.reaction1"\n` +
+        `        Add subscriber "E1#v1.reaction1" to "E1#v1.combine2"\n` +
+        `        Run query "E1#v1.combine2"\n` +
+        `          Add subscriber "E1#v1.combine2" to "E1#v1.v1"\n` +
+        `          Add subscriber "E1#v1.combine2" to "E1#v1.v2"\n` +
+        `        Set Entity property "E1#v1.v3" to abc:10\n` +
         `  Add Entity "E1#v2"\n` +
         `    Action "NoAction"\n` +
-        `      Add subscriber "E1#v2.reaction1" to "E1#v2.combine2"\n` +
-        `      Add subscriber "E1#v2.combine2" to "E1#v2.v1"\n` +
-        `      Add subscriber "E1#v2.combine2" to "E1#v2.v2"\n` +
-        `      Set Entity property "E1#v2.v3" to def:15\n` +
+        `      Run query "E1#v2.reaction1"\n` +
+        `        Add subscriber "E1#v2.reaction1" to "E1#v2.combine2"\n` +
+        `        Run query "E1#v2.combine2"\n` +
+        `          Add subscriber "E1#v2.combine2" to "E1#v2.v1"\n` +
+        `          Add subscriber "E1#v2.combine2" to "E1#v2.v2"\n` +
+        `        Set Entity property "E1#v2.v3" to def:15\n` +
         `Action EntitiesAction "E1.updateEntity()"\n` +
         `  Action EntityAction "E1#v1.update1()"\n` +
         `    Set Entity property "E1#v1.v1" to abc!\n` +
@@ -332,12 +336,14 @@ describe("DebugEvents", () => {
         `  Run onInvalidate for query "E1#v1.reaction1"\n` +
         `    Run reaction for query "E1#v1.reaction1"\n` +
         `      Remove subscriber "E1#v1.reaction1" from "E1#v1.combine2"\n` +
-        `      Add subscriber "E1#v1.reaction1" to "E1#v1.combine2"\n` +
-        `      Remove subscriber "E1#v1.combine2" from "E1#v1.v1"\n` +
-        `      Remove subscriber "E1#v1.combine2" from "E1#v1.v2"\n` +
-        `      Add subscriber "E1#v1.combine2" to "E1#v1.v1"\n` +
-        `      Add subscriber "E1#v1.combine2" to "E1#v1.v2"\n` +
-        `      Set Entity property "E1#v1.v3" to abc!:20\n`
+        `      Run query "E1#v1.reaction1"\n` +
+        `        Add subscriber "E1#v1.reaction1" to "E1#v1.combine2"\n` +
+        `        Remove subscriber "E1#v1.combine2" from "E1#v1.v1"\n` +
+        `        Remove subscriber "E1#v1.combine2" from "E1#v1.v2"\n` +
+        `        Run query "E1#v1.combine2"\n` +
+        `          Add subscriber "E1#v1.combine2" to "E1#v1.v1"\n` +
+        `          Add subscriber "E1#v1.combine2" to "E1#v1.v2"\n` +
+        `        Set Entity property "E1#v1.v3" to abc!:20\n`
 
       const eventsStr = events.map((e) => R.stringifyDebugEvent(e)).join("")
       expect(eventsStr).toEqual(expected)

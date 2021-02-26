@@ -83,9 +83,19 @@ export class Query<T> extends ChangeSubscriber {
       )
     }
     this.removeChangePublishers()
-    const ret = this.stateManager.whileEvaluatingChangeSubscriber(
-      this,
-      this.query
+    const ret = this.stateManager.withDebugEvent(
+      () => {
+        return {
+          type: "RunQueryDebugEvent",
+          query: this.name,
+        }
+      },
+      () => {
+        return this.stateManager.whileEvaluatingChangeSubscriber(
+          this,
+          this.query
+        )
+      }
     )
 
     // If the return value is a Proxied (Entity, byId, or index node),
