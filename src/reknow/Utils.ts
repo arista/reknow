@@ -118,7 +118,7 @@ export function replaceFunction(
         pd.get = replacer(pd.get, name, "getter") as any
       }
 
-      // If the pd was provided in a decorator, then modifying it
+      // If the pd was provided in a decorator, then modifying its
       // get/set/value in place would be enough.  But if the pd was
       // found later, then it needs to be assigned explicitly.  So
       // just assigning it explicitly all the time seems to work, and
