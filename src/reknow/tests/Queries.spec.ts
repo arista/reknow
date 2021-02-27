@@ -169,6 +169,7 @@ describe("Query", () => {
     }
   }
   let state!: ReturnType<typeof createState>
+  let stateManager!: R.StateManager
   let User!: typeof state.User
   let Job!: typeof state.Job
   let I1!: typeof state.I1
@@ -178,6 +179,7 @@ describe("Query", () => {
   let S1!: typeof state.S1
   beforeEach(() => {
     state = createState()
+    stateManager = state.stateManager
     User = state.User
     Job = state.Job
     I1 = state.I1
@@ -1324,6 +1326,22 @@ describe("Query", () => {
         expect(q1.value).toBe(0)
         expect(callCount).toBe(2)
       })
+    })
+  })
+  describe("two queries referencing the same query", () => {
+    it("should invalidate both of them when the referenced query invalidates", ()=>{
+      const u1 = state.action(() => I4.entities.add(new I4("m", 10), "id1"))
+      const q1 = stateManager.createQuery(()=>u1.age)
+      const q2 = stateManager.createQuery(()=>q1.value)
+      const q3 = stateManager.createQuery(()=>q1.value)
+
+      expect(q2.value).toBe(10)
+      expect(q3.value).toBe(10)
+
+      state.action(()=>u1.age++)
+
+      expect(q2.value).toBe(11)
+      expect(q3.value).toBe(11)
     })
   })
   // FIXME - add tests for relationships?

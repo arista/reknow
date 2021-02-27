@@ -59,6 +59,12 @@ export class Query<T> extends ChangeSubscriber {
       )
     }
 
+    if (this.stateManager.currentChangeSubscriber != null) {
+      this.stateManager.currentChangeSubscriber.addChangePublisher(
+        this.publisher
+      )
+    }
+
     this.wasNotifiedWhileEvaluating = false
     this.isEvaluating = true
     try {
@@ -77,11 +83,6 @@ export class Query<T> extends ChangeSubscriber {
   }
 
   evaluate(): T {
-    if (this.stateManager.currentChangeSubscriber != null) {
-      this.stateManager.currentChangeSubscriber.addChangePublisher(
-        this.publisher
-      )
-    }
     this.removeChangePublishers()
     const ret = this.stateManager.withDebugEvent(
       () => {
