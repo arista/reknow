@@ -14,6 +14,9 @@ export type DebugEvent =
   | RunReactionDebugEvent
   | RunEffectDebugEvent
   | RunQueryDebugEvent
+  | RunUseQueryDebugEvent
+  | UnmountUseQueryDebugEvent
+  | UseQueryForceRerenderDebugEvent
 
 export interface DebugEventBase {
   children?: Array<DebugEvent>
@@ -90,6 +93,21 @@ export interface RunQueryDebugEvent extends DebugEventBase {
   query: string
 }
 
+export interface RunUseQueryDebugEvent extends DebugEventBase {
+  type: "RunUseQueryDebugEvent"
+  query: string
+}
+
+export interface UnmountUseQueryDebugEvent extends DebugEventBase {
+  type: "UnmountUseQueryDebugEvent"
+  query: string
+}
+
+export interface UseQueryForceRerenderDebugEvent extends DebugEventBase {
+  type: "UseQueryForceRerenderDebugEvent"
+  query: string
+}
+
 export function stringifyDebugEvent(event: DebugEvent) {
   return stringifyDebugEventWithIndent(event, 0)
 }
@@ -140,6 +158,12 @@ function toEventString(event: DebugEvent): string {
       return `Run effect "${event.effect}"`
     case "RunQueryDebugEvent":
       return `Run query "${event.query}"`
+    case "RunUseQueryDebugEvent":
+      return `Run useQuery "${event.query}"`
+    case "UnmountUseQueryDebugEvent":
+      return `Unmount useQuery "${event.query}"`
+    case "UseQueryForceRerenderDebugEvent":
+      return `useQuery force re-render "${event.query}"`
   }
 }
 
