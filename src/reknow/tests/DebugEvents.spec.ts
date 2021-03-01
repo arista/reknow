@@ -343,7 +343,8 @@ describe("DebugEvents", () => {
         `        Run query "E1#v1.combine2"\n` +
         `          Add subscriber "E1#v1.combine2" to "E1#v1.v1"\n` +
         `          Add subscriber "E1#v1.combine2" to "E1#v1.v2"\n` +
-        `        Set Entity property "E1#v1.v3" to abc!:20\n`
+        `        Set Entity property "E1#v1.v3" to abc!:20\n` +
+        `  Run onInvalidate for query "E1#v1.combine2"\n`
 
       const eventsStr = events.map((e) => R.stringifyDebugEvent(e)).join("")
       expect(eventsStr).toEqual(expected)

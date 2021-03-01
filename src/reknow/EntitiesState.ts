@@ -524,7 +524,12 @@ export class EntitiesState<E extends Entity> extends Proxied<
       const f = () => cdecl.f.apply(entityState.proxy)
       const query: Query<any> = this.stateManager.createQuery(
         f,
-        `${this.name}#${entityState.id}.${cdecl.name}`
+        `${this.name}#${entityState.id}.${cdecl.name}`,
+        // If a query on an Entity is invalidated, notify any
+        // subscribers looking for any change to an Entity (such as
+        // Queries that return the entity), just like we would if a
+        // property on the Entity was invalidated.
+        ()=>entityState.notifySubscribersOfChange()
       )
       entityState.queries.push(query)
       entityState.queriesByName[cdecl.name] = query
