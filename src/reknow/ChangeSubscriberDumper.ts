@@ -58,8 +58,8 @@ export class ChangeSubscriberDumper {
 
   dumpEntities(e: Entities<any>) {
     let ret: any = {}
-    for (const id in e.entitiesById) {
-      const en = e.entitiesById[id]
+    for (const id in e.byId) {
+      const en = e.byId[id]
       const es = en.entityState
       ret[id] = this.dumpObjectChangePublishers(es._changePublishers)
     }

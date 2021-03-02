@@ -48,87 +48,87 @@ describe("Changing Object Identities", () => {
   describe("Entity", () => {
     it("should change identity if a property changes", () => {
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
-      expect(Users.entitiesById["user#1"]).toBe(u1)
+      expect(Users.byId["user#1"]).toBe(u1)
       action(() => (u1.name = "harriet"))
-      expect(Users.entitiesById["user#1"]).toEqual(u1)
-      expect(Users.entitiesById["user#1"]).not.toBe(u1)
+      expect(Users.byId["user#1"]).toEqual(u1)
+      expect(Users.byId["user#1"]).not.toBe(u1)
     })
     it("should change identity if a property is added", () => {
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
-      expect(Users.entitiesById["user#1"]).toBe(u1)
+      expect(Users.byId["user#1"]).toBe(u1)
       action(() => ((u1 as any).age = 14))
-      expect(Users.entitiesById["user#1"]).toEqual(u1)
-      expect(Users.entitiesById["user#1"]).not.toBe(u1)
+      expect(Users.byId["user#1"]).toEqual(u1)
+      expect(Users.byId["user#1"]).not.toBe(u1)
     })
     it("should change identity if a property is deleted", () => {
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
-      expect(Users.entitiesById["user#1"]).toBe(u1)
+      expect(Users.byId["user#1"]).toBe(u1)
       action(() => delete u1.name)
-      expect(Users.entitiesById["user#1"]).toEqual(u1)
-      expect(Users.entitiesById["user#1"]).not.toBe(u1)
+      expect(Users.byId["user#1"]).toEqual(u1)
+      expect(Users.byId["user#1"]).not.toBe(u1)
     })
     it("should not change identity if a property is changed to the same value", () => {
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
-      expect(Users.entitiesById["user#1"]).toBe(u1)
+      expect(Users.byId["user#1"]).toBe(u1)
       action(() => (u1.name = "daryl"))
-      expect(Users.entitiesById["user#1"]).toBe(u1)
+      expect(Users.byId["user#1"]).toBe(u1)
     })
     it("should not change identity if a non-existent property is deleted", () => {
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
-      expect(Users.entitiesById["user#1"]).toBe(u1)
+      expect(Users.byId["user#1"]).toBe(u1)
       action(() => delete u1.age)
-      expect(Users.entitiesById["user#1"]).toBe(u1)
+      expect(Users.byId["user#1"]).toBe(u1)
     })
     it("should not change identity if another entity is changed", () => {
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
       const u2 = action(() => Users.add(new User("mark"), "user#2"))
-      expect(Users.entitiesById["user#1"]).toBe(u1)
+      expect(Users.byId["user#1"]).toBe(u1)
       action(() => (u2.name = "harriet"))
-      expect(Users.entitiesById["user#1"]).toEqual(u1)
-      expect(Users.entitiesById["user#1"]).toBe(u1)
-      expect(Users.entitiesById["user#2"]).toEqual(u2)
-      expect(Users.entitiesById["user#2"]).not.toBe(u2)
+      expect(Users.byId["user#1"]).toEqual(u1)
+      expect(Users.byId["user#1"]).toBe(u1)
+      expect(Users.byId["user#2"]).toEqual(u2)
+      expect(Users.byId["user#2"]).not.toBe(u2)
     })
   })
-  describe("Entities.entitiesById", () => {
+  describe("Entities.byId", () => {
     it("should not change identity if a property changes", () => {
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
-      const byId = Users.entitiesById
+      const byId = Users.byId
       action(() => (u1.name = "harriet"))
-      expect(Users.entitiesById).toBe(byId)
-      expect(Users.entitiesById).toEqual(byId)
+      expect(Users.byId).toBe(byId)
+      expect(Users.byId).toEqual(byId)
     })
     it("should not change identity if a property is added", () => {
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
-      const byId = Users.entitiesById
+      const byId = Users.byId
       action(() => ((u1 as any).age = 14))
-      expect(Users.entitiesById).toBe(byId)
-      expect(Users.entitiesById).toEqual(byId)
+      expect(Users.byId).toBe(byId)
+      expect(Users.byId).toEqual(byId)
     })
     it("should not change identity if a property is deleted", () => {
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
-      const byId = Users.entitiesById
+      const byId = Users.byId
       action(() => delete u1.name)
-      expect(Users.entitiesById).toBe(byId)
-      expect(Users.entitiesById).toEqual(byId)
+      expect(Users.byId).toBe(byId)
+      expect(Users.byId).toEqual(byId)
     })
     it("should not change identity if a property is changed to the same value", () => {
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
-      const byId = Users.entitiesById
+      const byId = Users.byId
       action(() => (u1.name = "daryl"))
-      expect(Users.entitiesById).toBe(byId)
+      expect(Users.byId).toBe(byId)
     })
     it("should not change identity if a non-existent property is deleted", () => {
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
-      const byId = Users.entitiesById
+      const byId = Users.byId
       action(() => delete u1.age)
-      expect(Users.entitiesById).toBe(byId)
+      expect(Users.byId).toBe(byId)
     })
     it("should change identity if an entity is added", () => {
-      const byId = Users.entitiesById
+      const byId = Users.byId
       const u1 = action(() => Users.add(new User("daryl"), "user#1"))
-      expect(Users.entitiesById).not.toBe(byId)
-      expect(Users.entitiesById).toEqual(byId)
+      expect(Users.byId).not.toBe(byId)
+      expect(Users.byId).toEqual(byId)
     })
   })
   describe("Indexes", () => {
@@ -476,7 +476,7 @@ describe("Changing Object Identities", () => {
 
       // Changing a value that doesn't change the result should not
       // return a new result
-      m.action(() => (E1s.entitiesById.id1.v1 = 15))
+      m.action(() => (E1s.byId.id1.v1 = 15))
       const r2 = E1s.v2s
       expect(r2).toEqual([10, 20, 30])
       expect(v2scalled).toBe(1)

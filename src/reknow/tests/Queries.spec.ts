@@ -100,7 +100,7 @@ describe("Query", () => {
 
       @R.query get entitiesCount() {
         entitiesCountCount++
-        return Object.keys(I4.entities.entitiesById).length
+        return Object.keys(I4.entities.byId).length
       }
 
       static get entitiesCountCount() {
@@ -127,7 +127,7 @@ describe("Query", () => {
     class _S1 extends R.Service {
       @R.query get i4Count() {
         i4CountCount++
-        return Object.keys(I4.entities.entitiesById).length
+        return Object.keys(I4.entities.byId).length
       }
       get i4CountCount() {
         return i4CountCount
@@ -324,89 +324,89 @@ describe("Query", () => {
       testInvalidation(query, action, true)
     })
   })
-  describe("A Query that depends on a property of entitiesById", () => {
+  describe("A Query that depends on a property of byId", () => {
     it("should invalidate if an instance is added with that id", () => {
-      const query = () => User.entities.entitiesById.id1 != null
+      const query = () => User.entities.byId.id1 != null
       const action = () => User.entities.add(new User("a", 10), "id1")
       testInvalidation(query, action, true)
     })
     it("should invalidate if an instance is removed with that id", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
-      const query = () => User.entities.entitiesById.id1 != null
+      const query = () => User.entities.byId.id1 != null
       const action = () => u.removeEntity()
       testInvalidation(query, action, true)
     })
     it("should not invalidate if an instance with that id is changed", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
-      const query = () => User.entities.entitiesById.id1 != null
+      const query = () => User.entities.byId.id1 != null
       const action = () => u.age++
       testInvalidation(query, action, false)
     })
     it("should not invalidate if an instance is added with a different id", () => {
-      const query = () => User.entities.entitiesById.id1 != null
+      const query = () => User.entities.byId.id1 != null
       const action = () => User.entities.add(new User("a", 10), "id2")
       testInvalidation(query, action, false)
     })
     it("should not invalidate if an instance is removed with a different id", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id2"))
-      const query = () => User.entities.entitiesById.id1 != null
+      const query = () => User.entities.byId.id1 != null
       const action = () => u.removeEntity()
       testInvalidation(query, action, false)
     })
     it("should not invalidate if an instance is added to a different Entities with the same id", () => {
-      const query = () => User.entities.entitiesById.id1 != null
+      const query = () => User.entities.byId.id1 != null
       const action = () => Job.entities.add(new Job("a"), "id1")
       testInvalidation(query, action, false)
     })
   })
-  describe("A Query that depends on Object.getPropertyNames of entitiesById", () => {
+  describe("A Query that depends on Object.getPropertyNames of byId", () => {
     it("should invalidate if an instance is added", () => {
       const query = () =>
-        Object.getOwnPropertyNames(User.entities.entitiesById).length
+        Object.getOwnPropertyNames(User.entities.byId).length
       const action = () => User.entities.add(new User("a", 10), "id1")
       testInvalidation(query, action, true)
     })
     it("should invalidate if an instance is removed", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () =>
-        Object.getOwnPropertyNames(User.entities.entitiesById).length
+        Object.getOwnPropertyNames(User.entities.byId).length
       const action = () => u.removeEntity()
       testInvalidation(query, action, true)
     })
     it("should not invalidate if an existing instance is changed", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
       const query = () =>
-        Object.getOwnPropertyNames(User.entities.entitiesById).length
+        Object.getOwnPropertyNames(User.entities.byId).length
       const action = () => u.age++
       testInvalidation(query, action, false)
     })
     it("should not invalidate if an instance is added to a different Entities", () => {
       const query = () =>
-        Object.getOwnPropertyNames(User.entities.entitiesById).length
+        Object.getOwnPropertyNames(User.entities.byId).length
       const action = () => Job.entities.add(new Job("a"), "id1")
       testInvalidation(query, action, false)
     })
   })
-  describe("A Query that depends on Object.keys of entitiesById", () => {
+  describe("A Query that depends on Object.keys of byId", () => {
     it("should invalidate if an instance is added", () => {
-      const query = () => Object.keys(User.entities.entitiesById).length
+      const query = () => Object.keys(User.entities.byId).length
       const action = () => User.entities.add(new User("a", 10), "id1")
       testInvalidation(query, action, true)
     })
     it("should invalidate if an instance is removed", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
-      const query = () => Object.keys(User.entities.entitiesById).length
+      const query = () => Object.keys(User.entities.byId).length
       const action = () => u.removeEntity()
       testInvalidation(query, action, true)
     })
     it("should not invalidate if an existing instance is changed", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
-      const query = () => Object.keys(User.entities.entitiesById).length
+      const query = () => Object.keys(User.entities.byId).length
       const action = () => u.age++
       testInvalidation(query, action, false)
     })
     it("should not invalidate if an instance is added to a different Entities", () => {
-      const query = () => Object.keys(User.entities.entitiesById).length
+      const query = () => Object.keys(User.entities.byId).length
       const action = () => Job.entities.add(new Job("a"), "id1")
       testInvalidation(query, action, false)
     })
@@ -656,26 +656,26 @@ describe("Query", () => {
       testInvalidation(query, action, false, false)
     })
   })
-  describe("A Query that returns entitiesById", () => {
+  describe("A Query that returns byId", () => {
     it("should invalidate if an instance is added", () => {
-      const query = () => User.entities.entitiesById
+      const query = () => User.entities.byId
       const action = () => User.entities.add(new User("a", 10), "id1")
       testInvalidation(query, action, true, true)
     })
     it("should invalidate if an instance is removed", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
-      const query = () => User.entities.entitiesById
+      const query = () => User.entities.byId
       const action = () => u.removeEntity()
       testInvalidation(query, action, true, true)
     })
     it("should not invalidate if an existing instance is changed", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
-      const query = () => User.entities.entitiesById
+      const query = () => User.entities.byId
       const action = () => u.age++
       testInvalidation(query, action, false, false)
     })
     it("should not invalidate if an instance is added to a different Entities", () => {
-      const query = () => User.entities.entitiesById
+      const query = () => User.entities.byId
       const action = () => Job.entities.add(new Job("a"), "id1")
       testInvalidation(query, action, false, false)
     })
@@ -1342,6 +1342,23 @@ describe("Query", () => {
 
       expect(q2.value).toBe(11)
       expect(q3.value).toBe(11)
+    })
+  })
+  describe("a Query that returns an entity", () => {
+    it("should invalidate when a property of that entity is changed", ()=>{
+      const u1 = state.action(() => I4.entities.add(new I4("m", 10), "id1"))
+      let computeCount = 0
+      const q1 = stateManager.createQuery(()=>{
+        computeCount++
+        return u1
+      })
+      q1.value
+      expect(computeCount).toBe(1)
+      q1.value
+      expect(computeCount).toBe(1)
+      state.action(()=>u1.age++)
+      q1.value
+      expect(computeCount).toBe(2)
     })
   })
   // FIXME - add tests for relationships?

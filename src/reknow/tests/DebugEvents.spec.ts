@@ -216,8 +216,8 @@ describe("DebugEvents", () => {
           const v2 = this.add(new E1("def", 15), "v2")
         }
         @R.action updateEntity() {
-          this.entitiesById.v1.update1()
-          this.entitiesById.v2.removeEntity()
+          this.byId.v1.update1()
+          this.byId.v2.removeEntity()
         }
       }
       const E1Entities = new _E1Entities(E1)
@@ -281,8 +281,8 @@ describe("DebugEvents", () => {
           const v2 = this.add(new E1("def", 15), "v2")
         }
         @R.action updateEntity() {
-          this.entitiesById.v1.update1()
-          this.entitiesById.v2.removeEntity()
+          this.byId.v1.update1()
+          this.byId.v2.removeEntity()
         }
       }
       const E1Entities = new _E1Entities(E1)
@@ -376,8 +376,8 @@ describe("DebugEvents", () => {
           const v2 = this.add(new E1("def", 15), "v2")
         }
         @R.action updateEntity() {
-          this.entitiesById.v1.update1()
-          this.entitiesById.v2.removeEntity()
+          this.byId.v1.update1()
+          this.byId.v2.removeEntity()
         }
       }
       const E1Entities = new _E1Entities(E1)

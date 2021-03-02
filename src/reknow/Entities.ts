@@ -22,7 +22,7 @@ export class Entities<E extends Entity> {
     return this.entitiesState
   }
 
-  get entitiesById(): ById<E> {
+  get byId(): ById<E> {
     return this.entitiesState.entitiesById
   }
 

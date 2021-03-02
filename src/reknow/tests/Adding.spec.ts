@@ -18,8 +18,8 @@ describe("Adding Entities", () => {
         expect(u2.entityId == null).toBe(false)
 
         expect(u1).not.toBe(u2)
-        expect(Users.entitiesById[u1.entityId]).toBe(u1)
-        expect(Users.entitiesById[u2.entityId]).toBe(u2)
+        expect(Users.byId[u1.entityId]).toBe(u1)
+        expect(Users.byId[u2.entityId]).toBe(u2)
       })
       it("should allow the id to be specified when adding", () => {
         class User extends R.Entity {}
@@ -34,8 +34,8 @@ describe("Adding Entities", () => {
         const u2 = AppModel.action(() => Users.add(new User(), "u2"))
         expect(u2.entityId).toBe("u2")
 
-        expect(Users.entitiesById.u1).toBe(u1)
-        expect(Users.entitiesById.u2).toBe(u2)
+        expect(Users.byId.u1).toBe(u1)
+        expect(Users.byId.u2).toBe(u2)
       })
     })
     describe("with an id property declared", () => {
@@ -64,8 +64,8 @@ describe("Adding Entities", () => {
         expect(u2.entityId).toBe(u2.id)
 
         expect(u1).not.toBe(u2)
-        expect(Users.entitiesById[u1.entityId]).toBe(u1)
-        expect(Users.entitiesById[u2.entityId]).toBe(u2)
+        expect(Users.byId[u1.entityId]).toBe(u1)
+        expect(Users.byId[u2.entityId]).toBe(u2)
       })
       it("should use the id specified in the property", () => {
         const u1 = AppModel.action(() => Users.add(new User("user1")))
@@ -73,8 +73,8 @@ describe("Adding Entities", () => {
         const u2 = AppModel.action(() => Users.add(new User("user2")))
         expect(u2.entityId).toBe("user2")
 
-        expect(Users.entitiesById.user1).toBe(u1)
-        expect(Users.entitiesById.user2).toBe(u2)
+        expect(Users.byId.user1).toBe(u1)
+        expect(Users.byId.user2).toBe(u2)
       })
       it("id specified when adding should override the id property", () => {
         const u1 = AppModel.action(() => Users.add(new User("user1"), "u1"))
@@ -82,8 +82,8 @@ describe("Adding Entities", () => {
         const u2 = AppModel.action(() => Users.add(new User("user2"), "u2"))
         expect(u2.entityId).toBe("u2")
 
-        expect(Users.entitiesById.u1).toBe(u1)
-        expect(Users.entitiesById.u2).toBe(u2)
+        expect(Users.byId.u1).toBe(u1)
+        expect(Users.byId.u2).toBe(u2)
       })
       it("id should be unique", () => {
         const u1 = AppModel.action(() => Users.add(new User("user1")))
@@ -147,11 +147,11 @@ describe("Adding Entities", () => {
 
         const u1id = u1.entityId
         const d1id = notNull(u1.department).entityId
-        expect(Users.entitiesById[u1id]).toEqual({
+        expect(Users.byId[u1id]).toEqual({
           name: "user1",
           departmentId: d1id,
         })
-        expect(Departments.entitiesById[d1id]).toEqual({
+        expect(Departments.byId[d1id]).toEqual({
           name: "department1",
         })
       })
@@ -188,11 +188,11 @@ describe("Adding Entities", () => {
 
         const d1id = d1.entityId
         const u1id = notNull(d1.user).entityId
-        expect(Users.entitiesById[u1id]).toEqual({
+        expect(Users.byId[u1id]).toEqual({
           name: "user1",
           departmentId: d1id,
         })
-        expect(Departments.entitiesById[d1id]).toEqual({
+        expect(Departments.byId[d1id]).toEqual({
           name: "department1",
         })
       })
@@ -231,15 +231,15 @@ describe("Adding Entities", () => {
         const d1id = d1.entityId
         const u1id = d1.users[0].entityId
         const u2id = d1.users[1].entityId
-        expect(Users.entitiesById[u1id]).toEqual({
+        expect(Users.byId[u1id]).toEqual({
           name: "user1",
           departmentId: d1id,
         })
-        expect(Users.entitiesById[u2id]).toEqual({
+        expect(Users.byId[u2id]).toEqual({
           name: "user2",
           departmentId: d1id,
         })
-        expect(Departments.entitiesById[d1id]).toEqual({
+        expect(Departments.byId[d1id]).toEqual({
           name: "department1",
         })
       })
@@ -285,15 +285,15 @@ describe("Adding Entities", () => {
       const d1id = d1.entityId
       const u1id = d1.users[0].entityId
       const u2id = d1.users[1].entityId
-      expect(Users.entitiesById[u1id]).toEqual({
+      expect(Users.byId[u1id]).toEqual({
         name: "user1",
         departmentId: d1id,
       })
-      expect(Users.entitiesById[u2id]).toEqual({
+      expect(Users.byId[u2id]).toEqual({
         name: "user2",
         departmentId: d1id,
       })
-      expect(Departments.entitiesById[d1id]).toEqual({
+      expect(Departments.byId[d1id]).toEqual({
         name: "department1",
       })
     })
@@ -318,8 +318,8 @@ describe("Adding Entities", () => {
       expect(u1 instanceof User).toBe(true)
       expect(u1).not.toBe(_u1)
       const u1id = u1.entityId
-      expect(Users.entitiesById[u1id]).toBe(u1)
-      expect(Users.entitiesById[u1id]).toEqual({
+      expect(Users.byId[u1id]).toBe(u1)
+      expect(Users.byId[u1id]).toEqual({
         name: "user1",
         age: 20,
       })
@@ -365,15 +365,15 @@ describe("Adding Entities", () => {
       const d1id = d1.entityId
       const u1id = d1.users[0].entityId
       const u2id = d1.users[1].entityId
-      expect(Users.entitiesById[u1id]).toEqual({
+      expect(Users.byId[u1id]).toEqual({
         name: "user1",
         departmentId: d1id,
       })
-      expect(Users.entitiesById[u2id]).toEqual({
+      expect(Users.byId[u2id]).toEqual({
         name: "user2",
         departmentId: d1id,
       })
-      expect(Departments.entitiesById[d1id]).toEqual({
+      expect(Departments.byId[d1id]).toEqual({
         name: "department1",
       })
     })
@@ -499,7 +499,7 @@ describe("Adding Entities", () => {
       AppModel.action(() => {
         const u1 = Users.update(new User("u1"))
         const u1id = u1.id
-        const uu1 = Users.entitiesById[u1id]
+        const uu1 = Users.byId[u1id]
         expect(uu1).toBe(u1)
         expect(uu1.name).toEqual("u1")
       })
@@ -519,7 +519,7 @@ describe("Adding Entities", () => {
         expect(u1.currentEntity).toBe(u1a)
         const d1 = u1.department
         expect(d1 == null).toBe(false)
-        expect(Departments.entitiesById[notNull(d1).id]).toBe(d1)
+        expect(Departments.byId[notNull(d1).id]).toBe(d1)
       })
     })
     it("should process relationships with existing entities", () => {

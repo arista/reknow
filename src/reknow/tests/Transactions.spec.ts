@@ -26,16 +26,16 @@ describe("Transactions", () => {
       const user2 = this.createUser2()
     }
     @R.action deleteUser() {
-      this.remove(this.entitiesById.user1)
+      this.remove(this.byId.user1)
     }
     @R.action set name(name: string) {
-      this.entitiesById.user1.name = name
+      this.byId.user1.name = name
     }
     @R.action setGender(gender: string) {
-      this.entitiesById.user1.gender = gender
+      this.byId.user1.gender = gender
     }
     @R.action deleteName() {
-      delete this.entitiesById.user1.name
+      delete this.byId.user1.name
     }
   }
   const Users = new _Users(User)

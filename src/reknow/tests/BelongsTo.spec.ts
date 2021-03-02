@@ -136,9 +136,9 @@ describe("BelongsTo", () => {
           expect(j1.dependentNone).toBe(null)
           j1.dependentNone = u1
           j1.dependentNone = u2
-          expect(Users.entitiesById["user#1"]).toBe(u1)
+          expect(Users.byId["user#1"]).toBe(u1)
           j1.dependentNone = null
-          expect(Users.entitiesById["user#2"]).toBe(u2)
+          expect(Users.byId["user#2"]).toBe(u2)
         })
       })
       it("should not remove foreign if primary removed", () => {
@@ -148,7 +148,7 @@ describe("BelongsTo", () => {
 
           j1.dependentNone = u1
           Jobs.remove(j1)
-          expect(Users.entitiesById["user#1"]).toBe(u1)
+          expect(Users.byId["user#1"]).toBe(u1)
         })
       })
     })
@@ -162,9 +162,9 @@ describe("BelongsTo", () => {
           expect(j1.dependentUnspecified).toBe(null)
           j1.dependentUnspecified = u1
           j1.dependentUnspecified = u2
-          expect(Users.entitiesById["user#1"]).toBe(u1)
+          expect(Users.byId["user#1"]).toBe(u1)
           j1.dependentUnspecified = null
-          expect(Users.entitiesById["user#2"]).toBe(u2)
+          expect(Users.byId["user#2"]).toBe(u2)
         })
       })
       it("should not remove foreign if primary removed", () => {
@@ -174,7 +174,7 @@ describe("BelongsTo", () => {
 
           j1.dependentUnspecified = u1
           Jobs.remove(j1)
-          expect(Users.entitiesById["user#1"]).toBe(u1)
+          expect(Users.byId["user#1"]).toBe(u1)
         })
       })
     })
@@ -188,9 +188,9 @@ describe("BelongsTo", () => {
           expect(j1.dependentRemove).toBe(null)
           j1.dependentRemove = u1
           j1.dependentRemove = u2
-          expect(Users.entitiesById["user#1"] == null).toBe(true)
+          expect(Users.byId["user#1"] == null).toBe(true)
           j1.dependentRemove = null
-          expect(Users.entitiesById["user#2"] == null).toBe(true)
+          expect(Users.byId["user#2"] == null).toBe(true)
         })
       })
       it("should not remove foreign if changed to same value", () => {
@@ -201,7 +201,7 @@ describe("BelongsTo", () => {
           expect(j1.dependentRemove).toBe(null)
           j1.dependentRemove = u1
           j1.dependentRemove = u1
-          expect(Users.entitiesById["user#1"]).toBe(u1)
+          expect(Users.byId["user#1"]).toBe(u1)
         })
       })
       it("should remove foreign if primary removed", () => {
@@ -211,7 +211,7 @@ describe("BelongsTo", () => {
 
           j1.dependentRemove = u1
           Jobs.remove(j1)
-          expect(Users.entitiesById["user#1"] == null).toBe(true)
+          expect(Users.byId["user#1"] == null).toBe(true)
         })
       })
     })
@@ -244,13 +244,13 @@ describe("BelongsTo", () => {
 
           expect(m1.m2).toBe(m2)
           expect(m2.m1).toBe(m1)
-          expect(M1s.entitiesById[m1.id] == null).toBe(false)
-          expect(M2s.entitiesById[m2.id] == null).toBe(false)
+          expect(M1s.byId[m1.id] == null).toBe(false)
+          expect(M2s.byId[m2.id] == null).toBe(false)
 
           expect(() => AppModel.action(() => M1s.remove(m1))).not.toThrow()
 
-          expect(M1s.entitiesById[m1.id] == null).toBe(true)
-          expect(M2s.entitiesById[m2.id] == null).toBe(true)
+          expect(M1s.byId[m1.id] == null).toBe(true)
+          expect(M2s.byId[m2.id] == null).toBe(true)
         }
 
         // Removing m2 should remove m1
@@ -261,8 +261,8 @@ describe("BelongsTo", () => {
 
           expect(() => AppModel.action(() => M2s.remove(m2))).not.toThrow()
 
-          expect(M1s.entitiesById[m1.id] == null).toBe(true)
-          expect(M2s.entitiesById[m2.id] == null).toBe(true)
+          expect(M1s.byId[m1.id] == null).toBe(true)
+          expect(M2s.byId[m2.id] == null).toBe(true)
         }
       })
     })

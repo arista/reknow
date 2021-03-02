@@ -12,6 +12,6 @@ export class SingletonEntities<E extends Entity> extends Entities<E> {
   }
 
   get singleton(): E {
-    return this.entitiesById["singleton"]
+    return this.byId.singleton
   }
 }

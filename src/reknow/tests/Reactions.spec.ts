@@ -360,14 +360,14 @@ describe("Reactions", () => {
       })
     })
     describe("depending on Entities properties", () => {
-      describe("entitiesById", () => {
+      describe("byId", () => {
         let r1count!: number
         let r1!: R.Query<any>
         beforeEach(() => {
           r1count = 0
           r1 = AppModel.createReaction(() => {
             r1count++
-            const u = Users.entitiesById.u1
+            const u = Users.byId.u1
           }, "r1")
         })
         it("should be triggered when first created", () => {

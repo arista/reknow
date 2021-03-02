@@ -54,8 +54,8 @@ describe("Basic entity functions", () => {
       it("should have generated an id and make it available through byId", () => {
         const id = u.entityId
         expect(id == null).toBe(false)
-        expect(Users.entitiesById.hasOwnProperty(id)).toBe(true)
-        expect(Users.entitiesById[id]).toBe(u)
+        expect(Users.byId.hasOwnProperty(id)).toBe(true)
+        expect(Users.byId[id]).toBe(u)
       })
       describe("adding a second entity", () => {
         let _u2!: User
@@ -73,10 +73,10 @@ describe("Basic entity functions", () => {
           expect(id2 == null).toBe(false)
           expect(id).not.toBe(id2)
           expect(u).not.toBe(u2)
-          expect(Users.entitiesById.hasOwnProperty(id)).toBe(true)
-          expect(Users.entitiesById[id]).toBe(u)
-          expect(Users.entitiesById.hasOwnProperty(id2)).toBe(true)
-          expect(Users.entitiesById[id2]).toBe(u2)
+          expect(Users.byId.hasOwnProperty(id)).toBe(true)
+          expect(Users.byId[id]).toBe(u)
+          expect(Users.byId.hasOwnProperty(id2)).toBe(true)
+          expect(Users.byId[id2]).toBe(u2)
         })
       })
     })
@@ -107,12 +107,12 @@ describe("Basic entity functions", () => {
           })
         })
         it("should have removed the entity from byId", () => {
-          expect(Users.entitiesById.hasOwnProperty(id)).toBe(false)
-          expect(Users.entitiesById[id] == null).toBe(true)
+          expect(Users.byId.hasOwnProperty(id)).toBe(false)
+          expect(Users.byId[id] == null).toBe(true)
         })
         it("should still contain the other entity", () => {
-          expect(Users.entitiesById.hasOwnProperty(id2)).toBe(true)
-          expect(Users.entitiesById[id2] == null).toBe(false)
+          expect(Users.byId.hasOwnProperty(id2)).toBe(true)
+          expect(Users.byId[id2] == null).toBe(false)
         })
         describe("removing the other entity", () => {
           beforeEach(() => {
@@ -121,8 +121,8 @@ describe("Basic entity functions", () => {
             })
           })
           it("should have removed both entities", () => {
-            expect(Users.entitiesById.hasOwnProperty(id2)).toBe(false)
-            expect(Users.entitiesById[id2] == null).toBe(true)
+            expect(Users.byId.hasOwnProperty(id2)).toBe(false)
+            expect(Users.byId[id2] == null).toBe(true)
           })
         })
       })

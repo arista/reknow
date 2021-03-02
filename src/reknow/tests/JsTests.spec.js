@@ -67,7 +67,7 @@ describe("JavaScript interface", () => {
       }
 
       get user1() {
-        return this.entitiesById.u1
+        return this.byId.u1
       }
 
       get ageName() {
@@ -97,7 +97,7 @@ describe("JavaScript interface", () => {
       }
 
       get user1() {
-        return User.entities.entitiesById.u1
+        return User.entities.byId.u1
       }
 
       get ageName() {
@@ -205,7 +205,7 @@ describe("JavaScript interface", () => {
   describe("creating entities", () => {
     it("should allow the entities to be created", () => {
       const u1 = User.entities.createUser1()
-      expect(User.entities.entitiesById.u1).toBe(u1)
+      expect(User.entities.byId.u1).toBe(u1)
     })
   })
   describe("programmatic decorators", () => {
@@ -218,7 +218,7 @@ describe("JavaScript interface", () => {
         const u1 = User.entities.createUser1()
         u1.incrementAge()
         expect(u1.age).toBe(11)
-        expect(User.entities.entitiesById.u1).not.toBe(u1)
+        expect(User.entities.byId.u1).not.toBe(u1)
       })
       it("should declare a query", () => {
         const u1 = User.entities.createUser1()
@@ -328,7 +328,7 @@ describe("JavaScript interface", () => {
     describe("on Entities class", () => {
       it("should declare an action", () => {
         const u1 = User.entities.createUser1()
-        expect(User.entities.entitiesById.u1).toBe(u1)
+        expect(User.entities.byId.u1).toBe(u1)
       })
       it("should declare a query", () => {
         const u1 = User.entities.createUser1()
@@ -353,33 +353,33 @@ describe("JavaScript interface", () => {
         const u1 = action(() => User.entities.add(new User("name1", 10), "u1"))
         const u2 = action(() => User.entities.add(new User("name2", 5), "u2"))
 
-        expect(User.entities.byAge[0]).toBe(User.entities.entitiesById.u2)
-        expect(User.entities.byAge[1]).toBe(User.entities.entitiesById.u1)
+        expect(User.entities.byAge[0]).toBe(User.entities.byId.u2)
+        expect(User.entities.byAge[1]).toBe(User.entities.byId.u1)
 
         action(() => (u2.age = 15))
 
-        expect(User.entities.byAge[0]).toBe(User.entities.entitiesById.u1)
-        expect(User.entities.byAge[1]).toBe(User.entities.entitiesById.u2)
+        expect(User.entities.byAge[0]).toBe(User.entities.byId.u1)
+        expect(User.entities.byAge[1]).toBe(User.entities.byId.u2)
       })
       it("should declare a unique index", () => {
         const u1 = action(() => User.entities.add(new User("name1", 10), "u1"))
         const u2 = action(() => User.entities.add(new User("name2", 5), "u2"))
 
-        expect(User.entities.byName.name1).toBe(User.entities.entitiesById.u1)
-        expect(User.entities.byName.name2).toBe(User.entities.entitiesById.u2)
+        expect(User.entities.byName.name1).toBe(User.entities.byId.u1)
+        expect(User.entities.byName.name2).toBe(User.entities.byId.u2)
 
         action(() => (u2.name = "namename2"))
 
         expect(User.entities.byName.name2 == null).toBe(true)
         expect(User.entities.byName.namename2).toBe(
-          User.entities.entitiesById.u2
+          User.entities.byId.u2
         )
       })
     })
     describe("on Service class", () => {
       it("should declare an action", () => {
         const u1 = UserService.createUser1()
-        expect(User.entities.entitiesById.u1).toBe(u1)
+        expect(User.entities.byId.u1).toBe(u1)
       })
       it("should declare a query", () => {
         const u1 = User.entities.createUser1()
