@@ -124,6 +124,23 @@ describe("Query", () => {
     let entitiesCountCount = 0
     let firstNameCount = 0
 
+    // I5 entity - for testing @query
+    class I5 extends R.Entity {
+      static get entities() {
+        return I5Entities
+      }
+      constructor() {
+        super()
+      }
+
+      @R.query get q1() {
+        return User.entities.entitiesById.u1.age
+      }
+    }
+    class _I5Entities extends R.Entities<I5> {
+    }
+    const I5Entities = new _I5Entities(I5)
+    
     class _S1 extends R.Service {
       @R.query get i4Count() {
         i4CountCount++
@@ -146,10 +163,11 @@ describe("Query", () => {
         I2: I2.entities,
         I3: I3.entities,
         I4: I4.entities,
+        I5: I5.entities,
       },
       services: {
         S1,
-      },
+      }
     })
 
     const action = <T>(f: () => T): T => {
@@ -165,6 +183,7 @@ describe("Query", () => {
       I2,
       I3,
       I4,
+      I5,
       S1,
     }
   }
@@ -176,6 +195,7 @@ describe("Query", () => {
   let I2!: typeof state.I2
   let I3!: typeof state.I3
   let I4!: typeof state.I4
+  let I5!: typeof state.I5
   let S1!: typeof state.S1
   beforeEach(() => {
     state = createState()
@@ -186,6 +206,7 @@ describe("Query", () => {
     I2 = state.I2
     I3 = state.I3
     I4 = state.I4
+    I5 = state.I5
     S1 = state.S1
   })
 
@@ -1359,6 +1380,51 @@ describe("Query", () => {
       state.action(()=>u1.age++)
       q1.value
       expect(computeCount).toBe(2)
+    })
+  })
+  describe("a query that returns an entity", () => {
+    it("should invalidate if any property of the entity changes", ()=>{
+      let callCount = 0
+      const u1 = state.action(() => I4.entities.add(new I4("m", 10), "id1"))
+      const q1 = stateManager.createQuery(()=>{
+        callCount++
+        return u1
+      }, "q1")
+
+      expect(callCount).toBe(0)
+      expect(q1.value.age).toBe(10)
+      expect(callCount).toBe(1)
+      expect(q1.value.age).toBe(10)
+      expect(callCount).toBe(1)
+
+      state.action(()=>u1.age++)
+
+      expect(q1.value.age).toBe(11)
+      expect(callCount).toBe(2)
+      expect(q1.value.age).toBe(11)
+      expect(callCount).toBe(2)
+    })
+    it("should invalidate if a query on that entity is invalidated", ()=>{
+      let callCount = 0
+      const u1 = state.action(() => User.entities.add(new User("a", 10), "u1"))
+      const i1 = state.action(() => I5.entities.add(new I5()))
+      const q1 = stateManager.createQuery(()=>{
+        callCount++
+        return i1
+      }, "q1")
+
+      expect(callCount).toBe(0)
+      expect(q1.value.q1).toBe(10)
+      expect(callCount).toBe(1)
+      expect(q1.value.q1).toBe(10)
+      expect(callCount).toBe(1)
+
+      state.action(()=>u1.age++)
+
+      expect(q1.value.q1).toBe(11)
+      expect(callCount).toBe(2)
+      expect(q1.value.q1).toBe(11)
+      expect(callCount).toBe(2)
     })
   })
   // FIXME - add tests for relationships?
