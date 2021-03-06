@@ -134,7 +134,7 @@ describe("Query", () => {
       }
 
       @R.query get q1() {
-        return User.entities.entitiesById.u1.age
+        return User.entities.byId.u1.age
       }
     }
     class _I5Entities extends R.Entities<I5> {
