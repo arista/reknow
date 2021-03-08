@@ -20,9 +20,67 @@ Reknow also uses these Proxies to interact with frameworks like React.  In Rekno
 
 Because Reknow detects state changes all the way down to the property level, it is able to provide a "stream" of state changes to applications that desire it.  The relational modeling pattern effectively boils every state change down to either adding a model object, removing a model object, or changing the property of a model object.  By adding a listener to Reknow, an application can be notified of all these state changes.  This allows applications to implement sophisticated undo/redo mechanisms, incrementally save document state as a stream of edits, or even broadcast state changes to collaborators to allow shared document viewing or editing.
 
-The Reknow library itself has very few dependencies and can be used in Node.js or in browsers.  It works well with React, but has no direct connection to the React libraries - that connection is provided through a separate "react-reknow" library.  Reknow is designed primarily for TypeScript applications, but it can be used just as effectively with JavaScript.  It does make use of decorators, which are still "experimental" as of ES6, but also provides alternatives for environments where decorators are not supported.
+The Reknow library itself has very few dependencies and can be used in Node.js or in browsers.  It works well with React, but has no direct connection to the React libraries - that connection is provided through a separate "react-reknow" library.  Reknow is designed primarily for TypeScript applications, but it can be used just as effectively with JavaScript.  It does make use of decorators, which are still "experimental" as of ES6, but also provides alternatives for environments where decorators are not supported.  All of Reknow's operations run synchronously, without the use of timers or Promises.  It can be used from both async and non-async functions.
 
-## Tutorial
+## First Impressions
+
+This is a simple example that doesn't do much, but illustrates some of the basics involved with using Reknow.  These code samples can be pasted directly into node, once you've installed Reknow with `npm install --save reknow`.
+
+Start with a simple model class that represents a single Counter with a name and a value.  Before getting Reknow involved, it might look like this:
+
+```ts
+class Counter {
+  constructor(name, value) {
+    this.name = name
+    this.value = value
+  }
+
+  increment() {
+    this.value++
+  }
+}
+```
+
+And using that class would look something like this:
+
+```ts
+const c1 = new Counter("counter1", 10)
+console.log(c1.value)
+// prints "10"
+c1.increment()
+console.log(c1.value)
+// prints "11"
+```
+
+Now let's rewrite this as a Reknow model class:
+
+```ts
+const R = require("reknow")
+
+class Counter extends R.Entity {
+  static get entities() {
+    return CounterEntities
+  }
+  
+  constructor(name, value) {
+    super()
+    this.name = name
+    this.value = value
+  }
+
+  increment() {
+    this.value++
+  }
+}
+Counter.action("increment")
+
+class _CounterEntities extends R.Entities {
+}
+const CounterEntities = new _CounterEntities(Counter)
+```
+
+
+
 
 
 ## Overview
