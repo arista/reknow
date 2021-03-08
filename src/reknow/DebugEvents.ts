@@ -183,8 +183,8 @@ function toActionString(action: Action): string {
       )})"`
     case "InitializeAction":
       return `"InitializeAction"`
-    case "NoAction":
-      return `"NoAction"`
+    case "UnnamedAction":
+      return `"UnnamedAction"`
   }
 }
 

@@ -26,7 +26,7 @@ The Reknow library itself has very few dependencies and can be used in Node.js o
 
 This is a simple example that doesn't do much, but illustrates some of the basics involved with using Reknow.  These code samples can be pasted directly into node, once you've installed Reknow with `npm install --save reknow`.
 
-Start with a simple model class that represents a single Counter with a name and a value.  Before getting Reknow involved, it might look like this:
+We'll start with a simple model class that represents a single Counter with a name and a value.  Before getting Reknow involved, it might look like this:
 
 ```ts
 class Counter {
@@ -45,8 +45,10 @@ And using that class would look something like this:
 
 ```ts
 const c1 = new Counter("counter1", 10)
+
 console.log(c1.value)
 // prints "10"
+
 c1.increment()
 console.log(c1.value)
 // prints "11"
@@ -55,13 +57,9 @@ console.log(c1.value)
 Now let's rewrite this as a Reknow model class:
 
 ```ts
-const R = require("reknow")
+R = require("reknow")
 
 class Counter extends R.Entity {
-  static get entities() {
-    return CounterEntities
-  }
-  
   constructor(name, value) {
     super()
     this.name = name
@@ -71,44 +69,50 @@ class Counter extends R.Entity {
   increment() {
     this.value++
   }
+
+  static get entities() {
+    return CounterEntities
+  }
 }
-Counter.action("increment")
 
 class _CounterEntities extends R.Entities {
 }
-const CounterEntities = new _CounterEntities(Counter)
+
+CounterEntities = new _CounterEntities(Counter)
 ```
 
-Several things to note:
+The `Counter` class looks pretty much the same, except that it extends `R.Entity` (note that for convenience, we import all of Reknow under the `R` namespace).  But the most obvious difference is the introduction of the `_CounterEntities` class, and its singleton `CounterEntities` instance which is exposed by `Counter.entities`.  This singleton represents the full collection of `Counter` instances that have been added to Reknow.  It's where methods would be defined that apply to that full collection, such as adding a Counter, indexing Counters, etc.  The `Counter` class, on the other hand, should define methods that apply to a single `Counter` instance.
 
-* For convenience, the reknow library is imported into a single `R` namespace
-* Model classes extend Reknow's `Entity` base class
-* Every model class has a corresponding `Entities` class, and a singleton instance of that class.
-* By convention, the Entities class is named `_{model}Entities`, and the singleton instance is named `${model}Entities`
-* By convention, the model class contains a static `entities` getter that returns that singleton instance
-* The model class declares the `increment` method to be an "action".
+Note that the names `_CounterEntities` and `CounterEntities` don't really matter - they're just a convention.  All that really matters is that `Counter.entities` return the singleton `Entities` instance associated with the `Counter` class.  Typically the rest of the application wouldn't even see the `_CounterEntities` and `CounterEntities` names since `Counter` would be the only name exported from the model's source file.
 
-The `Entities` singleton is probably the most noteworthy feature.  In Reknow, each Entity class has a corresponding Entities singleton, which effectively represents the full collection of Entity instances of that type.  This is where indexes would be declared, where the method for adding a new Entity instance is found, and where the application would define methods that apply to the full collection of Entities.  The `Entity` class on the other hand, defines the properties and methods that apply to a single instance.
-
-This `Entities` class may feel somewhat odd, and rightfully so.  Typically these sorts of functions would be represented as static methods on the class, thereby avoiding the need to have two separate classes and a singleton.  However, this becomes problematic for TypeScript, which doesn't allow static members to access type arguments on a generic class.  So this does represent a break from a more "natural" programming style, but it's one that isn't particularly onerous.
-
-The other feature to note is the `Counter.action("increment")` call.  This is actually the alternative syntax for declaring a method to be an action.  The preferred method is to use a decorator like this:
+Now that we've set up our model class, we can create a Reknow `StateManager` that will manage all of our entity classes (which is just `Counter` in our case):
 
 ```ts
-class Counter extends R.Entity {
-  ...
-
-  @R.action increment() {
-    this.value++
-  }
-}
+models = new R.StateManager({
+  entities: {
+    Counter: Counter.entities
+  },
+  listener: e => console.log(R.stringifyTransaction(e))
+})
 ```
 
-However, not all environments recognize the `@` decorator syntax, so the `Counter.action("increment")` acts as an equivalent alternative.  We'll explore shortly what it actually means for a method to be an "action".
+Here we gather all of the entity classes that our application will use (just `Counter` for us), and create a `StateManager` to handle them.  This `StateManager` is effectively the central class in Reknow, but an application will hardly use it beyond this initial creation step.  Most of an application's interaction with the model will happen directly through the Entity classes.
 
-In a typical application, each model class would be defined in its own file with the corresponding Entity and Entities class, but only the model class would be exported (`Counter` in our case).  The application can still access the entities singleton through the static `entities` property (`Counter.entities`).  The Entities class (`_CounterEntities`) is almost never used directly by the application, so it is typically not exported.
+Just for fun, we've also defined a listener that will print out each "transaction".  This will help us see how Reknow tracks state changes.  In fact, it probably printed "InitializeAction" right off the bat.
 
+Let's create a Counter and add it to Reknow.  This will let Reknow manage that Counter and track any changes to its properties:
 
+```ts
+_c1 = new Counter("counter1", 10)
+c1 = Counter.entities.add(_c1)
+// Error: Attempt to mutate state outside of an action
+```
+
+We've run into an error!  All state changes in Reknow must occur within an "action", and adding an instance counts as a state change.  For now, we can fix it like this
+
+```ts
+c1 = models.action(()=>Counter.entities.add(_c1))
+```
 
 ## Overview
 

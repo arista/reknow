@@ -141,9 +141,9 @@ export function toMemberName(name: string, type: FunctionType) {
     case "method":
       return name
     case "getter":
-      return `get#${name}`
+      return `get!${name}`
     case "setter":
-      return `set#${name}`
+      return `set!${name}`
   }
 }
 

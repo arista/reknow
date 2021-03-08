@@ -26,6 +26,10 @@ export abstract class Entity {
     return this.entityState.id
   }
 
+  get entityName() {
+    return this.entityState.changePublisherName
+  }
+
   get currentEntity() {
     return this.entityState.proxy
   }
@@ -133,5 +137,9 @@ export abstract class Entity {
   static afterPropertyChange(prop: string, name: string) {
     const pd = this.getPropertyDescriptor(name)
     EntityDeclarations.addAfterPropertyChange(this.prototype, name, prop, pd)
+  }
+
+  toString() {
+    return JSON.stringify(this)
   }
 }

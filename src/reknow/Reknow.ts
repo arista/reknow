@@ -18,7 +18,7 @@ import {EntitiesAction as _EntitiesAction} from "./Types"
 import {EntityAction as _EntityAction} from "./Types"
 import {ServiceAction as _ServiceAction} from "./Types"
 import {InitializeAction as _InitializeAction} from "./Types"
-import {NoAction as _NoAction} from "./Types"
+import {UnnamedAction as _UnnamedAction} from "./Types"
 
 import {DebugEvent as _DebugEvent} from "./DebugEvents"
 import {ActionDebugEvent as _ActionDebugEvent} from "./DebugEvents"
@@ -55,6 +55,7 @@ export {afterChange} from "./Decorators"
 export {afterPropertyChange} from "./Decorators"
 
 export {stringifyDebugEvent} from "./DebugEvents"
+export {stringifyTransaction} from "./Transactions"
 
 // FIXME - apparently you need these workarounds to reexport types in TS <3.8
 export type EntitiesDefinitions = _EntitiesDefinitions
@@ -76,7 +77,7 @@ export type EntitiesAction = _EntitiesAction
 export type EntityAction = _EntityAction
 export type ServiceAction = _ServiceAction
 export type InitializeAction = _InitializeAction
-export type NoAction = _NoAction
+export type UnnamedAction = _UnnamedAction
 
 export type DebugEvent = _DebugEvent
 export type ActionDebugEvent = _ActionDebugEvent

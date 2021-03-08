@@ -54,7 +54,7 @@ export type Action =
   | EntityAction
   | ServiceAction
   | InitializeAction
-  | NoAction
+  | UnnamedAction
 
 export interface EntitiesAction {
   type: "EntitiesAction"
@@ -78,8 +78,8 @@ export interface ServiceAction {
   args: Array<any>
 }
 
-export interface NoAction {
-  type: "NoAction"
+export interface UnnamedAction {
+  type: "UnnamedAction"
 }
 
 export interface InitializeAction {

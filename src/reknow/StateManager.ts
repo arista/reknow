@@ -16,7 +16,7 @@ import {copyInstance} from "./Utils"
 import {EntityAdded} from "./Types"
 import {EntityRemoved} from "./Types"
 import {EntityPropertyChanged} from "./Types"
-import {NoAction} from "./Types"
+import {UnnamedAction} from "./Types"
 import {Entity} from "./Entity"
 import {ChangeSubscriber} from "./ChangeSubscriber"
 import {ChangePublisher} from "./ChangePublisher"
@@ -174,7 +174,7 @@ export class StateManager {
   }
 
   action<T>(f: () => T): T {
-    const action: NoAction = {type: "NoAction"}
+    const action: UnnamedAction = {type: "UnnamedAction"}
     return this.whileInAction(action, f)
   }
 
@@ -303,7 +303,7 @@ export class StateManager {
     )
 
     // Run this in an action in case it modifies any state
-    this.whileInAction({type: "NoAction"}, () => reaction.value)
+    this.whileInAction({type: "UnnamedAction"}, () => reaction.value)
     return reaction
   }
 

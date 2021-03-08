@@ -37,6 +37,9 @@ describe("Transactions", () => {
     @R.action deleteName() {
       delete this.byId.user1.name
     }
+    @R.action setUserName(user:User, name:string) {
+      user.name = name
+    }
   }
   const Users = new _Users(User)
   class _UsersService extends R.Service {
@@ -50,7 +53,7 @@ describe("Transactions", () => {
   const UsersService = new _UsersService()
   let transactions: Array<R.Transaction> = []
   const AppModel = new R.StateManager({
-    entities: {Users},
+    entities: {User: Users},
     services: {UsersService},
     listener: (t) => transactions.push(t),
   })
@@ -68,14 +71,14 @@ describe("Transactions", () => {
           {
             action: {
               type: "EntitiesAction",
-              entityType: "Users",
+              entityType: "User",
               name: "createUser",
               args: [],
             },
             stateChanges: [
               {
                 type: "EntityAdded",
-                entityType: "Users",
+                entityType: "User",
                 id: "user1",
                 entity: {
                   name: "brad",
@@ -86,6 +89,12 @@ describe("Transactions", () => {
           },
         ]
         expect(transactions).toEqual(expected)
+
+        const expectedStr =
+          "User.entities.createUser()\n" +
+          "  Added User#user1: {\"age\":21,\"name\":\"brad\"}"
+        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        expect(resultStr).toEqual(expectedStr)
       })
     })
     describe("adding two entities", () => {
@@ -97,14 +106,14 @@ describe("Transactions", () => {
             {
               action: {
                 type: "EntitiesAction",
-                entityType: "Users",
+                entityType: "User",
                 name: "createUser",
                 args: [],
               },
               stateChanges: [
                 {
                   type: "EntityAdded",
-                  entityType: "Users",
+                  entityType: "User",
                   id: "user1",
                   entity: {
                     name: "brad",
@@ -116,14 +125,14 @@ describe("Transactions", () => {
             {
               action: {
                 type: "EntitiesAction",
-                entityType: "Users",
+                entityType: "User",
                 name: "createUser2",
                 args: [],
               },
               stateChanges: [
                 {
                   type: "EntityAdded",
-                  entityType: "Users",
+                  entityType: "User",
                   id: "user2",
                   entity: {
                     name: "june",
@@ -134,6 +143,14 @@ describe("Transactions", () => {
             },
           ]
           expect(transactions).toEqual(expected)
+
+          const expectedStr =
+            "User.entities.createUser()\n" +
+            "  Added User#user1: {\"age\":21,\"name\":\"brad\"}\n" +
+            "User.entities.createUser2()\n" +
+            "  Added User#user2: {\"age\":28,\"name\":\"june\"}"
+          const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+          expect(resultStr).toEqual(expectedStr)
         })
       })
       describe("in one action that makes two nested action calls", () => {
@@ -143,14 +160,14 @@ describe("Transactions", () => {
             {
               action: {
                 type: "EntitiesAction",
-                entityType: "Users",
+                entityType: "User",
                 name: "createTwoUsers",
                 args: [],
               },
               stateChanges: [
                 {
                   type: "EntityAdded",
-                  entityType: "Users",
+                  entityType: "User",
                   id: "user1",
                   entity: {
                     name: "brad",
@@ -159,7 +176,7 @@ describe("Transactions", () => {
                 },
                 {
                   type: "EntityAdded",
-                  entityType: "Users",
+                  entityType: "User",
                   id: "user2",
                   entity: {
                     name: "june",
@@ -170,6 +187,13 @@ describe("Transactions", () => {
             },
           ]
           expect(transactions).toEqual(expected)
+
+          const expectedStr =
+            "User.entities.createTwoUsers()\n" +
+            "  Added User#user1: {\"age\":21,\"name\":\"brad\"}\n" +
+            "  Added User#user2: {\"age\":28,\"name\":\"june\"}"
+          const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+          expect(resultStr).toEqual(expectedStr)
         })
       })
     })
@@ -184,14 +208,14 @@ describe("Transactions", () => {
           {
             action: {
               type: "EntitiesAction",
-              entityType: "Users",
+              entityType: "User",
               name: "deleteUser",
               args: [],
             },
             stateChanges: [
               {
                 type: "EntityRemoved",
-                entityType: "Users",
+                entityType: "User",
                 id: "user1",
                 entity: {
                   name: "brad",
@@ -202,6 +226,12 @@ describe("Transactions", () => {
           },
         ]
         expect(transactions).toEqual(expected)
+
+        const expectedStr =
+          "User.entities.deleteUser()\n" +
+          "  Removed User#user1"
+        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        expect(resultStr).toEqual(expectedStr)
       })
     })
     describe("setting property values", () => {
@@ -215,14 +245,14 @@ describe("Transactions", () => {
           {
             action: {
               type: "EntitiesAction",
-              entityType: "Users",
-              name: "set#name",
+              entityType: "User",
+              name: "set!name",
               args: ["thalia"],
             },
             stateChanges: [
               {
                 type: "EntityPropertyChanged",
-                entityType: "Users",
+                entityType: "User",
                 id: "user1",
                 property: "name",
                 newValue: "thalia",
@@ -232,6 +262,12 @@ describe("Transactions", () => {
           },
         ]
         expect(transactions).toEqual(expected)
+
+        const expectedStr =
+          "User.entities.set!name(thalia)\n" +
+          "  Changed User#user1.name from brad to thalia"
+        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        expect(resultStr).toEqual(expectedStr)
       })
       it("changing an existing property to the same value should not report any state changes", () => {
         Users.name = "brad"
@@ -239,14 +275,18 @@ describe("Transactions", () => {
           {
             action: {
               type: "EntitiesAction",
-              entityType: "Users",
-              name: "set#name",
+              entityType: "User",
+              name: "set!name",
               args: ["brad"],
             },
             stateChanges: [],
           },
         ]
         expect(transactions).toEqual(expected)
+
+        const expectedStr = "User.entities.set!name(brad)"
+        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        expect(resultStr).toEqual(expectedStr)
       })
       it("setting a previously-nonexistent property should report the change with no oldValue", () => {
         Users.setGender("male")
@@ -254,14 +294,14 @@ describe("Transactions", () => {
           {
             action: {
               type: "EntitiesAction",
-              entityType: "Users",
+              entityType: "User",
               name: "setGender",
               args: ["male"],
             },
             stateChanges: [
               {
                 type: "EntityPropertyChanged",
-                entityType: "Users",
+                entityType: "User",
                 id: "user1",
                 property: "gender",
                 newValue: "male",
@@ -270,6 +310,12 @@ describe("Transactions", () => {
           },
         ]
         expect(transactions).toEqual(expected)
+
+        const expectedStr =
+          "User.entities.setGender(male)\n" +
+          "  Changed User#user1.gender from undefined to male"
+        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        expect(resultStr).toEqual(expectedStr)
       })
       it("deleting a property should report the change with no newValue", () => {
         Users.deleteName()
@@ -277,14 +323,14 @@ describe("Transactions", () => {
           {
             action: {
               type: "EntitiesAction",
-              entityType: "Users",
+              entityType: "User",
               name: "deleteName",
               args: [],
             },
             stateChanges: [
               {
                 type: "EntityPropertyChanged",
-                entityType: "Users",
+                entityType: "User",
                 id: "user1",
                 property: "name",
                 oldValue: "brad",
@@ -293,6 +339,29 @@ describe("Transactions", () => {
           },
         ]
         expect(transactions).toEqual(expected)
+
+        const expectedStr =
+          "User.entities.deleteName()\n" +
+          "  Changed User#user1.name from brad to undefined"
+        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        expect(resultStr).toEqual(expectedStr)
+      })
+    })
+    describe("passing and entity as an argument", () => {
+      beforeEach(() => {
+        transactions = []
+      })
+      it("should report the entity's name as the argument", () => {
+        const u = Users.createUser()
+        Users.setUserName(u, "abc")
+
+        const expectedStr =
+          "User.entities.createUser()\n" +
+          "  Added User#user1: {\"age\":21,\"name\":\"brad\"}\n" +
+          "User.entities.setUserName(User#user1, abc)\n" +
+          "  Changed User#user1.name from brad to abc"
+        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        expect(resultStr).toEqual(expectedStr)
       })
     })
   })
@@ -308,7 +377,7 @@ describe("Transactions", () => {
         {
           action: {
             type: "EntityAction",
-            entityType: "Users",
+            entityType: "User",
             id: "user1",
             name: "setAge",
             args: [25],
@@ -316,7 +385,7 @@ describe("Transactions", () => {
           stateChanges: [
             {
               type: "EntityPropertyChanged",
-              entityType: "Users",
+              entityType: "User",
               id: "user1",
               property: "age",
               newValue: 25,
@@ -326,6 +395,12 @@ describe("Transactions", () => {
         },
       ]
       expect(transactions).toEqual(expected)
+
+      const expectedStr =
+        "User#user1.setAge(25)\n" +
+        "  Changed User#user1.age from 21 to 25"
+      const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+      expect(resultStr).toEqual(expectedStr)
     })
   })
   describe("Service actions", () => {
@@ -342,7 +417,7 @@ describe("Transactions", () => {
           stateChanges: [
             {
               type: "EntityAdded",
-              entityType: "Users",
+              entityType: "User",
               id: "user1",
               entity: {
                 name: "brad",
@@ -353,6 +428,12 @@ describe("Transactions", () => {
         },
       ]
       expect(transactions).toEqual(expected)
+
+      const expectedStr =
+        "UsersService.createUser()\n" +
+        "  Added User#user1: {\"age\":21,\"name\":\"brad\"}"
+      const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+      expect(resultStr).toEqual(expectedStr)
     })
   })
   describe("No actions", () => {
@@ -363,12 +444,12 @@ describe("Transactions", () => {
       const expected = [
         {
           action: {
-            type: "NoAction",
+            type: "UnnamedAction",
           },
           stateChanges: [
             {
               type: "EntityAdded",
-              entityType: "Users",
+              entityType: "User",
               id: "user1",
               entity: {
                 name: "brad",
@@ -379,6 +460,12 @@ describe("Transactions", () => {
         },
       ]
       expect(transactions).toEqual(expected)
+
+      const expectedStr =
+        "UnnamedAction\n" +
+        "  Added User#user1: {\"age\":21,\"name\":\"brad\"}"
+      const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+      expect(resultStr).toEqual(expectedStr)
     })
   })
   describe("Action with parameters", () => {
@@ -395,7 +482,7 @@ describe("Transactions", () => {
           stateChanges: [
             {
               type: "EntityAdded",
-              entityType: "Users",
+              entityType: "User",
               id: "user1",
               entity: {
                 name: "brad",
@@ -406,6 +493,12 @@ describe("Transactions", () => {
         },
       ]
       expect(transactions).toEqual(expected)
+
+      const expectedStr =
+        "UsersService.createUserWithParams(brad, 21)\n" +
+        "  Added User#user1: {\"age\":21,\"name\":\"brad\"}"
+      const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+      expect(resultStr).toEqual(expectedStr)
     })
   })
 })
