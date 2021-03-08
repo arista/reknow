@@ -104,7 +104,9 @@ class Counter extends R.Entity {
 }
 ```
 
-However, not all environments recognize the `@` decorator syntax, so the `Counter.action("increment")` acts as an equivalent alternative.
+However, not all environments recognize the `@` decorator syntax, so the `Counter.action("increment")` acts as an equivalent alternative.  We'll explore shortly what it actually means for a method to be an "action".
+
+In a typical application, each model class would be defined in its own file with the corresponding Entity and Entities class, but only the model class would be exported (`Counter` in our case).  The application can still access the entities singleton through the static `entities` property (`Counter.entities`).  The Entities class (`_CounterEntities`) is almost never used directly by the application, so it is typically not exported.
 
 
 
