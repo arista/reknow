@@ -44,7 +44,7 @@ class Counter {
 And using that class would look something like this:
 
 ```ts
-const c1 = new Counter("counter1", 10)
+c1 = new Counter("counter1", 10)
 
 console.log(c1.value)
 // prints "10"
@@ -92,13 +92,13 @@ models = new R.StateManager({
   entities: {
     Counter: Counter.entities
   },
-  listener: e => console.log(R.stringifyTransaction(e))
+  listener: e => console.log(`ACTION!: ${R.stringifyTransaction(e)}`)
 })
 ```
 
 Here we gather all of the entity classes that our application will use (just `Counter` for us), and create a `StateManager` to handle them.  This `StateManager` is effectively the central class in Reknow, but an application will hardly use it beyond this initial creation step.  Most of an application's interaction with the model will happen directly through the Entity classes.
 
-Just for fun, we've also defined a listener that will print out each "transaction".  This will help us see how Reknow tracks state changes.  In fact, it probably printed "InitializeAction" right off the bat.
+Just for fun, we've also defined a listener that will print out each "transaction".  This will help us see how Reknow tracks state changes.  In fact, it should have printed "InitializeAction" right off the bat.
 
 Let's create a Counter and add it to Reknow.  This will let Reknow manage that Counter and track any changes to its properties:
 
@@ -108,11 +108,21 @@ c1 = Counter.entities.add(_c1)
 // Error: Attempt to mutate state outside of an action
 ```
 
-We've run into an error!  All state changes in Reknow must occur within an "action", and adding an instance counts as a state change.  For now, we can fix it like this
+We've run into an error!  Adding an instance is a state change, and all state changes in Reknow must occur within an "action" (we'll explain why in a moment).  For now, we can fix it by putting our state changes in a function and passing it to `models.action`:
 
 ```ts
 c1 = models.action(()=>Counter.entities.add(_c1))
 ```
+
+
+
+```
+ACTION!: UnnamedAction
+  Added Counter#1: {"name":"counter1","value":10}
+```
+
+
+
 
 ## Overview
 
