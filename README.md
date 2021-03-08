@@ -79,7 +79,32 @@ class _CounterEntities extends R.Entities {
 const CounterEntities = new _CounterEntities(Counter)
 ```
 
+Several things to note:
 
+* For convenience, the reknow library is imported into a single `R` namespace
+* Model classes extend Reknow's `Entity` base class
+* Every model class has a corresponding `Entities` class, and a singleton instance of that class.
+* By convention, the Entities class is named `_{model}Entities`, and the singleton instance is named `${model}Entities`
+* By convention, the model class contains a static `entities` getter that returns that singleton instance
+* The model class declares the `increment` method to be an "action".
+
+The `Entities` singleton is probably the most noteworthy feature.  In Reknow, each Entity class has a corresponding Entities singleton, which effectively represents the full collection of Entity instances of that type.  This is where indexes would be declared, where the method for adding a new Entity instance is found, and where the application would define methods that apply to the full collection of Entities.  The `Entity` class on the other hand, defines the properties and methods that apply to a single instance.
+
+This `Entities` class may feel somewhat odd, and rightfully so.  Typically these sorts of functions would be represented as static methods on the class, thereby avoiding the need to have two separate classes and a singleton.  However, this becomes problematic for TypeScript, which doesn't allow static members to access type arguments on a generic class.  So this does represent a break from a more "natural" programming style, but it's one that isn't particularly onerous.
+
+The other feature to note is the `Counter.action("increment")` call.  This is actually the alternative syntax for declaring a method to be an action.  The preferred method is to use a decorator like this:
+
+```ts
+class Counter extends R.Entity {
+  ...
+
+  @R.action increment() {
+    this.value++
+  }
+}
+```
+
+However, not all environments recognize the `@` decorator syntax, so the `Counter.action("increment")` acts as an equivalent alternative.
 
 
 
