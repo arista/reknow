@@ -8,7 +8,7 @@ Reknow is a state management library based on relational modeling concepts, desi
 
 Reknow organizes and maintains an application's internal state, separating that state from the application's presentation layer.  In a React application, Reknow occupies the same space as libraries like Redux or Recoil.
 
-Reknow borrows several concepts from relational modeling systems.  Developers who have used relational databases or object/relational mapping libraries should find many of the concepts familiar.  For example, a basic rule in Reknow is that model objects must not reference each other directly, but instead reference each other by id (or other property value).  Reknow uses indexes and special properties to expose those relationships in ways that feel natural to developers.
+Reknow borrows several concepts from relational modeling systems.  Developers who have used relational databases or object/relational mapping libraries should find many of the concepts familiar.  For example, a basic rule in Reknow is that model objects must not reference each other directly, but instead reference each other by id (or other property value).  Reknow uses indexes and generated properties to expose those relationships in ways that feel natural to developers.
 
 That "natural feel" is a guiding principle of Reknow.  It is a goal of Reknow to allow applications to model and maintain state naturally, without introducing separate patterns for updating or selecting data.  Applications can freely add and remove model instances, and even change instance property values directly.  Reknow will automatically detect these changes and take care of the downstream effects, such as notifying the appropriate React components.  Applications can also compute and assemble selected values from the model using straightforward functions or getter methods.  Reknow will automatically cache the results, while tracking what model objects and properties were referenced in those calculations, allowing Reknow to invalidate the cached values when those dependencies change.
 
@@ -16,11 +16,37 @@ Reknow uses JavaScript Proxies to make all of this possible.  These Proxies inte
 
 Reknow also uses these Proxies to interact with frameworks like React.  In Reknow, the underlying data is mutable, and new immutable copies are not created with each state change.  Instead, when a model object is changed, Reknow creates a new Proxy to refer to that model object.  This is sufficient to signal a data change to React, because it effectively presents React with a new object identity.  In other words, Reknow effects object identity changes by creating new Proxies to mutable data, instead of creating new copies of immutable data.
 
-(As an aside - it is perfectly fine for an application to end up with multiple Proxies that "point" at the same underlying data, so long as React always sees the "latest" Proxy.  Reknow provides techniques to make sure this is the case.)
+Because Reknow detects state changes all the way down to the property level, it is able to provide a "stream" of state changes to applications that desire it.  The relational modeling pattern effectively boils every state change down to either adding a model object, removing a model object, or changing the property of a model object.  By adding a listener to Reknow, an application can be notified of all these state changes.  This allows applications to implement sophisticated undo/redo mechanisms, incrementally save document state as a stream of edits, or even broadcast state changes to collaborators to enable shared document viewing or editing.
 
-Because Reknow detects state changes all the way down to the property level, it is able to provide a "stream" of state changes to applications that desire it.  The relational modeling pattern effectively boils every state change down to either adding a model object, removing a model object, or changing the property of a model object.  By adding a listener to Reknow, an application can be notified of all these state changes.  This allows applications to implement sophisticated undo/redo mechanisms, incrementally save document state as a stream of edits, or even broadcast state changes to collaborators to allow shared document viewing or editing.
+The Reknow library itself has very few dependencies and can be used in Node.js or in browsers.  It works well with React, but has no direct connection to the React libraries - that connection is provided through a separate "react-reknow" library.  Reknow is designed primarily for TypeScript applications, but it can be used just as effectively with JavaScript.  It does make use of decorators, which are still "experimental" as of ES6, but also provides alternatives for environments where decorators are not supported.  All of Reknow's operations run synchronously, without the use of timers or Promises, and can be used from both async and non-async functions.
 
-The Reknow library itself has very few dependencies and can be used in Node.js or in browsers.  It works well with React, but has no direct connection to the React libraries - that connection is provided through a separate "react-reknow" library.  Reknow is designed primarily for TypeScript applications, but it can be used just as effectively with JavaScript.  It does make use of decorators, which are still "experimental" as of ES6, but also provides alternatives for environments where decorators are not supported.  All of Reknow's operations run synchronously, without the use of timers or Promises.  It can be used from both async and non-async functions.
+## Building An Application With Reknow
+
+The steps to build a Reknow application typically look something like this:
+
+* Design the classes that will model as much of the application's state as possible.  This includes both the data that the application manipulates (Topics, Posts, ShoppingCartItems, etc.), as well as the "view state" of the application (NavigationBreadcrumb, ErrorDialog, etc.).  Keep object properties as simple as possible, preferably sticking to strings, numbers, and booleans, remembering that more complex structures can be defined using Reknow's relational facilities.
+  * Add `@hasMany`, `@hasOne`, and `@belongsTo` declarations to the model classes to surface their various relationships.
+  * Add `@index` declarations to support other ways the application might access the data.
+  * Add `@query` decorators to mark out methods in the model classes that supply processed data to other application layers (such as React components).  These methods will cache their return values and invalidate automatically in response to the appropriate state changes.  Keep those methods as pure as possible without side effects or state changes.
+  * Add `@action` decorators to mark out "top-level" state-changing methods in the model classes.  Try to keep those methods as "pure" as possible, without side effects.
+  * Add `@afterAdd`, `@afterRemove`, and `@afterChange` decorators to methods that invoke side effects in response to the state changes in `@action` methods.
+  * Add `@reaction` decorators to methods that perform state changes in response to other state changes (typically used to maintain "computed" properties that then feed into indexes).
+* Create a Reknow `StateManager` instance, passing it a list of all the model classes that it will be managing.
+* Build the presentation layer.  Assuming it is a React application:
+  * Apply the `useQuery` hook from the `react-reknow` library to pull data directly from model objects.  `useQuery` will automatically trigger a component re-render whenever the underlying model object data changes.
+  * Invoke `@action` methods directly on model objects in response to user actions
+  * Inovke `@action` methods at any time, actually, even in response to asynchronous events like Timers, within async methods, etc.
+
+## Sample Todo Application
+
+```
+npx create-react-app todoapp --template typescript
+npm install --save reknow
+npm install --save react-reknow
+npm start
+```
+add experimentalDecorators to tsconfig
+
 
 ## First Impressions
 
