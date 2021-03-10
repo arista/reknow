@@ -4,7 +4,7 @@ describe("Query", () => {
   function createState() {
     // User entity
     class User extends R.Entity {
-      static get entities() {
+      static get entities(): _UserEntities {
         return UserEntities
       }
       amount!: number
@@ -17,7 +17,7 @@ describe("Query", () => {
 
     // Job entity
     class Job extends R.Entity {
-      static get entities() {
+      static get entities(): _JobEntities {
         return JobEntities
       }
       constructor(public name: string) {
@@ -29,7 +29,7 @@ describe("Query", () => {
 
     // I1 entity - for testing SortIndex
     class I1 extends R.Entity {
-      static get entities() {
+      static get entities(): _I1Entities {
         return I1Entities
       }
       amount: number = 0
@@ -44,7 +44,7 @@ describe("Query", () => {
 
     // I2 entity - for testing SortIndex
     class I2 extends R.Entity {
-      static get entities() {
+      static get entities(): _I2Entities {
         return I2Entities
       }
       amount: number = 0
@@ -59,7 +59,7 @@ describe("Query", () => {
 
     // I3 entity - for testing SortIndex
     class I3 extends R.Entity {
-      static get entities() {
+      static get entities(): _I3Entities {
         return I3Entities
       }
       constructor(public name: string, public age: number) {
@@ -73,7 +73,7 @@ describe("Query", () => {
 
     // I4 entity - for testing @query
     class I4 extends R.Entity {
-      static get entities() {
+      static get entities(): _I4Entities {
         return I4Entities
       }
       constructor(public name: string, public age: number) {
@@ -126,7 +126,7 @@ describe("Query", () => {
 
     // I5 entity - for testing @query
     class I5 extends R.Entity {
-      static get entities() {
+      static get entities(): _I5Entities {
         return I5Entities
       }
       constructor() {
@@ -137,10 +137,9 @@ describe("Query", () => {
         return User.entities.byId.u1.age
       }
     }
-    class _I5Entities extends R.Entities<I5> {
-    }
+    class _I5Entities extends R.Entities<I5> {}
     const I5Entities = new _I5Entities(I5)
-    
+
     class _S1 extends R.Service {
       @R.query get i4Count() {
         i4CountCount++
@@ -167,7 +166,7 @@ describe("Query", () => {
       },
       services: {
         S1,
-      }
+      },
     })
 
     const action = <T>(f: () => T): T => {
@@ -382,28 +381,24 @@ describe("Query", () => {
   })
   describe("A Query that depends on Object.getPropertyNames of byId", () => {
     it("should invalidate if an instance is added", () => {
-      const query = () =>
-        Object.getOwnPropertyNames(User.entities.byId).length
+      const query = () => Object.getOwnPropertyNames(User.entities.byId).length
       const action = () => User.entities.add(new User("a", 10), "id1")
       testInvalidation(query, action, true)
     })
     it("should invalidate if an instance is removed", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
-      const query = () =>
-        Object.getOwnPropertyNames(User.entities.byId).length
+      const query = () => Object.getOwnPropertyNames(User.entities.byId).length
       const action = () => u.removeEntity()
       testInvalidation(query, action, true)
     })
     it("should not invalidate if an existing instance is changed", () => {
       const u = state.action(() => User.entities.add(new User("a", 10), "id1"))
-      const query = () =>
-        Object.getOwnPropertyNames(User.entities.byId).length
+      const query = () => Object.getOwnPropertyNames(User.entities.byId).length
       const action = () => u.age++
       testInvalidation(query, action, false)
     })
     it("should not invalidate if an instance is added to a different Entities", () => {
-      const query = () =>
-        Object.getOwnPropertyNames(User.entities.byId).length
+      const query = () => Object.getOwnPropertyNames(User.entities.byId).length
       const action = () => Job.entities.add(new Job("a"), "id1")
       testInvalidation(query, action, false)
     })
@@ -1350,26 +1345,26 @@ describe("Query", () => {
     })
   })
   describe("two queries referencing the same query", () => {
-    it("should invalidate both of them when the referenced query invalidates", ()=>{
+    it("should invalidate both of them when the referenced query invalidates", () => {
       const u1 = state.action(() => I4.entities.add(new I4("m", 10), "id1"))
-      const q1 = stateManager.createQuery(()=>u1.age)
-      const q2 = stateManager.createQuery(()=>q1.value)
-      const q3 = stateManager.createQuery(()=>q1.value)
+      const q1 = stateManager.createQuery(() => u1.age)
+      const q2 = stateManager.createQuery(() => q1.value)
+      const q3 = stateManager.createQuery(() => q1.value)
 
       expect(q2.value).toBe(10)
       expect(q3.value).toBe(10)
 
-      state.action(()=>u1.age++)
+      state.action(() => u1.age++)
 
       expect(q2.value).toBe(11)
       expect(q3.value).toBe(11)
     })
   })
   describe("a Query that returns an entity", () => {
-    it("should invalidate when a property of that entity is changed", ()=>{
+    it("should invalidate when a property of that entity is changed", () => {
       const u1 = state.action(() => I4.entities.add(new I4("m", 10), "id1"))
       let computeCount = 0
-      const q1 = stateManager.createQuery(()=>{
+      const q1 = stateManager.createQuery(() => {
         computeCount++
         return u1
       })
@@ -1377,16 +1372,16 @@ describe("Query", () => {
       expect(computeCount).toBe(1)
       q1.value
       expect(computeCount).toBe(1)
-      state.action(()=>u1.age++)
+      state.action(() => u1.age++)
       q1.value
       expect(computeCount).toBe(2)
     })
   })
   describe("a query that returns an entity", () => {
-    it("should invalidate if any property of the entity changes", ()=>{
+    it("should invalidate if any property of the entity changes", () => {
       let callCount = 0
       const u1 = state.action(() => I4.entities.add(new I4("m", 10), "id1"))
-      const q1 = stateManager.createQuery(()=>{
+      const q1 = stateManager.createQuery(() => {
         callCount++
         return u1
       }, "q1")
@@ -1397,18 +1392,18 @@ describe("Query", () => {
       expect(q1.value.age).toBe(10)
       expect(callCount).toBe(1)
 
-      state.action(()=>u1.age++)
+      state.action(() => u1.age++)
 
       expect(q1.value.age).toBe(11)
       expect(callCount).toBe(2)
       expect(q1.value.age).toBe(11)
       expect(callCount).toBe(2)
     })
-    it("should invalidate if a query on that entity is invalidated", ()=>{
+    it("should invalidate if a query on that entity is invalidated", () => {
       let callCount = 0
       const u1 = state.action(() => User.entities.add(new User("a", 10), "u1"))
       const i1 = state.action(() => I5.entities.add(new I5()))
-      const q1 = stateManager.createQuery(()=>{
+      const q1 = stateManager.createQuery(() => {
         callCount++
         return i1
       }, "q1")
@@ -1419,7 +1414,7 @@ describe("Query", () => {
       expect(q1.value.q1).toBe(10)
       expect(callCount).toBe(1)
 
-      state.action(()=>u1.age++)
+      state.action(() => u1.age++)
 
       expect(q1.value.q1).toBe(11)
       expect(callCount).toBe(2)

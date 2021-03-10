@@ -2,6 +2,9 @@ import * as R from "../Reknow"
 
 describe("Basic entity functions", () => {
   class User extends R.Entity {
+    static get entities(): _Users {
+      return Users
+    }
     name?: string
     age?: number
     gender!: string

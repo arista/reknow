@@ -5,7 +5,11 @@ describe("Adding Entities", () => {
   describe("assigning id's", () => {
     describe("with no id property declared", () => {
       it("should assign an id to an entity that has no id property declared", () => {
-        class User extends R.Entity {}
+        class User extends R.Entity {
+          static get entities(): _Users {
+            return Users
+          }
+        }
         class _Users extends R.Entities<User> {}
         const Users = new _Users(User)
         const AppModel = new R.StateManager({
@@ -22,7 +26,11 @@ describe("Adding Entities", () => {
         expect(Users.byId[u2.entityId]).toBe(u2)
       })
       it("should allow the id to be specified when adding", () => {
-        class User extends R.Entity {}
+        class User extends R.Entity {
+          static get entities(): _Users {
+            return Users
+          }
+        }
         class _Users extends R.Entities<User> {}
         const Users = new _Users(User)
         const AppModel = new R.StateManager({
@@ -40,6 +48,9 @@ describe("Adding Entities", () => {
     })
     describe("with an id property declared", () => {
       class User extends R.Entity {
+        static get entities(): _Users {
+          return Users
+        }
         @R.id id?: string
         constructor(id: string | null = null) {
           super()
@@ -117,6 +128,9 @@ describe("Adding Entities", () => {
     describe("belongsTo", () => {
       it("should assign the relationship", () => {
         class User extends R.Entity {
+          static get entities(): _Users {
+            return Users
+          }
           departmentId!: string | null
           @R.belongsTo(() => Department, "departmentId")
           department!: Department | null
@@ -128,6 +142,9 @@ describe("Adding Entities", () => {
         const Users = new _Users(User)
 
         class Department extends R.Entity {
+          static get entities(): _Departments {
+            return Departments
+          }
           constructor(public name: string) {
             super()
           }
@@ -159,6 +176,9 @@ describe("Adding Entities", () => {
     describe("hasOne", () => {
       it("should assign the relationship", () => {
         class User extends R.Entity {
+          static get entities(): _Users {
+            return Users
+          }
           departmentId!: string | null
           constructor(public name: string) {
             super()
@@ -168,6 +188,9 @@ describe("Adding Entities", () => {
         const Users = new _Users(User)
 
         class Department extends R.Entity {
+          static get entities(): _Departments {
+            return Departments
+          }
           @R.hasOne(() => User, "departmentId") user!: User | null
           constructor(public name: string) {
             super()
@@ -200,6 +223,9 @@ describe("Adding Entities", () => {
     describe("hasMany", () => {
       it("should assign the relationship", () => {
         class User extends R.Entity {
+          static get entities(): _Users {
+            return Users
+          }
           departmentId!: string | null
           constructor(public name: string) {
             super()
@@ -209,6 +235,9 @@ describe("Adding Entities", () => {
         const Users = new _Users(User)
 
         class Department extends R.Entity {
+          static get entities(): _Departments {
+            return Departments
+          }
           @R.hasMany(() => User, "departmentId", {sort: "name"})
           users!: Array<User>
           constructor(public name: string) {
@@ -248,6 +277,9 @@ describe("Adding Entities", () => {
   describe("adding a graph of objects", () => {
     it("should add each object only once", () => {
       class User extends R.Entity {
+        static get entities(): _Users {
+          return Users
+        }
         departmentId!: string | null
         @R.belongsTo(() => Department, "departmentId")
         department!: Department | null
@@ -259,6 +291,9 @@ describe("Adding Entities", () => {
       const Users = new _Users(User)
 
       class Department extends R.Entity {
+        static get entities(): _Departments {
+          return Departments
+        }
         @R.hasMany(() => User, "departmentId", {sort: "name"})
         users!: Array<User>
         constructor(public name: string) {
@@ -301,6 +336,9 @@ describe("Adding Entities", () => {
   describe("adding plain objects", () => {
     it("should convert the objects to the appropriate class", () => {
       class User extends R.Entity {
+        static get entities(): _Users {
+          return Users
+        }
         constructor(public name: string, public age: number) {
           super()
         }
@@ -326,6 +364,9 @@ describe("Adding Entities", () => {
     })
     it("should convert a mixture of objects in a graph", () => {
       class User extends R.Entity {
+        static get entities(): _Users {
+          return Users
+        }
         departmentId!: string | null
         @R.belongsTo(() => Department, "departmentId")
         department!: Department | null
@@ -337,6 +378,9 @@ describe("Adding Entities", () => {
       const Users = new _Users(User)
 
       class Department extends R.Entity {
+        static get entities(): _Departments {
+          return Departments
+        }
         @R.hasMany(() => User, "departmentId", {sort: "name"})
         users!: Array<User>
         constructor(public name: string) {
@@ -380,6 +424,9 @@ describe("Adding Entities", () => {
   })
   describe("error checking", () => {
     class User extends R.Entity {
+      static get entities(): _Users {
+        return Users
+      }
       departmentId!: string | null
       @R.belongsTo(() => Department, "departmentId")
       department!: Department | null
@@ -391,6 +438,9 @@ describe("Adding Entities", () => {
     const Users = new _Users(User)
 
     class Department extends R.Entity {
+      static get entities(): _Departments {
+        return Departments
+      }
       @R.hasMany(() => User, "departmentId", {sort: "name"}) users!: Array<User>
       constructor(public name: string) {
         super()
@@ -461,6 +511,9 @@ describe("Adding Entities", () => {
   })
   describe("update", () => {
     class User extends R.Entity {
+      static get entities(): _Users {
+        return Users
+      }
       @R.id id!: string
       departmentId!: string | null
       @R.belongsTo(() => Department, "departmentId")
@@ -473,6 +526,9 @@ describe("Adding Entities", () => {
     const Users = new _Users(User)
 
     class Department extends R.Entity {
+      static get entities(): _Departments {
+        return Departments
+      }
       @R.id id!: string
       @R.hasMany(() => User, "departmentId", {sort: "name"}) users!: Array<User>
       constructor(public name: string) {

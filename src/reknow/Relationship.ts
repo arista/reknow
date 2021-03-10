@@ -17,7 +17,11 @@ export abstract class Relationship {
       const entitiesState: EntitiesState<any> = entityClass.entitiesState
       // FIXME - if entitiesState is null, that could indicate that the entity class hasn't been added to the StateManager
       if (entitiesState == null) {
-        throw new Error(`Class ${(entityClass as any).name || entityClass} not found - it may not have been added to the StateManager`)
+        throw new Error(
+          `Class ${
+            (entityClass as any).name || entityClass
+          } not found - it may not have been added to the StateManager`
+        )
       }
       this._foreignEntitiesState = entitiesState
     }

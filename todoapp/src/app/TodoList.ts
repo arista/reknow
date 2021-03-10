@@ -3,7 +3,7 @@ import {TodoListItem} from "./TodoListItem"
 import {TodoApp} from "./TodoApp"
 
 export class TodoList extends R.Entity {
-  static get entities() {
+  static get entities():Entities {
     return entities
   }
 
@@ -51,7 +51,7 @@ export class TodoList extends R.Entity {
   }
 }
 
-class _Entities extends R.Entities<TodoList> {
+class Entities extends R.Entities<TodoList> {
   @R.index("-createdAt") byCreatedAt!: R.SortIndex<TodoList>
   @R.index("+name") byName!: R.SortIndex<TodoList>
 
@@ -60,4 +60,4 @@ class _Entities extends R.Entities<TodoList> {
   }
 }
 
-const entities = new _Entities(TodoList)
+const entities = new Entities(TodoList)

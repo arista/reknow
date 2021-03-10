@@ -3,6 +3,9 @@ import * as R from "../Reknow"
 describe("Indexes", () => {
   describe("SortIndex", () => {
     class User extends R.Entity {
+      static get entities(): _Users {
+        return Users
+      }
       constructor(public name: string | null, public age: number | null) {
         super()
       }
@@ -99,6 +102,9 @@ describe("Indexes", () => {
 
   describe("UniqueHashIndex", () => {
     class User extends R.Entity {
+      static get entities(): _Users {
+        return Users
+      }
       constructor(public name: string | null) {
         super()
       }
@@ -175,6 +181,9 @@ describe("Indexes", () => {
 
   describe("HashIndex to SortIndex", () => {
     class User extends R.Entity {
+      static get entities(): _Users {
+        return Users
+      }
       constructor(public name: string | null, age: number | null) {
         super()
       }
@@ -236,6 +245,9 @@ describe("Indexes", () => {
 
   describe("HashIndex to UniqueHashIndex", () => {
     class User extends R.Entity {
+      static get entities(): _Users {
+        return Users
+      }
       constructor(public job: string | null, public name: string | null) {
         super()
       }
@@ -376,6 +388,9 @@ describe("Indexes", () => {
 
   describe("HashIndex to SortIndex", () => {
     class User extends R.Entity {
+      static get entities(): _Users {
+        return Users
+      }
       constructor(public name: string | null, public age: number | null) {
         super()
       }
@@ -431,6 +446,9 @@ describe("Indexes", () => {
 
   describe("HashIndex to HashIndex to SortIndex", () => {
     class User extends R.Entity {
+      static get entities(): _Users {
+        return Users
+      }
       constructor(
         public job: string | null,
         public name: string | null,

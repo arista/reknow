@@ -2,7 +2,7 @@ import * as R from "reknow"
 import {TodoList} from "./TodoList"
 
 export class TodoListItem extends R.Entity {
-  static get entities() {
+  static get entities():Entities {
     return entities
   }
 
@@ -21,7 +21,7 @@ export class TodoListItem extends R.Entity {
   }
 }
 
-class _Entities extends R.Entities<TodoListItem> {
+class Entities extends R.Entities<TodoListItem> {
   @R.index("=todoListId", "=complete", "+createdAt") byComplete!: R.HashIndex<
     R.HashIndex<R.SortIndex<TodoListItem>>
   >
@@ -31,4 +31,4 @@ class _Entities extends R.Entities<TodoListItem> {
   }
 }
 
-const entities = new _Entities(TodoListItem)
+const entities = new Entities(TodoListItem)

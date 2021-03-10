@@ -2,6 +2,9 @@ import * as R from "../Reknow"
 
 describe("Changing Object Identities", () => {
   class User extends R.Entity {
+    static get entities(): _Users {
+      return Users
+    }
     age?: number
     name?: string
     constructor(
@@ -26,6 +29,9 @@ describe("Changing Object Identities", () => {
   const Users = new _Users(User)
 
   class Job extends R.Entity {
+    static get entities(): _Jobs {
+      return Jobs
+    }
     constructor(
       public name: string,
       public userId: string,
@@ -450,6 +456,9 @@ describe("Changing Object Identities", () => {
   describe("identity of query results", () => {
     it("should change if recomputed", () => {
       class E1 extends R.Entity {
+        static get entities(): _E1s {
+          return E1s
+        }
         constructor(public v1: number, public v2: number) {
           super()
         }

@@ -146,6 +146,7 @@ export type ConstructorFunction<T> = new (...args: Array<any>) => T
 
 export type EntityClass<E extends Entity> = {
   new (...args: Array<any>): E
+  entities: Entities<E>
 }
 
 export type InternalEntityClass<E extends Entity> = {

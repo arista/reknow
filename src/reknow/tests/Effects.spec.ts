@@ -3,6 +3,9 @@ import * as R from "../Reknow"
 describe("Effects", () => {
   describe("basic calls", () => {
     class User extends R.Entity {
+      static get entities(): _Users {
+        return Users
+      }
       @R.id id: string
       name?: string
       constructor(id: string, name: string, public age: number) {

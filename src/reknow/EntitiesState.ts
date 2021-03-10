@@ -529,7 +529,7 @@ export class EntitiesState<E extends Entity> extends Proxied<
         // subscribers looking for any change to an Entity (such as
         // Queries that return the entity), just like we would if a
         // property on the Entity was invalidated.
-        ()=>entityState.notifySubscribersOfChange()
+        () => entityState.notifySubscribersOfChange()
       )
       entityState.queries.push(query)
       entityState.queriesByName[cdecl.name] = query

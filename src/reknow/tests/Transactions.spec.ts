@@ -2,6 +2,9 @@ import * as R from "../Reknow"
 
 describe("Transactions", () => {
   class User extends R.Entity {
+    static get entities(): _Users {
+      return Users
+    }
     gender!: string
     name?: string
     constructor(name: string, public age: number) {
@@ -37,7 +40,7 @@ describe("Transactions", () => {
     @R.action deleteName() {
       delete this.byId.user1.name
     }
-    @R.action setUserName(user:User, name:string) {
+    @R.action setUserName(user: User, name: string) {
       user.name = name
     }
   }
@@ -92,8 +95,10 @@ describe("Transactions", () => {
 
         const expectedStr =
           "User.entities.createUser()\n" +
-          "  Added User#user1: {\"age\":21,\"name\":\"brad\"}"
-        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+          '  Added User#user1: {"age":21,"name":"brad"}'
+        const resultStr = transactions
+          .map((t) => R.stringifyTransaction(t))
+          .join("\n")
         expect(resultStr).toEqual(expectedStr)
       })
     })
@@ -146,10 +151,12 @@ describe("Transactions", () => {
 
           const expectedStr =
             "User.entities.createUser()\n" +
-            "  Added User#user1: {\"age\":21,\"name\":\"brad\"}\n" +
+            '  Added User#user1: {"age":21,"name":"brad"}\n' +
             "User.entities.createUser2()\n" +
-            "  Added User#user2: {\"age\":28,\"name\":\"june\"}"
-          const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+            '  Added User#user2: {"age":28,"name":"june"}'
+          const resultStr = transactions
+            .map((t) => R.stringifyTransaction(t))
+            .join("\n")
           expect(resultStr).toEqual(expectedStr)
         })
       })
@@ -190,9 +197,11 @@ describe("Transactions", () => {
 
           const expectedStr =
             "User.entities.createTwoUsers()\n" +
-            "  Added User#user1: {\"age\":21,\"name\":\"brad\"}\n" +
-            "  Added User#user2: {\"age\":28,\"name\":\"june\"}"
-          const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+            '  Added User#user1: {"age":21,"name":"brad"}\n' +
+            '  Added User#user2: {"age":28,"name":"june"}'
+          const resultStr = transactions
+            .map((t) => R.stringifyTransaction(t))
+            .join("\n")
           expect(resultStr).toEqual(expectedStr)
         })
       })
@@ -228,9 +237,10 @@ describe("Transactions", () => {
         expect(transactions).toEqual(expected)
 
         const expectedStr =
-          "User.entities.deleteUser()\n" +
-          "  Removed User#user1"
-        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+          "User.entities.deleteUser()\n" + "  Removed User#user1"
+        const resultStr = transactions
+          .map((t) => R.stringifyTransaction(t))
+          .join("\n")
         expect(resultStr).toEqual(expectedStr)
       })
     })
@@ -266,7 +276,9 @@ describe("Transactions", () => {
         const expectedStr =
           "User.entities.set!name(thalia)\n" +
           "  Changed User#user1.name from brad to thalia"
-        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        const resultStr = transactions
+          .map((t) => R.stringifyTransaction(t))
+          .join("\n")
         expect(resultStr).toEqual(expectedStr)
       })
       it("changing an existing property to the same value should not report any state changes", () => {
@@ -285,7 +297,9 @@ describe("Transactions", () => {
         expect(transactions).toEqual(expected)
 
         const expectedStr = "User.entities.set!name(brad)"
-        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        const resultStr = transactions
+          .map((t) => R.stringifyTransaction(t))
+          .join("\n")
         expect(resultStr).toEqual(expectedStr)
       })
       it("setting a previously-nonexistent property should report the change with no oldValue", () => {
@@ -314,7 +328,9 @@ describe("Transactions", () => {
         const expectedStr =
           "User.entities.setGender(male)\n" +
           "  Changed User#user1.gender from undefined to male"
-        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        const resultStr = transactions
+          .map((t) => R.stringifyTransaction(t))
+          .join("\n")
         expect(resultStr).toEqual(expectedStr)
       })
       it("deleting a property should report the change with no newValue", () => {
@@ -343,7 +359,9 @@ describe("Transactions", () => {
         const expectedStr =
           "User.entities.deleteName()\n" +
           "  Changed User#user1.name from brad to undefined"
-        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        const resultStr = transactions
+          .map((t) => R.stringifyTransaction(t))
+          .join("\n")
         expect(resultStr).toEqual(expectedStr)
       })
     })
@@ -357,10 +375,12 @@ describe("Transactions", () => {
 
         const expectedStr =
           "User.entities.createUser()\n" +
-          "  Added User#user1: {\"age\":21,\"name\":\"brad\"}\n" +
+          '  Added User#user1: {"age":21,"name":"brad"}\n' +
           "User.entities.setUserName(User#user1, abc)\n" +
           "  Changed User#user1.name from brad to abc"
-        const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        const resultStr = transactions
+          .map((t) => R.stringifyTransaction(t))
+          .join("\n")
         expect(resultStr).toEqual(expectedStr)
       })
     })
@@ -397,9 +417,10 @@ describe("Transactions", () => {
       expect(transactions).toEqual(expected)
 
       const expectedStr =
-        "User#user1.setAge(25)\n" +
-        "  Changed User#user1.age from 21 to 25"
-      const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        "User#user1.setAge(25)\n" + "  Changed User#user1.age from 21 to 25"
+      const resultStr = transactions
+        .map((t) => R.stringifyTransaction(t))
+        .join("\n")
       expect(resultStr).toEqual(expectedStr)
     })
   })
@@ -431,8 +452,10 @@ describe("Transactions", () => {
 
       const expectedStr =
         "UsersService.createUser()\n" +
-        "  Added User#user1: {\"age\":21,\"name\":\"brad\"}"
-      const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        '  Added User#user1: {"age":21,"name":"brad"}'
+      const resultStr = transactions
+        .map((t) => R.stringifyTransaction(t))
+        .join("\n")
       expect(resultStr).toEqual(expectedStr)
     })
   })
@@ -462,9 +485,10 @@ describe("Transactions", () => {
       expect(transactions).toEqual(expected)
 
       const expectedStr =
-        "UnnamedAction\n" +
-        "  Added User#user1: {\"age\":21,\"name\":\"brad\"}"
-      const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        "UnnamedAction\n" + '  Added User#user1: {"age":21,"name":"brad"}'
+      const resultStr = transactions
+        .map((t) => R.stringifyTransaction(t))
+        .join("\n")
       expect(resultStr).toEqual(expectedStr)
     })
   })
@@ -496,8 +520,10 @@ describe("Transactions", () => {
 
       const expectedStr =
         "UsersService.createUserWithParams(brad, 21)\n" +
-        "  Added User#user1: {\"age\":21,\"name\":\"brad\"}"
-      const resultStr = transactions.map(t=>R.stringifyTransaction(t)).join("\n")
+        '  Added User#user1: {"age":21,"name":"brad"}'
+      const resultStr = transactions
+        .map((t) => R.stringifyTransaction(t))
+        .join("\n")
       expect(resultStr).toEqual(expectedStr)
     })
   })

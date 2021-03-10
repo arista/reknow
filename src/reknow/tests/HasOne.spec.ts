@@ -2,6 +2,9 @@ import * as R from "../Reknow"
 
 describe("HasOne", () => {
   class User extends R.Entity {
+    static get entities(): _Users {
+      return Users
+    }
     constructor(public name: string) {
       super()
     }
@@ -23,6 +26,9 @@ describe("HasOne", () => {
   const Users = new _Users(User)
 
   class Job extends R.Entity {
+    static get entities(): _Jobs {
+      return Jobs
+    }
     dependentUnspecifiedId!: string | null
     dependentNoneId!: string | null
     dependentRemoveId!: string | null
@@ -287,6 +293,9 @@ describe("HasOne", () => {
     describe("circular dependentRemove", () => {
       it("should not get caught in an infinite loop", () => {
         class M1 extends R.Entity {
+          static get entities(): _M1s {
+            return M1s
+          }
           @R.id id!: string
           @R.hasOne(() => M2, "m1Id", {dependent: "remove"}) m2!: M2 | null
         }
@@ -294,6 +303,9 @@ describe("HasOne", () => {
         const M1s = new _M1s(M1)
 
         class M2 extends R.Entity {
+          static get entities(): _M2s {
+            return M2s
+          }
           @R.id id!: string
           @R.belongsTo(() => M1, "m1Id", {dependent: "remove"}) m1!: M1 | null
           constructor(public m1Id: string) {
@@ -339,11 +351,18 @@ describe("HasOne", () => {
   describe("selecting indexes", () => {
     it("should use a matching index", () => {
       class M1 extends R.Entity {
+        static get entities(): _M1s {
+          return M1s
+        }
         @R.hasOne(() => M2, "m1Id") r!: M2 | null
       }
       class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
-      class M2 extends R.Entity {}
+      class M2 extends R.Entity {
+        static get entities(): _M2s {
+          return M2s
+        }
+      }
       class _M2s extends R.Entities<M2> {
         @R.uniqueIndex("=m1Id") ix1!: R.UniqueHashIndex<M2>
       }
@@ -354,12 +373,19 @@ describe("HasOne", () => {
     })
     it("should re-use a created index", () => {
       class M1 extends R.Entity {
+        static get entities(): _M1s {
+          return M1s
+        }
         @R.hasOne(() => M2, "m1Id") r!: M2 | null
         @R.hasOne(() => M2, "m1Id") r2!: M2 | null
       }
       class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
-      class M2 extends R.Entity {}
+      class M2 extends R.Entity {
+        static get entities(): _M2s {
+          return M2s
+        }
+      }
       class _M2s extends R.Entities<M2> {}
       const M2s = new _M2s(M2)
       const AppModel = new R.StateManager({entities: {M1s, M2s}})
@@ -371,11 +397,18 @@ describe("HasOne", () => {
     })
     it("should not use an index that isn't unique", () => {
       class M1 extends R.Entity {
+        static get entities(): _M1s {
+          return M1s
+        }
         @R.hasOne(() => M2, "m1Id") r!: M2 | null
       }
       class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
-      class M2 extends R.Entity {}
+      class M2 extends R.Entity {
+        static get entities(): _M2s {
+          return M2s
+        }
+      }
       class _M2s extends R.Entities<M2> {
         @R.index("=m1Id") ix1!: R.HashIndex<R.SortIndex<M2>>
       }
@@ -386,11 +419,18 @@ describe("HasOne", () => {
     })
     it("should not use an index that's for a different property", () => {
       class M1 extends R.Entity {
+        static get entities(): _M1s {
+          return M1s
+        }
         @R.hasOne(() => M2, "m1Id") r!: M2 | null
       }
       class _M1s extends R.Entities<M1> {}
       const M1s = new _M1s(M1)
-      class M2 extends R.Entity {}
+      class M2 extends R.Entity {
+        static get entities(): _M2s {
+          return M2s
+        }
+      }
       class _M2s extends R.Entities<M2> {
         @R.uniqueIndex("=m1Name") ix1!: R.UniqueHashIndex<M2>
       }

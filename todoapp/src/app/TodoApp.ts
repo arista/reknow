@@ -4,7 +4,7 @@ import {TodoList} from "./TodoList"
 export type ListSortOrder = "byCreatedAt" | "byName"
 
 export class TodoApp extends R.Entity {
-  static get entities() {
+  static get entities():R.SingletonEntities<TodoApp> {
     return entities
   }
 

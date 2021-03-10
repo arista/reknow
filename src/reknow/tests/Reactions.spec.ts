@@ -8,6 +8,9 @@ import * as R from "../Reknow"
 
 describe("Reactions", () => {
   class User extends R.Entity {
+    static get entities(): _Users {
+      return Users
+    }
     constructor(public name: string, public age: number) {
       super()
     }
@@ -29,6 +32,9 @@ describe("Reactions", () => {
   beforeEach(() => (r1counters = {u1: 0, u2: 0}))
 
   class Job extends R.Entity {
+    static get entities(): _Jobs {
+      return Jobs
+    }
     constructor(public name: string, public userId: string) {
       super()
     }
@@ -507,6 +513,9 @@ describe("Reactions", () => {
   describe("Reactions that depend on each other in a chain", () => {
     it("should trigger all of the affected reactions in the action", () => {
       class E1 extends R.Entity {
+        static get entities(): _E1s {
+          return E1s
+        }
         v2!: number
         v3!: number
         constructor(public v: number) {

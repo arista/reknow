@@ -201,7 +201,7 @@ describe("DebugEvents", () => {
           super()
           this.v3 = "yo"
         }
-        static get entities() {
+        static get entities(): _E1Entities {
           return E1Entities
         }
         @R.action update1() {
@@ -257,7 +257,7 @@ describe("DebugEvents", () => {
           super()
           this.v3 = "yo"
         }
-        static get entities() {
+        static get entities(): _E1Entities {
           return E1Entities
         }
         @R.action update1() {
@@ -358,7 +358,7 @@ describe("DebugEvents", () => {
           super()
           this.v3 = "yo"
         }
-        static get entities() {
+        static get entities(): _E1Entities {
           return E1Entities
         }
         @R.action update1() {

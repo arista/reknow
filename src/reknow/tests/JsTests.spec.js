@@ -371,9 +371,7 @@ describe("JavaScript interface", () => {
         action(() => (u2.name = "namename2"))
 
         expect(User.entities.byName.name2 == null).toBe(true)
-        expect(User.entities.byName.namename2).toBe(
-          User.entities.byId.u2
-        )
+        expect(User.entities.byName.namename2).toBe(User.entities.byId.u2)
       })
     })
     describe("on Service class", () => {
