@@ -9,7 +9,9 @@ export const models = new R.StateManager({
     TodoApp: TodoApp.entities,
     TodoList: TodoList.entities,
     TodoListItem: TodoListItem.entities,
-  }
+  },
+  listener: (e) => console.log(R.stringifyTransaction(e)),
+  //debugListener: e=>console.log(R.stringifyDebugEvent(e)),
 })
 
 export const useQuery = ReactReknow(models).useQuery

@@ -6,12 +6,13 @@ export class TodoListItem extends R.Entity {
     return entities
   }
 
-  @R.id id!:string
-  todoListId!:string
-  @R.belongsTo(()=>TodoList, "todoListId") todoList!:TodoList
+  @R.id id!: string
+  todoListId!: string
+  @R.belongsTo(() => TodoList, "todoListId") todoList!: TodoList
+
   complete = false
-  
-  constructor(public name: string, public createdAt:string) {
+
+  constructor(public name: string, public createdAt: string) {
     super()
   }
 
@@ -21,6 +22,9 @@ export class TodoListItem extends R.Entity {
 }
 
 class _Entities extends R.Entities<TodoListItem> {
+  @R.index("=todoListId", "=complete", "+createdAt") byComplete!: R.HashIndex<
+    R.HashIndex<R.SortIndex<TodoListItem>>
+  >
   addItem(name: string) {
     const createdAt = new Date().toISOString()
     return this.add(new TodoListItem(name, createdAt))
