@@ -44,7 +44,7 @@ describe("HasOne", () => {
   class _Jobs extends R.Entities<Job> {}
   const Jobs = new _Jobs(Job)
 
-  const AppModel = new R.StateManager({entities: {Users, Jobs}})
+  const AppModel = new R.StateManager({entities: {User, Job}})
   const action = <T>(f: () => T) => {
     AppModel.action(f)
   }
@@ -100,7 +100,7 @@ describe("HasOne", () => {
         j1.userId = "user#1"
         expect(() => (j2.userId = "user#1")).toThrow(
           new Error(
-            `Unique key violation: attempt to add multiple entities with key "user#1" from property "userId" in index "_indexForRelationship_Jobs.job"`
+            `Unique key violation: attempt to add multiple entities with key "user#1" from property "userId" in index "_indexForRelationship_Job.job"`
           )
         )
       })
@@ -125,7 +125,7 @@ describe("HasOne", () => {
         j1.userName = "jack"
         expect(() => (j2.userName = "jack")).toThrow(
           new Error(
-            `Unique key violation: attempt to add multiple entities with key "jack" from property "userName" in index "_indexForRelationship_Jobs.jobByName"`
+            `Unique key violation: attempt to add multiple entities with key "jack" from property "userName" in index "_indexForRelationship_Job.jobByName"`
           )
         )
       })
@@ -315,7 +315,7 @@ describe("HasOne", () => {
         class _M2s extends R.Entities<M2> {}
         const M2s = new _M2s(M2)
 
-        const AppModel = new R.StateManager({entities: {M1s, M2s}})
+        const AppModel = new R.StateManager({entities: {M1, M2}})
 
         // Removing m1 should remove m2
         {
@@ -367,7 +367,7 @@ describe("HasOne", () => {
         @R.uniqueIndex("=m1Id") ix1!: R.UniqueHashIndex<M2>
       }
       const M2s = new _M2s(M2)
-      const AppModel = new R.StateManager({entities: {M1s, M2s}})
+      const AppModel = new R.StateManager({entities: {M1, M2}})
 
       expect(M1s.getRelationshipIndexName("r")).toEqual("ix1")
     })
@@ -388,7 +388,7 @@ describe("HasOne", () => {
       }
       class _M2s extends R.Entities<M2> {}
       const M2s = new _M2s(M2)
-      const AppModel = new R.StateManager({entities: {M1s, M2s}})
+      const AppModel = new R.StateManager({entities: {M1, M2}})
 
       expect(M1s.getRelationshipIndexName("r") == null).toBe(false)
       expect(M1s.getRelationshipIndexName("r")).toEqual(
@@ -413,7 +413,7 @@ describe("HasOne", () => {
         @R.index("=m1Id") ix1!: R.HashIndex<R.SortIndex<M2>>
       }
       const M2s = new _M2s(M2)
-      const AppModel = new R.StateManager({entities: {M1s, M2s}})
+      const AppModel = new R.StateManager({entities: {M1, M2}})
 
       expect(M1s.getRelationshipIndexName("r")).not.toEqual("ix1")
     })
@@ -435,7 +435,7 @@ describe("HasOne", () => {
         @R.uniqueIndex("=m1Name") ix1!: R.UniqueHashIndex<M2>
       }
       const M2s = new _M2s(M2)
-      const AppModel = new R.StateManager({entities: {M1s, M2s}})
+      const AppModel = new R.StateManager({entities: {M1, M2}})
 
       expect(M1s.getRelationshipIndexName("r")).not.toEqual("ix1")
     })

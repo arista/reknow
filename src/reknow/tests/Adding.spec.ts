@@ -13,7 +13,7 @@ describe("Adding Entities", () => {
         class _Users extends R.Entities<User> {}
         const Users = new _Users(User)
         const AppModel = new R.StateManager({
-          entities: {Users},
+          entities: {User},
         })
 
         const u1 = AppModel.action(() => Users.add(new User()))
@@ -34,7 +34,7 @@ describe("Adding Entities", () => {
         class _Users extends R.Entities<User> {}
         const Users = new _Users(User)
         const AppModel = new R.StateManager({
-          entities: {Users},
+          entities: {User},
         })
 
         const u1 = AppModel.action(() => Users.add(new User(), "u1"))
@@ -62,7 +62,7 @@ describe("Adding Entities", () => {
       class _Users extends R.Entities<User> {}
       const Users = new _Users(User)
       const AppModel = new R.StateManager({
-        entities: {Users},
+        entities: {User},
       })
       beforeEach(() => AppModel.clearState())
 
@@ -102,7 +102,7 @@ describe("Adding Entities", () => {
           AppModel.action(() => Users.add(new User("user1")))
         ).toThrow(
           new Error(
-            'An Entity has already been added to "Users" with id "user1"'
+            'An Entity has already been added to "User" with id "user1"'
           )
         )
       })
@@ -153,7 +153,7 @@ describe("Adding Entities", () => {
         const Departments = new _Departments(Department)
 
         const AppModel = new R.StateManager({
-          entities: {Users, Departments},
+          entities: {User, Department},
         })
 
         const u1 = AppModel.action(() => {
@@ -200,7 +200,7 @@ describe("Adding Entities", () => {
         const Departments = new _Departments(Department)
 
         const AppModel = new R.StateManager({
-          entities: {Users, Departments},
+          entities: {User, Department},
         })
 
         const d1 = AppModel.action(() => {
@@ -248,7 +248,7 @@ describe("Adding Entities", () => {
         const Departments = new _Departments(Department)
 
         const AppModel = new R.StateManager({
-          entities: {Users, Departments},
+          entities: {User, Department},
         })
 
         const d1 = AppModel.action(() => {
@@ -304,7 +304,7 @@ describe("Adding Entities", () => {
       const Departments = new _Departments(Department)
 
       const AppModel = new R.StateManager({
-        entities: {Users, Departments},
+        entities: {User, Department},
       })
 
       const d1 = AppModel.action(() => {
@@ -346,7 +346,7 @@ describe("Adding Entities", () => {
       class _Users extends R.Entities<User> {}
       const Users = new _Users(User)
       const AppModel = new R.StateManager({
-        entities: {Users},
+        entities: {User},
       })
 
       const _u1 = {name: "user1", age: 20}
@@ -391,7 +391,7 @@ describe("Adding Entities", () => {
       const Departments = new _Departments(Department)
 
       const AppModel = new R.StateManager({
-        entities: {Users, Departments},
+        entities: {User, Department},
       })
 
       const d1 = AppModel.action(() => {
@@ -450,7 +450,7 @@ describe("Adding Entities", () => {
     const Departments = new _Departments(Department)
 
     const AppModel = new R.StateManager({
-      entities: {Users, Departments},
+      entities: {User, Department},
     })
     beforeEach(() => AppModel.clearState())
 
@@ -459,7 +459,7 @@ describe("Adding Entities", () => {
         const d = new Department("d1")
         expect(() => Users.add(d as any)).toThrow(
           new Error(
-            "Attempt to add entity of unexpected class Department to Users"
+            "Attempt to add entity of unexpected class Department to User"
           )
         )
       })
@@ -470,7 +470,7 @@ describe("Adding Entities", () => {
         const _d2 = new Department("d2")
         expect(() => d1.users.push(_d2 as any)).toThrow(
           new Error(
-            "Attempt to add entity of unexpected class Department to Users"
+            "Attempt to add entity of unexpected class Department to User"
           )
         )
       })
@@ -539,7 +539,7 @@ describe("Adding Entities", () => {
     const Departments = new _Departments(Department)
 
     const AppModel = new R.StateManager({
-      entities: {Users, Departments},
+      entities: {User, Department},
     })
     beforeEach(() => AppModel.clearState())
 

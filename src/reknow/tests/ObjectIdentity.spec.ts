@@ -43,7 +43,7 @@ describe("Changing Object Identities", () => {
   class _Jobs extends R.Entities<Job> {}
   const Jobs = new _Jobs(Job)
 
-  const AppModel = new R.StateManager({entities: {Users, Jobs}})
+  const AppModel = new R.StateManager({entities: {User, Job}})
   const action = <T>(f: () => T): T => {
     return AppModel.action(f)
   }
@@ -471,7 +471,7 @@ describe("Changing Object Identities", () => {
         }
       }
       const E1s = new _E1s(E1)
-      const m = new R.StateManager({entities: {E1s}})
+      const m = new R.StateManager({entities: {E1}})
       let v2scalled = 0
 
       m.action(() => {

@@ -51,7 +51,7 @@ describe("Effects", () => {
     class _Users extends R.Entities<User> {}
     const Users = new _Users(User)
     const AppModel = new R.StateManager({
-      entities: {Users},
+      entities: {User},
     })
     beforeEach(() => AppModel.clearState())
 

@@ -44,7 +44,7 @@ describe("HasMany", () => {
   class _Jobs extends R.Entities<Job> {}
   const Jobs = new _Jobs(Job)
 
-  const AppModel = new R.StateManager({entities: {Users, Jobs}})
+  const AppModel = new R.StateManager({entities: {User, Job}})
   const action = <T>(f: () => T) => {
     AppModel.action(f)
   }
@@ -497,7 +497,7 @@ describe("HasMany", () => {
         class _M2s extends R.Entities<M2> {}
         const M2s = new _M2s(M2)
 
-        const AppModel = new R.StateManager({entities: {M1s, M2s}})
+        const AppModel = new R.StateManager({entities: {M1, M2}})
 
         // Removing m1 should remove m2
         {
@@ -556,7 +556,7 @@ describe("HasMany", () => {
         @R.index("=m1Id") ix1!: R.HashIndex<R.SortIndex<M2>>
       }
       const M2s = new _M2s(M2)
-      const AppModel = new R.StateManager({entities: {M1s, M2s}})
+      const AppModel = new R.StateManager({entities: {M1, M2}})
 
       expect(M1s.getRelationshipIndexName("r")).toEqual("ix1")
     })
@@ -577,7 +577,7 @@ describe("HasMany", () => {
       }
       class _M2s extends R.Entities<M2> {}
       const M2s = new _M2s(M2)
-      const AppModel = new R.StateManager({entities: {M1s, M2s}})
+      const AppModel = new R.StateManager({entities: {M1, M2}})
 
       expect(M1s.getRelationshipIndexName("r") == null).toBe(false)
       expect(M1s.getRelationshipIndexName("r")).toEqual(
@@ -602,7 +602,7 @@ describe("HasMany", () => {
         @R.uniqueIndex("=m1Id") ix1!: R.UniqueHashIndex<M2>
       }
       const M2s = new _M2s(M2)
-      const AppModel = new R.StateManager({entities: {M1s, M2s}})
+      const AppModel = new R.StateManager({entities: {M1, M2}})
 
       expect(M1s.getRelationshipIndexName("r")).not.toEqual("ix1")
     })
@@ -624,7 +624,7 @@ describe("HasMany", () => {
         @R.index("=m1Id2") ix1!: R.HashIndex<R.SortIndex<M2>>
       }
       const M2s = new _M2s(M2)
-      const AppModel = new R.StateManager({entities: {M1s, M2s}})
+      const AppModel = new R.StateManager({entities: {M1, M2}})
 
       expect(M1s.getRelationshipIndexName("r")).not.toEqual("ix1")
     })
@@ -648,7 +648,7 @@ describe("HasMany", () => {
         @R.index("=m1Id", "-num") ix3!: R.HashIndex<R.SortIndex<M2>>
       }
       const M2s = new _M2s(M2)
-      const AppModel = new R.StateManager({entities: {M1s, M2s}})
+      const AppModel = new R.StateManager({entities: {M1, M2}})
 
       expect(M1s.getRelationshipIndexName("r")).toEqual("ix3")
     })
@@ -674,7 +674,7 @@ describe("HasMany", () => {
         >
       }
       const M2s = new _M2s(M2)
-      const AppModel = new R.StateManager({entities: {M1s, M2s}})
+      const AppModel = new R.StateManager({entities: {M1, M2}})
 
       expect(M1s.getRelationshipIndexName("r")).toEqual("ix3")
     })

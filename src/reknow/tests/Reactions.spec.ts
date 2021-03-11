@@ -43,7 +43,7 @@ describe("Reactions", () => {
   const Jobs = new _Jobs(Job)
 
   const AppModel = new R.StateManager({
-    entities: {Users, Jobs},
+    entities: {User, Job},
   })
   const action = <T>(f: () => T): T => {
     return AppModel.action(f)
@@ -505,7 +505,7 @@ describe("Reactions", () => {
         }, "cdef")
       }).toThrow(
         new Error(
-          `Possible circular dependency detected: Users#u1.r1's onInvalidate called more than 20 times while resolving transaction`
+          `Possible circular dependency detected: User#u1.r1's onInvalidate called more than 20 times while resolving transaction`
         )
       )
     })
@@ -533,7 +533,7 @@ describe("Reactions", () => {
       class _E1s extends R.Entities<E1> {}
       const E1s = new _E1s(E1)
       const m = new R.StateManager({
-        entities: {E1s},
+        entities: {E1},
       })
       let v2calls = 0
       let v3calls = 0

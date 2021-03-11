@@ -97,12 +97,12 @@ export class StateManager {
     // Run through a pass to create the EntitiesStates and do some
     // initialization
     for (const name in flattenedDefinitions) {
-      const entities = flattenedDefinitions[name]
+      const entityClass = flattenedDefinitions[name]
       const entitiesState = new EntitiesState(
         name,
         this,
-        entities,
-        entities.entityClass
+        entityClass.entities,
+        entityClass
       )
       this.entitiesStates.push(entitiesState)
     }

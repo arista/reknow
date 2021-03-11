@@ -226,7 +226,7 @@ describe("DebugEvents", () => {
       const listener = (e: R.DebugEvent) => events.push(e)
       const sm = new R.StateManager({
         entities: {
-          E1: E1.entities,
+          E1,
         },
         debugListener: listener,
       })
@@ -291,7 +291,7 @@ describe("DebugEvents", () => {
       const listener = (e: R.DebugEvent) => events.push(e)
       const sm = new R.StateManager({
         entities: {
-          E1: E1.entities,
+          E1,
         },
         debugListener: listener,
       })
@@ -387,7 +387,7 @@ describe("DebugEvents", () => {
       const listener = (e: R.DebugEvent) => events.push(e)
       const sm = new R.StateManager({
         entities: {
-          E1: E1.entities,
+          E1,
         },
         debugListener: listener,
       })

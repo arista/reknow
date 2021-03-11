@@ -6,9 +6,11 @@ import {TodoListItem} from "./TodoListItem"
 
 export const models = new R.StateManager({
   entities: {
-    TodoApp: TodoApp.entities,
-    TodoList: TodoList.entities,
-    TodoListItem: TodoListItem.entities,
+    todo: {
+      TodoApp,
+      TodoList,
+      TodoListItem,
+    },
   },
   listener: (e) => console.log(R.stringifyTransaction(e)),
   //debugListener: e=>console.log(R.stringifyDebugEvent(e)),

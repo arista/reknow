@@ -156,13 +156,13 @@ describe("Query", () => {
     // StateManager
     const stateManager = new R.StateManager({
       entities: {
-        User: User.entities,
-        Job: Job.entities,
-        I1: I1.entities,
-        I2: I2.entities,
-        I3: I3.entities,
-        I4: I4.entities,
-        I5: I5.entities,
+        User,
+        Job,
+        I1,
+        I2,
+        I3,
+        I4,
+        I5,
       },
       services: {
         S1,

@@ -23,6 +23,8 @@ import {HasManySort} from "./Types"
 import {HasManySortElement} from "./Types"
 import {ArrayChangesResults} from "./Types"
 import {ConstructorFunction} from "./Types"
+import {EntityClass} from "./Types"
+import {EntitiesDefinitionTreeEntry} from "./Types"
 
 export function notNull<T>(val: T | null | undefined): T {
   if (val == null) {
@@ -52,11 +54,21 @@ export function _flattenEntitiesDefinitionTree(
     }
     const fullName = baseName == null ? name : `${baseName}.${name}`
     const entry = tree[name]
-    if (entry instanceof Entities) {
-      result[fullName] = entry
+    const entityClass = entityDefnitionTreeEntryAsEntityClass(entry)
+    if (entityClass != null) {
+      result[fullName] = entityClass
     } else {
-      _flattenEntitiesDefinitionTree(result, entry, fullName)
+      _flattenEntitiesDefinitionTree(result, entry as EntitiesDefinitionTree, fullName)
     }
+  }
+}
+
+export function entityDefnitionTreeEntryAsEntityClass(entry:EntitiesDefinitionTreeEntry):EntityClass<any>|null {
+  if (typeof(entry) === "function") {
+    return entry
+  }
+  else {
+    return null
   }
 }
 

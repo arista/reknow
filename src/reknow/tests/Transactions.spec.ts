@@ -56,7 +56,7 @@ describe("Transactions", () => {
   const UsersService = new _UsersService()
   let transactions: Array<R.Transaction> = []
   const AppModel = new R.StateManager({
-    entities: {User: Users},
+    entities: {User},
     services: {UsersService},
     listener: (t) => transactions.push(t),
   })

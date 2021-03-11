@@ -16,7 +16,7 @@ describe("Indexes", () => {
       @R.index("+name", "-age") index3!: R.SortIndex<User>
     }
     const Users = new _Users(User)
-    const AppModel = new R.StateManager({entities: {Users}})
+    const AppModel = new R.StateManager({entities: {User}})
     const action = <T>(f: () => T) => {
       AppModel.action(f)
     }
@@ -113,7 +113,7 @@ describe("Indexes", () => {
       @R.uniqueIndex("=name") index1!: R.UniqueHashIndex<User>
     }
     const Users = new _Users(User)
-    const AppModel = new R.StateManager({entities: {Users}})
+    const AppModel = new R.StateManager({entities: {User}})
     const action = <T>(f: () => T) => {
       AppModel.action(f)
     }
@@ -192,7 +192,7 @@ describe("Indexes", () => {
       @R.index("=name", "+age") index1!: R.UniqueHashIndex<User>
     }
     const Users = new _Users(User)
-    const AppModel = new R.StateManager({entities: {Users}})
+    const AppModel = new R.StateManager({entities: {User}})
     const action = <T>(f: () => T) => {
       AppModel.action(f)
     }
@@ -258,7 +258,7 @@ describe("Indexes", () => {
       >
     }
     const Users = new _Users(User)
-    const AppModel = new R.StateManager({entities: {Users}})
+    const AppModel = new R.StateManager({entities: {User}})
     const action = <T>(f: () => T) => {
       AppModel.action(f)
     }
@@ -399,7 +399,7 @@ describe("Indexes", () => {
       @R.index("=name", "+age") index1!: R.HashIndex<R.SortIndex<User>>
     }
     const Users = new _Users(User)
-    const AppModel = new R.StateManager({entities: {Users}})
+    const AppModel = new R.StateManager({entities: {User}})
     const action = <T>(f: () => T) => {
       AppModel.action(f)
     }
@@ -463,7 +463,7 @@ describe("Indexes", () => {
       >
     }
     const Users = new _Users(User)
-    const AppModel = new R.StateManager({entities: {Users}})
+    const AppModel = new R.StateManager({entities: {User}})
     const action = <T>(f: () => T) => {
       AppModel.action(f)
     }
