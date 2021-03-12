@@ -20,6 +20,8 @@ import {ServiceAction as _ServiceAction} from "./Types"
 import {InitializeAction as _InitializeAction} from "./Types"
 import {UnnamedAction as _UnnamedAction} from "./Types"
 
+import {EntityClass as _EntityClass} from "./Types"
+
 import {DebugEvent as _DebugEvent} from "./DebugEvents"
 import {ActionDebugEvent as _ActionDebugEvent} from "./DebugEvents"
 import {AddDebugEvent as _AddDebugEvent} from "./DebugEvents"
@@ -92,3 +94,6 @@ export type InvalidateQueryDebugEvent = _InvalidateQueryDebugEvent
 export type RunQueryOnInvalidateDebugEvent = _RunQueryOnInvalidateDebugEvent
 export type RunReactionDebugEvent = _RunReactionDebugEvent
 export type RunEffectDebugEvent = _RunEffectDebugEvent
+
+export type EntityClass<E extends _Entity> = _EntityClass<E>
+  
