@@ -2,7 +2,7 @@ import * as R from "reknow"
 import {TodoList} from "./TodoList"
 
 export class TodoListItem extends R.Entity {
-  static get entities():Entities {
+  static get entities(): Entities {
     return entities
   }
 

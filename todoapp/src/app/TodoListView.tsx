@@ -2,6 +2,7 @@ import React from "react"
 import {useQuery} from "./Models"
 import {TodoList} from "./TodoList"
 import {TodoListItemView} from "./TodoListItemView"
+import {TextInputView} from "./TextInputView"
 
 export const TodoListView: React.FC<{todoList: TodoList}> = (params) => {
   const todoList = useQuery(() => params.todoList)
@@ -22,17 +23,10 @@ export const TodoListView: React.FC<{todoList: TodoList}> = (params) => {
           <TodoListItemView item={item} key={item.id} />
         ))}
         Add new todo:
-        <input
-          type="text"
-          value={todoList.itemToAdd}
-          onChange={(e) => todoList.setItemToAdd(e.target.value)}
+        <TextInputView
+          caption="Add Item"
+          onValue={(v) => todoList.addItem(v)}
         />
-        <button
-          disabled={!todoList.canAddItem}
-          onClick={() => todoList.addItem()}
-        >
-          Add Item
-        </button>
       </ul>
     </li>
   )

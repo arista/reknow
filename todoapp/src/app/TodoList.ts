@@ -3,7 +3,7 @@ import {TodoListItem} from "./TodoListItem"
 import {TodoApp} from "./TodoApp"
 
 export class TodoList extends R.Entity {
-  static get entities():Entities {
+  static get entities(): Entities {
     return entities
   }
 
@@ -15,27 +15,17 @@ export class TodoList extends R.Entity {
     dependent: "remove",
   })
   items!: Array<TodoListItem>
+  itemCount = 0
 
   @R.belongsTo(() => TodoApp, "todoAppId") todoApp!: TodoApp
-
-  itemToAdd = ""
 
   constructor(public name: string) {
     super()
   }
 
-  @R.query get canAddItem() {
-    return this.itemToAdd !== ""
-  }
-
-  @R.action addItem() {
-    const item = TodoListItem.entities.addItem(this.itemToAdd)
+  @R.action addItem(value: string) {
+    const item = TodoListItem.entities.addItem(value)
     this.items.push(item)
-    this.itemToAdd = ""
-  }
-
-  @R.action setItemToAdd(val: string) {
-    this.itemToAdd = val
   }
 
   @R.query get completeItems() {
@@ -49,10 +39,15 @@ export class TodoList extends R.Entity {
   @R.action remove() {
     this.removeEntity()
   }
+
+  @R.reaction computeItemCount() {
+    this.itemCount = this.items.length
+  }
 }
 
 class Entities extends R.Entities<TodoList> {
   @R.index("-createdAt") byCreatedAt!: R.SortIndex<TodoList>
+  @R.index("-itemCount") byItemCount!: R.SortIndex<TodoList>
   @R.index("+name") byName!: R.SortIndex<TodoList>
 
   addList(name: string) {

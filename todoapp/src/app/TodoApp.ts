@@ -1,10 +1,10 @@
 import * as R from "reknow"
 import {TodoList} from "./TodoList"
 
-export type ListSortOrder = "byCreatedAt" | "byName"
+export type ListSortOrder = "byCreatedAt" | "byName" | "byItemCount"
 
 export class TodoApp extends R.Entity {
-  static get entities():R.SingletonEntities<TodoApp> {
+  static get entities(): Entities {
     return entities
   }
 
@@ -19,21 +19,14 @@ export class TodoApp extends R.Entity {
   @R.hasMany(() => TodoList, "todoAppId", {sort: "+createdAt"})
   todoListsByCreatedAt!: Array<TodoList>
 
-  listToAdd = ""
+  @R.hasMany(() => TodoList, "todoAppId", {sort: "-itemCount"})
+  todoListsByItemCount!: Array<TodoList>
+
   listSortOrder: ListSortOrder = "byCreatedAt"
 
-  @R.query get canAddList() {
-    return this.listToAdd !== ""
-  }
-
-  @R.action addList() {
-    const todoList = TodoList.entities.addList(this.listToAdd)
+  @R.action addList(value: string) {
+    const todoList = TodoList.entities.addList(value)
     this.todoLists.push(todoList)
-    this.listToAdd = ""
-  }
-
-  @R.action setListToAdd(val: string) {
-    this.listToAdd = val
   }
 
   @R.action setListSortOrder(val: ListSortOrder) {
@@ -44,10 +37,14 @@ export class TodoApp extends R.Entity {
     switch (this.listSortOrder) {
       case "byName":
         return this.todoListsByName
+      case "byItemCount":
+        return this.todoListsByItemCount
       default:
         return this.todoListsByCreatedAt
     }
   }
 }
 
-const entities = new R.SingletonEntities(TodoApp, () => new TodoApp())
+class Entities extends R.Entities<TodoApp> {}
+
+const entities = new Entities(TodoApp)

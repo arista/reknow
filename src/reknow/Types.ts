@@ -7,7 +7,9 @@ import {Selector} from "./Selector"
 export type EntitiesDefinitionTree = {
   [name: string]: EntitiesDefinitionTreeEntry
 }
-export type EntitiesDefinitionTreeEntry = EntityClass<any> | EntitiesDefinitionTree
+export type EntitiesDefinitionTreeEntry =
+  | EntityClass<any>
+  | EntitiesDefinitionTree
 export type EntitiesDefinitions = {[name: string]: EntityClass<any>}
 
 export type ServiceDefinitionTree = {

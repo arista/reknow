@@ -118,7 +118,7 @@ export class Query<T> extends ChangeSubscriber {
   remove() {
     this.removeChangePublishers()
     this.isRemoved = true
-    this.cachedValue = null
+    this.invalidateCachedValue()
   }
 
   notifyChangeSubscriber() {
@@ -130,7 +130,7 @@ export class Query<T> extends ChangeSubscriber {
         }
       },
       () => {
-        this.cachedValue = null
+        this.invalidateCachedValue()
 
         if (this.isEvaluating) {
           this.wasNotifiedWhileEvaluating = true
@@ -152,5 +152,9 @@ export class Query<T> extends ChangeSubscriber {
 
   get hasCachedValue() {
     return this.cachedValue != null
+  }
+
+  invalidateCachedValue() {
+    this.cachedValue = null
   }
 }

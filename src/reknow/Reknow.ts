@@ -96,4 +96,3 @@ export type RunReactionDebugEvent = _RunReactionDebugEvent
 export type RunEffectDebugEvent = _RunEffectDebugEvent
 
 export type EntityClass<E extends _Entity> = _EntityClass<E>
-  

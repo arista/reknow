@@ -1,10 +1,12 @@
 import React from "react"
 import {useQuery} from "./Models"
+import {useComponentEntity} from "./Models"
 import {TodoApp} from "./TodoApp"
 import {TodoListView} from "./TodoListView"
+import {TextInputView} from "./TextInputView"
 
-export const TodoAppView: React.FC<{todoApp: TodoApp}> = (params) => {
-  const todoApp = useQuery(() => params.todoApp)
+export const TodoAppView: React.FC<{}> = (params) => {
+  const todoApp = useComponentEntity(() => new TodoApp())
   const lists = useQuery(() => todoApp.sortedTodoLists)
 
   return (
@@ -12,17 +14,7 @@ export const TodoAppView: React.FC<{todoApp: TodoApp}> = (params) => {
       <div>Todo App</div>
       <div>
         Add a new Todo list:
-        <input
-          type="text"
-          value={todoApp.listToAdd}
-          onChange={(e) => todoApp.setListToAdd(e.target.value)}
-        />
-        <button
-          disabled={!todoApp.canAddList}
-          onClick={() => todoApp.addList()}
-        >
-          Add List
-        </button>
+        <TextInputView caption="Add List" onValue={(v) => todoApp.addList(v)} />
         <div>
           Lists
           <button
@@ -36,6 +28,12 @@ export const TodoAppView: React.FC<{todoApp: TodoApp}> = (params) => {
             disabled={todoApp.listSortOrder === "byName"}
           >
             Sort By Name
+          </button>
+          <button
+            onClick={() => todoApp.setListSortOrder("byItemCount")}
+            disabled={todoApp.listSortOrder === "byItemCount"}
+          >
+            Sort By Item Count
           </button>
         </div>
         <ul>

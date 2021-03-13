@@ -58,16 +58,21 @@ export function _flattenEntitiesDefinitionTree(
     if (entityClass != null) {
       result[fullName] = entityClass
     } else {
-      _flattenEntitiesDefinitionTree(result, entry as EntitiesDefinitionTree, fullName)
+      _flattenEntitiesDefinitionTree(
+        result,
+        entry as EntitiesDefinitionTree,
+        fullName
+      )
     }
   }
 }
 
-export function entityDefnitionTreeEntryAsEntityClass(entry:EntitiesDefinitionTreeEntry):EntityClass<any>|null {
-  if (typeof(entry) === "function") {
+export function entityDefnitionTreeEntryAsEntityClass(
+  entry: EntitiesDefinitionTreeEntry
+): EntityClass<any> | null {
+  if (typeof entry === "function") {
     return entry
-  }
-  else {
+  } else {
     return null
   }
 }

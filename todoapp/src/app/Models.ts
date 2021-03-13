@@ -3,6 +3,7 @@ import {ReactReknow} from "react-reknow"
 import {TodoApp} from "./TodoApp"
 import {TodoList} from "./TodoList"
 import {TodoListItem} from "./TodoListItem"
+import {TextInput} from "./TextInput"
 
 export const models = new R.StateManager({
   entities: {
@@ -10,10 +11,11 @@ export const models = new R.StateManager({
       TodoApp,
       TodoList,
       TodoListItem,
+      TextInput,
     },
   },
   listener: (e) => console.log(R.stringifyTransaction(e)),
   //debugListener: e=>console.log(R.stringifyDebugEvent(e)),
 })
 
-export const useQuery = ReactReknow(models).useQuery
+export const {useQuery, useComponentEntity} = ReactReknow(models)
