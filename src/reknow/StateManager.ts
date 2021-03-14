@@ -18,6 +18,7 @@ import {EntityRemoved} from "./Types"
 import {EntityPropertyChanged} from "./Types"
 import {UnnamedAction} from "./Types"
 import {Entity} from "./Entity"
+import {Entities} from "./Entities"
 import {ChangeSubscriber} from "./ChangeSubscriber"
 import {ChangePublisher} from "./ChangePublisher"
 import {Listener} from "./Types"
@@ -101,7 +102,7 @@ export class StateManager {
       const entitiesState = new EntitiesState(
         name,
         this,
-        entityClass.entities,
+        Entities.getEntitiesForEntityClass(entityClass),
         entityClass
       )
       this.entitiesStates.push(entitiesState)

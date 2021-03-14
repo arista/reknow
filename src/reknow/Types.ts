@@ -1,4 +1,5 @@
 import {Entities} from "./Entities"
+import {ENTITIES_KEY} from "./Entity"
 import {EntitiesState} from "./EntitiesState"
 import {Entity} from "./Entity"
 import {Service} from "./Service"
@@ -148,7 +149,7 @@ export type ConstructorFunction<T> = new (...args: Array<any>) => T
 
 export type EntityClass<E extends Entity> = {
   new (...args: Array<any>): E
-  entities: Entities<E>
+  [ENTITIES_KEY]?: Entities<E>
 }
 
 export type InternalEntityClass<E extends Entity> = {

@@ -4,10 +4,6 @@ import {TodoList} from "./TodoList"
 export type ListSortOrder = "byCreatedAt" | "byName" | "byItemCount"
 
 export class TodoApp extends R.Entity {
-  static get entities(): Entities {
-    return entities
-  }
-
   @R.id id!: string
 
   @R.hasMany(() => TodoList, "todoAppId", {dependent: "remove"})
@@ -25,7 +21,7 @@ export class TodoApp extends R.Entity {
   listSortOrder: ListSortOrder = "byCreatedAt"
 
   @R.action addList(value: string) {
-    const todoList = TodoList.entities.addList(value)
+    const todoList = new TodoList(value).addEntity()
     this.todoLists.push(todoList)
   }
 
@@ -46,5 +42,4 @@ export class TodoApp extends R.Entity {
 }
 
 class Entities extends R.Entities<TodoApp> {}
-
-const entities = new Entities(TodoApp)
+new Entities(TodoApp)

@@ -16,9 +16,9 @@ describe("Adding Entities", () => {
           entities: {User},
         })
 
-        const u1 = AppModel.action(() => Users.add(new User()))
+        const u1 = AppModel.action(() => new User().addEntity())
         expect(u1.entityId == null).toBe(false)
-        const u2 = AppModel.action(() => Users.add(new User()))
+        const u2 = AppModel.action(() => new User().addEntity())
         expect(u2.entityId == null).toBe(false)
 
         expect(u1).not.toBe(u2)

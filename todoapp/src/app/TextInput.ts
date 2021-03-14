@@ -1,10 +1,6 @@
 import * as R from "reknow"
 
 export class TextInput extends R.Entity {
-  static get entities(): Entities {
-    return entities
-  }
-
   constructor(public value: string = "", public onValue: (v: string) => void) {
     super()
   }
@@ -24,5 +20,4 @@ export class TextInput extends R.Entity {
 }
 
 class Entities extends R.Entities<TextInput> {}
-
-const entities = new Entities(TextInput)
+new Entities(TextInput)

@@ -1,12 +1,8 @@
 import * as R from "reknow"
-import {TodoListItem} from "./TodoListItem"
+import {TodoListItem, TodoListItemEntities} from "./TodoListItem"
 import {TodoApp} from "./TodoApp"
 
 export class TodoList extends R.Entity {
-  static get entities(): Entities {
-    return entities
-  }
-
   @R.id id!: string
   todoAppId!: string
 
@@ -24,16 +20,16 @@ export class TodoList extends R.Entity {
   }
 
   @R.action addItem(value: string) {
-    const item = TodoListItem.entities.addItem(value)
+    const item = new TodoListItem(value).addEntity()
     this.items.push(item)
   }
 
   @R.query get completeItems() {
-    return TodoListItem.entities.byComplete[this.id]?.true || []
+    return TodoListItemEntities.byComplete[this.id]?.true || []
   }
 
   @R.query get incompleteItems() {
-    return TodoListItem.entities.byComplete[this.id]?.false || []
+    return TodoListItemEntities.byComplete[this.id]?.false || []
   }
 
   @R.action remove() {
@@ -45,14 +41,6 @@ export class TodoList extends R.Entity {
   }
 }
 
-class Entities extends R.Entities<TodoList> {
-  @R.index("-createdAt") byCreatedAt!: R.SortIndex<TodoList>
-  @R.index("-itemCount") byItemCount!: R.SortIndex<TodoList>
-  @R.index("+name") byName!: R.SortIndex<TodoList>
+class Entities extends R.Entities<TodoList> {}
 
-  addList(name: string) {
-    return this.add(new TodoList(name))
-  }
-}
-
-const entities = new Entities(TodoList)
+new Entities(TodoList)

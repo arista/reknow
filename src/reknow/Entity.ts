@@ -1,5 +1,6 @@
 import {notNull} from "./Utils"
 import {EntityState} from "./EntityState"
+import {Entities} from "./Entities"
 import {EntityDeclarations} from "./EntityDeclarations"
 import {EntityClass} from "./Types"
 import {HasManyOptions} from "./Types"
@@ -7,6 +8,7 @@ import {HasOneOptions} from "./Types"
 import {BelongsToOptions} from "./Types"
 
 export const ENTITY_STATE_KEY = Symbol("ENTITY_STATE_KEY")
+export const ENTITIES_KEY = Symbol("ENTITIES_KEY")
 
 export abstract class Entity {
   [ENTITY_STATE_KEY]: EntityState<any> | null = null
@@ -36,6 +38,10 @@ export abstract class Entity {
 
   get isEntityRemoved() {
     return this.entityState.isRemoved
+  }
+
+  addEntity():this {
+    return this.hasEntityState ? this : Entities.getEntitiesForEntity(this).add(this)
   }
 
   removeEntity() {

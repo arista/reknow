@@ -67,11 +67,11 @@ The sample app uses the pattern of importing Reknow into its own namespace:
 import * as R from "reknow"
 ```
 
-A Reknow model file might use many reknow exports, so it's typically more convenient to import the whole namespace rather than importing individual exports.
+A Reknow model file typically uses many reknow exports, so it's often more convenient to import the whole namespace rather than importing individual exports.
 
 #### Entity and Entities classes
 
-Each model class in Reknow is typically coded in its own file, and is implemented using two classes: the `Entity` class, which covers a single instance of the model, and the `Entities` class, which covers the whole collection of model instances.  The `Entities` class is created as a singleton, and accessed as a static getter from the `Entity` class.
+Each model is implemented using two classes: the `Entity` class, which covers a single instance of the model, and the `Entities` class, which covers the collection of model instances.  The `Entities` class is created as a singleton, and accessed as a static getter from the `Entity` class.
 
 The basic template for a model class looks like this:
 
@@ -81,9 +81,6 @@ import * as R from "reknow"
 export class TodoListItem extends R.Entity {
   // property declarations
   // relationship declarations
-  static get entities(): Entities {
-    return entities
-  }
 
   constructor(/* more property declarations */) {
     super()
@@ -99,11 +96,21 @@ class Entities extends R.Entities<TodoListItem> {
   // other methods not specific to a single instance
 }
 
-const entities = new Entities(TodoListItem)
+// If the Entities class exposes indexes or methods to the rest of the application
+export const TodoListItemEntities = new Entities(TodoListItem)
+// OR, if the Entities class is empty
+new Entities(TodoListItem)
 ```
 
-Only the `Entity` class is exported.  The rest of the application accesses the `Entities` methods by calling `TodoListItem.entities...`.
+Each model class is typically written in its own file, and exports only the `Entity` class.  The rest of the application accesses the `Entities` methods by calling `TodoListItem.entities...`.
 
+Both the `Entity` and `Entities` base classes provide properties and methods that can be used by the application.  Those will be discussed later.
+
+The `Entities` class should avoid setting its own properties to hold application data.  All application data should be stored in the `Entity` instance classes.
+
+#### Adding Entity Instances
+
+Reknow will only manage `Entity` instances that the application has explicitly added.
 
 
 

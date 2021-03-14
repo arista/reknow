@@ -2,17 +2,13 @@ import * as R from "reknow"
 import {TodoList} from "./TodoList"
 
 export class TodoListItem extends R.Entity {
-  static get entities(): Entities {
-    return entities
-  }
-
   @R.id id!: string
   todoListId!: string
   @R.belongsTo(() => TodoList, "todoListId") todoList!: TodoList
 
   complete = false
 
-  constructor(public name: string, public createdAt: string) {
+  constructor(public name: string, public createdAt = new Date().toISOString()) {
     super()
   }
 
@@ -25,10 +21,6 @@ class Entities extends R.Entities<TodoListItem> {
   @R.index("=todoListId", "=complete", "+createdAt") byComplete!: R.HashIndex<
     R.HashIndex<R.SortIndex<TodoListItem>>
   >
-  addItem(name: string) {
-    const createdAt = new Date().toISOString()
-    return this.add(new TodoListItem(name, createdAt))
-  }
 }
 
-const entities = new Entities(TodoListItem)
+export const TodoListItemEntities = new Entities(TodoListItem)
