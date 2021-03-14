@@ -47,6 +47,65 @@ npm start
 ```
 add experimentalDecorators to tsconfig
 
+The example is a simple Todo list manager.  It allows the user to add lists, add items to those lists, mark items as "done", and to remove entire lists.  Items in each list are ordered by their creation time, most recent first.  Items marked as "done" are displayed with a strikethrough at the bottom of the list.  The lists offer a choice of ordering - either by creation time, alphabetically by list name, or by number of items in the list.
+
+The application's data is modeled using `TodoApp`, `TodoList`, and `TodoListItem`, with one-to-many relationships between them:
+
+```
+TodoApp --< TodoList --< TodoListItem
+```
+
+A `TextInput` is also modeled, to demonstrate the use of a "standalone" reusable component with state.
+
+### Concepts
+
+#### Importing Reknow
+
+The sample app uses the pattern of importing Reknow into its own namespace:
+
+```
+import * as R from "reknow"
+```
+
+A Reknow model file might use many reknow exports, so it's typically more convenient to import the whole namespace rather than importing individual exports.
+
+#### Entity and Entities classes
+
+Each model class in Reknow is typically coded in its own file, and is implemented using two classes: the `Entity` class, which covers a single instance of the model, and the `Entities` class, which covers the whole collection of model instances.  The `Entities` class is created as a singleton, and accessed as a static getter from the `Entity` class.
+
+The basic template for a model class looks like this:
+
+```ts
+import * as R from "reknow"
+
+export class TodoListItem extends R.Entity {
+  // property declarations
+  // relationship declarations
+  static get entities(): Entities {
+    return entities
+  }
+
+  constructor(/* more property declarations */) {
+    super()
+  }
+
+  // instance-specific methods
+}
+
+class Entities extends R.Entities<TodoListItem> {
+  // index declarations
+  // creator methods
+  // finder methods
+  // other methods not specific to a single instance
+}
+
+const entities = new Entities(TodoListItem)
+```
+
+Only the `Entity` class is exported.  The rest of the application accesses the `Entities` methods by calling `TodoListItem.entities...`.
+
+
+
 
 ## First Impressions
 
