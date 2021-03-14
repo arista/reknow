@@ -102,6 +102,22 @@ export const TodoListItemEntities = new Entities(TodoListItem)
 new Entities(TodoListItem)
 ```
 
+Or to boil it down to its minimal form:
+
+```ts
+import * as R from "reknow"
+
+export class TodoListItem extends R.Entity {
+  constructor() {
+    super()
+  }
+}
+
+class Entities extends R.Entities<TodoListItem> {}
+
+new Entities(TodoListItem)
+```
+
 Each model class is typically written in its own file, and exports only the `Entity` class.  The rest of the application accesses the `Entities` methods by calling `TodoListItem.entities...`.
 
 Both the `Entity` and `Entities` base classes provide properties and methods that can be used by the application.  Those will be discussed later.

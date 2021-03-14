@@ -20,4 +20,5 @@ export class TextInput extends R.Entity {
 }
 
 class Entities extends R.Entities<TextInput> {}
+
 new Entities(TextInput)

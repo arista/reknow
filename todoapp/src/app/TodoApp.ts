@@ -42,4 +42,5 @@ export class TodoApp extends R.Entity {
 }
 
 class Entities extends R.Entities<TodoApp> {}
+
 new Entities(TodoApp)
