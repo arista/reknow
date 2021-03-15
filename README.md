@@ -104,6 +104,52 @@ const item = new TodoListItem("buy milk").addEntity()
 
 Once added, an Entity instance will remain in Reknow until it is explicitly removed by the application (or if an "owning" object is removed by the application).
 
+#### Entity Id's
+
+Every entity added to Reknow is assigned a stable id.  This id can be accessed with the `entityId` property:
+
+```ts
+const item = new TodoListItem("buy milk").addEntity()
+const itemId = item.entityId
+```
+
+An entity can also use a decorator to declare an `@R.id` property, in which case Reknow will automatically copy the entity's id into that property.  Or, if that property has a value when the Entity is added, Reknow will use that value as the id.  For example, if Reknow is assigning the id:
+
+```ts
+export class TodoListItem extends R.Entity {
+  @R.id id!:string
+
+  constructor() {
+    super()
+  }
+}
+```
+
+(Note: the `!` in the property declaration tells Typescript not to complain that the property hasn't been assigned in the constructor.  This notation will show up with other "synthetic" properties used by Reknow)
+
+Or if the application is providing the id in the constructor, then the declaration might look like this:
+
+```ts
+export class TodoListItem extends R.Entity {
+  @R.id id:string
+
+  constructor(id:string) {
+    super()
+   this.id = id
+  }
+}
+```
+
+The final way to assign an id is with the `addEntity()` method, which takes an optional id argument:
+
+```ts
+const item = new TodoListItem("buy milk").addEntity("Item22424")
+```
+
+Entity id's must be strings, and they must be unique among all instances of a given Entity type.
+
+By default, if Reknow is generating the id, it will use a very simple counter to generate id's like "1", "2", etc.  The application can provide an alternate id generator (FIXME), which will be consulted whenever Reknow needs a new id.  An application might use this to assign generate UUID's for instances, for example.
+
 #### Entity Properties
 
 Entity classes should stick to "simple" properties as much as possible: strings, numbers, and booleans.  If an Entity needs to refer to other Entities, it should do so using id's and "relationships" rather than direct references.  Data structures like ordered lists (arrays) or key/value collections (objects), should also be implemented relationally.
@@ -142,6 +188,10 @@ All of the state changes that occur while executing an `@R.action` method will b
 It is fine for `action` methods to call other `action` methods - only the "outermost" `action` will apply.  But before going and marking every method as an `action`, be aware that conceptually, an action should represent a "top-level" operation.  It should leave all affected model instances in valid and consistent states.
 
 Also be aware that action methods should be "pure", meaning that they depend only their inputs and the current state of the model, and they should have no side effects other than to make state changes to the model.
+
+#### Indexes
+
+Indexes organize all of the Entities of a given class into orderly structures that facilitate rapid lookups by the application.
 
 #### Queries
 
