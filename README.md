@@ -67,42 +67,13 @@ The sample app uses the pattern of importing Reknow into its own namespace:
 import * as R from "reknow"
 ```
 
-A Reknow model file typically uses many reknow exports, so it's often more convenient to import the whole namespace rather than importing individual exports.
+A Reknow model file typically uses many reknow exports, so it's often more convenient to import the whole namespace rather than importing individual exports.  The file can then reference Reknow exports off of that namespace, for example: `@R.hasMany`.
 
 #### Entity and Entities classes
 
-Each model is implemented using two classes: the `Entity` class, which covers a single instance of the model, and the `Entities` class, which covers the collection of model instances.  The `Entities` class is created as a singleton, and accessed as a static getter from the `Entity` class.
+Each model class extends the `Entity` base class, and has an associated singleton instance that extends the `Entities` base class.  The `Entity` class represents individual instances of the model, while the `Entities` singleton refers to the whole collection of instances.  Each model is typically defined in its own file, containing both the `Entity` class and the `Entities` singleton.  Often just the `Entity` class is exported, but if the model has also added useful definitions to the `Entities` class (indexes, finders, etc.), then its singleton would also be exported and made available to the rest of the application.
 
-The basic template for a model class looks like this:
-
-```ts
-import * as R from "reknow"
-
-export class TodoListItem extends R.Entity {
-  // property declarations
-  // relationship declarations
-
-  constructor(/* more property declarations */) {
-    super()
-  }
-
-  // instance-specific methods
-}
-
-class Entities extends R.Entities<TodoListItem> {
-  // index declarations
-  // creator methods
-  // finder methods
-  // other methods not specific to a single instance
-}
-
-// If the Entities class exposes indexes or methods to the rest of the application
-export const TodoListItemEntities = new Entities(TodoListItem)
-// OR, if the Entities class is empty
-new Entities(TodoListItem)
-```
-
-Or to boil it down to its minimal form:
+A minimal model file would look like this:
 
 ```ts
 import * as R from "reknow"
@@ -113,20 +84,78 @@ export class TodoListItem extends R.Entity {
   }
 }
 
-class Entities extends R.Entities<TodoListItem> {}
+class Entities extends R.Entities<TodoListItem> {
+}
 
 new Entities(TodoListItem)
+
+// OR, if the Entities class contains definitions the rest of
+// the application will find useful:
+export const TodoListItemEntities = new Entities(TodoListItem)
 ```
 
-Each model class is typically written in its own file, and exports only the `Entity` class.  The rest of the application accesses the `Entities` methods by calling `TodoListItem.entities...`.
+#### Adding and Removing Entity Instances
 
-Both the `Entity` and `Entities` base classes provide properties and methods that can be used by the application.  Those will be discussed later.
+Reknow will only manage Entity instances that have been added by the application.  Adding an instance will also return a Proxy that the application should use from then on to access the instance.  Typically an application will create and add an instance in a single step, so that it doesn't accidentally end up using the un-Proxied instance.  For example:
 
-The `Entities` class should avoid setting its own properties to hold application data.  All application data should be stored in the `Entity` instance classes.
+```ts
+const item = new TodoListItem("buy milk").addEntity()
+```
 
-#### Adding Entity Instances
+Once added, an Entity instance will remain in Reknow until it is explicitly removed by the application (or if an "owning" object is removed by the application).
 
-Reknow will only manage `Entity` instances that the application has explicitly added.
+#### Entity Properties
+
+Entity classes should stick to "simple" properties as much as possible: strings, numbers, and booleans.  If an Entity needs to refer to other Entities, it should do so using id's and "relationships" rather than direct references.  Data structures like ordered lists (arrays) or key/value collections (objects), should also be implemented relationally.
+
+Having said that, Reknow doesn't specify or enforce restrictions on property types.  An application is free to use whatever values it wants for properties.  However, the only changes Reknow will detect and react to are new values being assigned to properties.  For a string, number, or boolean value, this will work naturally.  But if a property value is an array, then Reknow will only detect if the property is assigned a completely new array - it will not detect if the array itself is mutated.
+
+In some cases, this may be perfectly fine.  If a complex structure is read-only, or is treated as immutable, then it should work fine as a property value.  Or if the application has other ways to detect changes in the value, such as callbacks registered with the value, then it would be appropriate to store that value in Reknow.  This would be the case for system-provided objects, like an `XMLHttpRequest`, or a DOM `Node`, or a `Promise`.
+
+#### State Changes and Actions
+
+From Reknow's perspective, all of its state is contained in Entity instances that have been added to it, and all of an Entity's state is contained in simple or (from Reknow's perspective) immutable property values.  This means that there are only 3 kinds of state changes in Reknow:
+
+* Adding an Entity
+* Removing an Entity
+* Changing an Entity's property value
+
+The `addEntity()` method, seen earlier, will add Entity instances to Reknow.  Similarly, `removeEntity()` will remove an instance.  Property changes are effected by simply assigning the property: `todoItem.complete = true`.
+
+All of these state changes can be invoked at nearly any time: at the start of an application, in response to user input, in response to a callback, as part of an `async` method, etc.  The one consistent rule is that all state changes must take place within an "Action".  The easiest way to do this is to use a decorator to mark an Entity method as an action:
+
+```ts
+import * as R from "reknow"
+
+export class TodoListItem extends R.Entity {
+  ...
+  @R.action setComplete() {
+    this.complete = true
+  }
+...
+```
+
+(alternatives to decorators are described later)
+
+All of the state changes that occur while executing an `@R.action` method will be collected into a single "action", whether it's a single property change or a more complex sequence of changes.  Reknow will wait until the end of the application's action before taking its own actions in response, such as reporting the action to its listeners, notifying the application of invalidated cached values, updating the affected React components, or running validators on the affected Entities (coming soon).
+
+It is fine for `action` methods to call other `action` methods - only the "outermost" `action` will apply.  But before going and marking every method as an `action`, be aware that conceptually, an action should represent a "top-level" operation.  It should leave all affected model instances in valid and consistent states.
+
+Also be aware that action methods should be "pure", meaning that they depend only their inputs and the current state of the model, and they should have no side effects other than to make state changes to the model.
+
+#### Queries
+
+A "query" is a function whose return value is cached, so that calling the function again will return the cached value without actually executing the function again.  As the query function executes, Reknow "watches" the function to see what Entity instances and properties it references.  If any of those referenced values later changes, Reknow will invalidate the query's cached value.  If the query is called after that, it will execute its function and recompute the value, generating a possibly new set of referenced Entities and properties (aka, "dependencies").
+
+The easiest way to define a query is to use the `@R.query` decorator on an Entity getter method.
+
+```
+@R.query get completeItems() {
+  return ...
+}
+```
+
+
 
 
 
