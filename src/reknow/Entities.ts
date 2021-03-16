@@ -59,22 +59,28 @@ export class Entities<E extends Entity> {
 
   initialize() {}
 
-  static getEntitiesForEntity<E extends Entity>(entity:E):Entities<E> {
-    const entityClass:EntityClass<E> = entity.constructor as EntityClass<E>
+  static getEntitiesForEntity<E extends Entity>(entity: E): Entities<E> {
+    const entityClass: EntityClass<E> = entity.constructor as EntityClass<E>
     return this.getEntitiesForEntityClass(entityClass)
   }
-  
-  static getEntitiesForEntityClass<E extends Entity>(entityClass:EntityClass<E>):Entities<E> {
+
+  static getEntitiesForEntityClass<E extends Entity>(
+    entityClass: EntityClass<E>
+  ): Entities<E> {
     const ret = entityClass[ENTITIES_KEY]
     if (ret == null) {
-      throw new Error(`Entity class "${entityClass}" does not have an associated Entities class.  Make sure an instance of the appropriate Entities class has been instantiated and passed the Entity class`)
+      throw new Error(
+        `Entity class "${entityClass}" does not have an associated Entities class.  Make sure an instance of the appropriate Entities class has been instantiated and passed the Entity class`
+      )
     }
     return ret
   }
 
-  static setEntitiesForEntityClass<E extends Entity>(entityClass:EntityClass<E>, entities:Entities<E>) {
+  static setEntitiesForEntityClass<E extends Entity>(
+    entityClass: EntityClass<E>,
+    entities: Entities<E>
+  ) {
     entityClass[ENTITIES_KEY] = entities
-    
   }
 
   // FIXME - factor this out into Utils of Entity, Entities, and Service

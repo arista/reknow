@@ -163,11 +163,11 @@ export type HashIndexEntry<E extends Entity> =
   | UniqueHashIndex<E>
   | SortIndex<E>
 
-export type HashIndex<I extends HashIndexEntry<any>> = {
+export type HashIndex<I extends HashIndexEntry<any>> = Readonly<{
   [key: string]: I
-}
-export type UniqueHashIndex<E extends Entity> = {[key: string]: E}
-export type SortIndex<E extends Entity> = Array<E>
+}>
+export type UniqueHashIndex<E extends Entity> = Readonly<{[key: string]: E}>
+export type SortIndex<E extends Entity> = ReadonlyArray<E>
 
 export interface IndexDecorator {
   name: string

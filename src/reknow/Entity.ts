@@ -40,8 +40,10 @@ export abstract class Entity {
     return this.entityState.isRemoved
   }
 
-  addEntity(id: string | null = null):this {
-    return this.hasEntityState ? this : Entities.getEntitiesForEntity(this).add(this, id)
+  addEntity(id: string | null = null): this {
+    return this.hasEntityState
+      ? this
+      : Entities.getEntitiesForEntity(this).add(this, id)
   }
 
   removeEntity() {

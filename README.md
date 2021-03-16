@@ -216,7 +216,7 @@ That line declares that `TodoListItemEntities.byName` will be an array of all th
 * `byName!` is the name of the property that will provide access to the index.  The property will be "synthesized" by Reknow, so the `!` tells Typescript not to complain that its value isn't being set explicitly in the constructor.
 * `R.SortIndex<TodoListItem>` is the property's type.  This is effectively an alias for `TodoListItem[]`.
 
-This is an example of a "SortIndex", exposed to the application as an Array.  Reknow will automatically keep this Array sorted in ascending order by each instance's `name` property, updating it as instances are added, removed, or modified.
+This is an example of a "SortIndex", exposed to the application as an Array.  Reknow will automatically keep this Array sorted in ascending order by each instance's `name` property, updating it as instances are added, removed, or modified.  The application read access this structure freely, but is prevented from modifyin it.
 
 A SortIndex can sort by any number of properties, each in either ascending or descending order.  For example, `@R.index("+name", "-age")` will sort instances first by `name` in ascending order, then by `age` in descending order for instances that have the same `name`.  If instances have the same `name` and `age`, then Reknow will sort by entity id (ascending) as the last resort.
 
@@ -287,6 +287,10 @@ Note the use of `@R.uniqueIndex` instead of `@R.index`.  This causes the resulti
 ```
 
 Declaring a UniqueHashIndex also enforces a uniqueness constraint on entity instances.  For example, attempting to add or update two instances with the same `name` and `status` will throw an exception.
+
+#### Relationships
+
+
 
 #### Queries
 
