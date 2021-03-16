@@ -96,24 +96,29 @@ export const TodoListItemEntities = new Entities(TodoListItem)
 
 #### Adding and Removing Entity Instances
 
-Reknow will only manage Entity instances that have been added by the application.  Adding an instance will also return a Proxy that the application should use from then on to access the instance.  Typically an application will create and add an instance in a single step, so that it doesn't accidentally end up using the un-Proxied instance.  For example:
+Reknow will only manage Entity instances that have been added by the application.  Adding an instance will also return a Proxy that the application should use from then on to access the instance.  Typically an application will create and add an instance in a single step, so that it doesn't accidentally end up using an un-Proxied instance.  For example:
 
 ```ts
 const item = new TodoListItem("buy milk").addEntity()
 ```
 
-Once added, an Entity instance will remain in Reknow until it is explicitly removed by the application (or if an "owning" object is removed by the application).
+Once added, an Entity instance will remain in Reknow until it is removed by the application:
+
+```ts
+item.removeEntity()
+```
+
 
 #### Entity Id's
 
-Every entity added to Reknow is assigned a stable id.  This id can be accessed with the `entityId` property:
+Every entity added to Reknow is assigned a permanent id.  This id can be accessed with the `entityId` property:
 
 ```ts
 const item = new TodoListItem("buy milk").addEntity()
 const itemId = item.entityId
 ```
 
-An entity can also use a decorator to declare an `@R.id` property, in which case Reknow will automatically copy the entity's id into that property.  Or, if that property has a value when the Entity is added, Reknow will use that value as the id.  For example, if Reknow is assigning the id:
+An entity can use the `@R.id` decorator to declare an id property, in which case Reknow will automatically copy the entity's id into that property.  Or, if that property has a value when the Entity is added, Reknow will use that value as the id.  For example, if Reknow is assigning the id:
 
 ```ts
 export class TodoListItem extends R.Entity {
@@ -135,7 +140,7 @@ export class TodoListItem extends R.Entity {
 
   constructor(id:string) {
     super()
-   this.id = id
+    this.id = id
   }
 }
 ```
@@ -148,7 +153,7 @@ const item = new TodoListItem("buy milk").addEntity("Item22424")
 
 Entity id's must be strings, and they must be unique among all instances of a given Entity type.
 
-By default, if Reknow is generating the id, it will use a very simple counter to generate id's like "1", "2", etc.  The application can provide an alternate id generator (FIXME), which will be consulted whenever Reknow needs a new id.  An application might use this to assign generate UUID's for instances, for example.
+By default, if Reknow is generating the id, it will use a very simple counter to generate id's like "1", "2", etc.  The application can provide an alternate id generator (FIXME), which will be consulted whenever Reknow needs a new id.
 
 #### Entity Properties
 
@@ -191,7 +196,97 @@ Also be aware that action methods should be "pure", meaning that they depend onl
 
 #### Indexes
 
-Indexes organize all of the Entities of a given class into orderly structures that facilitate rapid lookups by the application.
+Indexes organize all of the Entities of a given class into orderly structures that facilitate rapid lookups by the application.  Indexes are declared on the `Entities` class using decorators.  For example:
+
+```ts
+export class TodoListItem extends R.Entity {
+  ...
+}
+
+class Entities extends R.Entities {
+  @R.index("+name") byName!:R.SortIndex<TodoListItem>
+}
+
+export const TodoListItemEntities = new Entities(TodoListItem)
+```
+
+That line declares that `TodoListItemEntities.byName` will be an array of all the `TodoListItem` instances that have been added to Reknow, sorted by `name` in ascending order.  There's a lot packed into that line, so to break it down:
+
+* `@R.index("+name")` is the decorator that declares the index
+* `byName!` is the name of the property that will provide access to the index.  The property will be "synthesized" by Reknow, so the `!` tells Typescript not to complain that its value isn't being set explicitly in the constructor.
+* `R.SortIndex<TodoListItem>` is the property's type.  This is effectively an alias for `TodoListItem[]`.
+
+This is an example of a "SortIndex", exposed to the application as an Array.  Reknow will automatically keep this Array sorted in ascending order by each instance's `name` property, updating it as instances are added, removed, or modified.
+
+A SortIndex can sort by any number of properties, each in either ascending or descending order.  For example, `@R.index("+name", "-age")` will sort instances first by `name` in ascending order, then by `age` in descending order for instances that have the same `name`.  If instances have the same `name` and `age`, then Reknow will sort by entity id (ascending) as the last resort.
+
+An index can be directed to group instances with the same property value.  This is called a "HashIndex", and is declared by using `=` with the property name:
+
+```ts
+@R.index("=name", "+age") byNameAndAge!:R.HashIndex<SortIndex<TodoListItem>>
+```
+
+Instead of a single array, `byNameAndAge` is now an Object whose keys are names, and whose values are arrays of instances with those names, with each array ordered by age.  For example:
+
+```ts
+{
+  "name1": [...],
+  "name2": [...],
+  ...
+}
+```
+An application can use `TodoListItemEntities.byNameAndAge.name1 || []` to get a list of all TodoListItems with `name` property set to "name1".  Note that if no instances had a `name` with "name1", then it won't have an entry in the object, hence the `|| []`.
+
+A HashIndex can also declare multiple levels of grouping.  For example:
+
+```ts
+@R.index("=name", "=status") byNameAndStatus!:R.HashIndex<R.HashIndex<SortIndex<TodoListItem>>>
+```
+
+This will maintain a "multi-level" object, something like this:
+
+```ts
+{
+  "name1": {
+    "complete": [...],
+    "incomplete": [...],
+  },
+  "name2": {
+    "complete": [...],
+    "incomplete": [...],
+  },
+  ...
+}
+```
+
+Which an application can access with `TodoListItemEntities.byNameAndStatus.name2?.complete || []`.  Again, the `?.` and `|| []` are to protect against keys that might not exist in the object.
+
+This example doesn't specify any sort terms, but as always, entity id is always used as the sort term of "last resort".
+
+An index may specify any number of hash (`=`) and sort (`+`/`-`) terms.  The only rule is that all of the hash terms must appear before all sort terms.
+
+The final type of index is a "UniqueHashIndex".  This is similar to a HashIndex, except that the final values are instances, as opposed to arrays of instances:
+
+```ts
+@R.uniqueIndex("=name", "=status") byNameAndStatus!:R.HashIndex<R.UniqueHashIndex<TodoListItem>>
+```
+
+Note the use of `@R.uniqueIndex` instead of `@R.index`.  This causes the resulting structure to look like this:
+
+```ts
+{
+  "name1": {
+    "complete": TodoListItem,
+    "incomplete": TodoListItem,
+  },
+  "name2": {
+    "complete": TodoListItem,
+  },
+  ...
+}
+```
+
+Declaring a UniqueHashIndex also enforces a uniqueness constraint on entity instances.  For example, attempting to add or update two instances with the same `name` and `status` will throw an exception.
 
 #### Queries
 
