@@ -288,21 +288,85 @@ Note the use of `@R.uniqueIndex` instead of `@R.index`.  This causes the resulti
 
 Declaring a UniqueHashIndex also enforces a uniqueness constraint on entity instances.  For example, attempting to add or update two instances with the same `name` and `status` will throw an exception.
 
+Indexes will only work on actual properties of Entity instances - they will not work correctly if they refer to getter methods.  This is important for applications that want to create indexes based on "computed values".  Reknow provides a "reaction" facility, described later, to help with that.
+
 #### Relationships
 
+As mentioned previously, Entities refer to each other through properties and id's rather than direct pointers.  For example, a `TodoList` may "own" multiple `TodoListItem` instances.  This can be implemented by defining a `todoListId` property on `TodoListItem`, which holds the id of the `TodoList` to which the item belongs.  When a TodoList wishes to get a list of its items, it effectively searches through all TodoListItems to find those whose `todoListId` match its id.  Practically, a HashIndex would be used to turn this search into a quick lookup.
 
+Reknow provides `@R.hasMany`, `@R.hasOne`, and `@R.belongsTo` decorators that simplify the implementation of relationships.  For example:
+
+```ts
+export class TodoList extends R.Entity {
+  @R.hasMany(() => TodoListItem, "todoListId", {
+    sort: "+createdAt",
+    dependent: "remove",
+  })
+  items!: Array<TodoListItem>
+  ...
+```
+These declarations can look confusing at first, so to break it down:
+
+```
+@R.hasMany(...) items!: Array<TodoListItem>
+```
+The decorator is ultimately declaring an `items` property which will be an array of the items that belong to the `TodoList`.  The `!` in the declaration effectively tells Typescript that this is a "synthetic" property, and Typescript shouldn't complain that the property isn't set in the constructor.
+
+The `hasMany` decorator has three arguments: the "foreign" Entity class, the "foreign key", and a set of options.
+* The foreign Entity class is expressed indirectly through the return value of a Function, so as to avoid circular references during startup.
+* The "foreign key" is the property on the foreign Entity that is used to refer back to the TodoList's id - `todoListId` in our case.
+* The `sort` option declare that the resulting list of items should be sorted by each item's `createdAt` (ascending).
+* The `dependent` option declares that if the TodoList is removed, all of its items should also be removed automatically.
+
+With this declaration in place, the application can simply refer to `myTodoList.items` and receive an array of items whose `todoListId` has the same value as `myTodoList.id`, ordered by `item.createdAt`.  If another item sets its `todoListId` to that same list, then it will immediately "appear" in the array at the correct position.
+
+The array is also somewhat mutable.  `items.push(item)` will "add" an item to the array by setting its `todoListId` appropriately, with the caveat that the new item will appear in the index correctly sorted, not necessarily at the end.  Similarly, `items.pop()` will "remove" the last item from the list by setting its `todoListId` appropriately, or removing it from Reknow altogether if `dependent: "remove"` is specified.
+
+Underneath, there is no actual array representing the relationship.  The `items` property simply performs a lookup in the appropriate index, wrapping the result with a Proxy to make the array appear mutable.
+
+To find the "appropriate index", the relationship will look through the indexes defined on `TodoListItemEntities`, specifically looking for one whose terms start with `("=todoListId", "+createdAt")`.  If it doesn't find such an index, then it will create an index itself and add it to the class.  All of this is a one-time process that happens at startup.  This process allows the application to define and use relationships without the burden of managing the associated indexes.
+
+An Entity can declare as many relationships as it wants.  It can even have multiple relationships to the same "foreign" Entity class, perhaps sorting them in different ways, although at most one of those relationships should define a `dependent` option.
+
+The `@R.hasOne` declaration is similar to `@R.hasMany`, except that it results in only a single Entity (or null), and it uses a UniqueHashIndex underneath.  `@R.belongsTo` is similar to `@R.hasOne`, except that the notion of "primary" and "foreign" are swapped.
 
 #### Queries
 
-A "query" is a function whose return value is cached, so that calling the function again will return the cached value without actually executing the function again.  As the query function executes, Reknow "watches" the function to see what Entity instances and properties it references.  If any of those referenced values later changes, Reknow will invalidate the query's cached value.  If the query is called after that, it will execute its function and recompute the value, generating a possibly new set of referenced Entities and properties (aka, "dependencies").
+A "query" is a function whose return value is cached, so that calling the function again will return the cached value without executing the function again.  As the query function executes, Reknow "watches" the function to see what Entity instances, properties, indexes, relationships, and other queries it references.  If any of those referenced values later changes, Reknow will invalidate the query's cached value.  If the query is called after that, it will execute its function and recompute the value, generating a possibly new set of referenced Entities and properties.
+
+(Note: there is no "query language" or other special facility for reading data from Entity instances and indexes.  The term "Query" has been appropriated from other relational systems, where it might have a different meaning)
+
+An application can also associate a callback function with a query, which will be called after Reknow invalidates the Query.  This is how `react-reknow`, for example, knows when to re-render a React component in response to a change in Reknow data.
 
 The easiest way to define a query is to use the `@R.query` decorator on an Entity getter method.
 
 ```
 @R.query get completeItems() {
-  return ...
+  return this.items.filter(item => item.complete === true)
 }
 ```
+The first time this is called on a `TodoList`, it will search through that list for all of the items marked as "complete" and return the result.  That result will be cached and returned the next time `completeItems` is called on that list.
+
+While the getter was running, Reknow was building up a list of "dependencies", noting that the list of `items` was referenced (or more accurately, that the appropriate entry in the index underlying the `items` relationship was accessed), and that the `complete` property of each item was also referenced.  Internally, Reknow keeps track of all those dependencies and watches them all for changes.  For example, if one of the list's items changes its `complete` property, then the query would be invalidated.
+
+A query can reference other queries as part of its computation.  Reknow will track those references as dependencies, and if any of those dependent queries is invalidated, the referring query will also be invalidated.
+
+A query must be a "pure" function, depending solely on the current state of the model and avoiding any side effects.  It cannot take any inputs, and when declared with the `@R.query` decorator, it must be defined on a getter.  An `@R.query` may be defined on either an `Entity` or an `Entities` class.
+
+#### Reactions
+
+A "reaction" is a combination of a query and an action.  Like a query, it is a function that Reknow "watches" to find its dependencies.  Unlike a query, React will automatically call the function initially, and will automatically call the function again if any dependency changes.  Also unlike a query, a reaction is allowed, and even encouraged, to change model state when it is called.
+
+The most common use of a reaction is to set an Entity property that is computed from other values, solely for the purpose of indexing on that property.  For example:
+
+```ts
+export class TodoList extends R.Entity {
+  ...
+  @R.reaction computeItemCount() {
+    this.itemCount = this.items.length
+  }
+```
+This effectively defines `itemCount` to be a "computed" property that is kept in sync with the number of items in its relationship.  And index can then be defined that allows all lists to be sorted by the number of items they contain.
 
 
 
