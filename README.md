@@ -330,6 +330,18 @@ An Entity can declare as many relationships as it wants.  It can even have multi
 
 The `@R.hasOne` declaration is similar to `@R.hasMany`, except that it results in only a single Entity (or null), and it uses a UniqueHashIndex underneath.  `@R.belongsTo` is similar to `@R.hasOne`, except that the notion of "primary" and "foreign" are swapped.
 
+#### Proxies and Object Identity
+
+As described previously, Reknow relies heavily on Javascript Proxies to implement its functionality.  Entity instances retrieved by the application are presented through Proxies, so that Reknow is able to monitor how the application is reading or modifying those Entities.  Indexes and relationships also follow this pattern, presenting data to the application through Proxies that mediate access and mutation.
+
+Underneath all the Proxies, Reknow maintains the "real" data structures internally, and those data structures are mutable.  When the application changes an Entity's property, that change eventually makes its way through the Proxy to the underlying instance, and that instance's property really is changed.  Reknow is not maintaining immutable structures or using a copy-on-write strategy.  This is true of Reknow's indexes as well.
+
+This may seem to run counter to React's requirements, which rely on value changes to trigger visual changes.  More specifically, React will not take action on a new value unless `newValue !== oldValue`.  Treating data as immutable is one way to meet that requirement, creating new copies of objects to represent data changes.
+
+Reknow takes a different approach, using new Proxy instances to present React with new object identities that satisfy the `newValue !== oldValue` requirement.  Both `oldValue` and `newValue` are Proxies that "point" to the same underlying Entity or index structure, and accessing the data through either Proxy will yield the exact same results.  React doesn't actually care that the underlying object is the same - it just sees a new object identity show up in the form of a new Proxy, and concludes that the underlying data has changed.
+
+Reknow supports this approach by automatically creating new Proxies when an Entity or index is changed.  Or more accurately, Reknow caches the Proxy assigned to an Entity or index, invalidates that Proxy assignment on mutation, and generates a new Proxy the next time it is needed.
+
 #### Queries
 
 A "query" is a function whose return value is cached, so that calling the function again will return the cached value without executing the function again.  As the query function executes, Reknow "watches" the function to see what Entity instances, properties, indexes, relationships, and other queries it references.  If any of those referenced values later changes, Reknow will invalidate the query's cached value.  If the query is called after that, it will execute its function and recompute the value, generating a possibly new set of referenced Entities and properties.
