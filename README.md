@@ -332,15 +332,17 @@ The `@R.hasOne` declaration is similar to `@R.hasMany`, except that it results i
 
 #### Proxies and Object Identity
 
-As described previously, Reknow relies heavily on Javascript Proxies to implement its functionality.  Entity instances retrieved by the application are presented through Proxies, so that Reknow is able to monitor how the application is reading or modifying those Entities.  Indexes and relationships also follow this pattern, presenting data to the application through Proxies that mediate access and mutation.
+As described previously, Reknow relies heavily on Javascript Proxies to implement its functionality.  Entity instances retrieved by the application are presented through Proxies, so that Reknow is able to monitor how the application is reading or modifying the properties of those Entities.  Indexes and relationships also follow this pattern, presenting data to the application through Proxies that mediate access and mutation.  All of this happens automatically without the application needing to do anything special to use those Proxies.
 
 Underneath all the Proxies, Reknow maintains the "real" data structures internally, and those data structures are mutable.  When the application changes an Entity's property, that change eventually makes its way through the Proxy to the underlying instance, and that instance's property really is changed.  Reknow is not maintaining immutable structures or using a copy-on-write strategy.  This is true of Reknow's indexes as well.
 
 This may seem to run counter to React's requirements, which rely on value changes to trigger visual changes.  More specifically, React will not take action on a new value unless `newValue !== oldValue`.  Treating data as immutable is one way to meet that requirement, creating new copies of objects to represent data changes.
 
-Reknow takes a different approach, using new Proxy instances to present React with new object identities that satisfy the `newValue !== oldValue` requirement.  Both `oldValue` and `newValue` are Proxies that "point" to the same underlying Entity or index structure, and accessing the data through either Proxy will yield the exact same results.  React doesn't actually care that the underlying object is the same - it just sees a new object identity show up in the form of a new Proxy, and concludes that the underlying data has changed.
+Reknow takes a different approach, using new Proxy instances to present React with new object identities that satisfy the `newValue !== oldValue` requirement.  Both `oldValue` and `newValue` are Proxies that "point" to the same underlying Entity or index structure, and accessing the data through either Proxy will yield the exact same results.  React doesn't actually care that the underlying object is the same - it just sees a new object identity show up and concludes that the underlying data has changed.
 
-Reknow supports this approach by automatically creating new Proxies when an Entity or index is changed.  Or more accurately, Reknow caches the Proxy assigned to an Entity or index, invalidates that Proxy assignment on mutation, and generates a new Proxy the next time it is needed.
+Reknow supports this approach by automatically using a new Proxy instance when an Entity or index is changed.  From the application's perspective, all of those Proxies are equivalent, and it's perfectly fine for the application to use multiple Proxies to the same Entity.  But once the data reaches React, the application should make sure that React is seeing the "latest" Proxy associated with an Entity.
+
+The `Entity.currentEntity` property will return the most recent Proxy associated with an Entity.  However, it's unusual for applications to need this method, as Reknow provides more convenient ways to keep React synchronized with the most up-to-date Proxies, described below.
 
 #### Queries
 
@@ -359,15 +361,17 @@ The easiest way to define a query is to use the `@R.query` decorator on an Entit
 ```
 The first time this is called on a `TodoList`, it will search through that list for all of the items marked as "complete" and return the result.  That result will be cached and returned the next time `completeItems` is called on that list.
 
-While the getter was running, Reknow was building up a list of "dependencies", noting that the list of `items` was referenced (or more accurately, that the appropriate entry in the index underlying the `items` relationship was accessed), and that the `complete` property of each item was also referenced.  Internally, Reknow keeps track of all those dependencies and watches them all for changes.  For example, if one of the list's items changes its `complete` property, then the query would be invalidated.
+While the getter was running, Reknow was building up a list of "dependencies", noting that the list of `items` was referenced (or more accurately, that the appropriate entry in the index underlying the `items` relationship was accessed), and that the `complete` property of each item was also referenced.  Internally, Reknow keeps track of all those dependencies and watches them all for changes.  For example, if one of the list's items changes its `complete` property, then the query would be invalidated.  If the list itself changes by adding or removing an item, the query will also be invalidated.
 
 A query can reference other queries as part of its computation.  Reknow will track those references as dependencies, and if any of those dependent queries is invalidated, the referring query will also be invalidated.
+
+Queries have a special case: if a query returns an Entity, then the query will be invalidated if any property of the Entity is changed.  This is a convenience that supports simplified usage in React, as will be described later.
 
 A query must be a "pure" function, depending solely on the current state of the model and avoiding any side effects.  It cannot take any inputs, and when declared with the `@R.query` decorator, it must be defined on a getter.  An `@R.query` may be defined on either an `Entity` or an `Entities` class.
 
 #### Reactions
 
-A "reaction" is a combination of a query and an action.  Like a query, it is a function that Reknow "watches" to find its dependencies.  Unlike a query, React will automatically call the function initially, and will automatically call the function again if any dependency changes.  Also unlike a query, a reaction is allowed, and even encouraged, to change model state when it is called.
+A "reaction" is a combination of a query and an action.  Like a query, it is a function that Reknow "watches" to find its dependencies.  Unlike a query, Reknow will automatically call the function initially, and will automatically call the function again if a dependency changes.  Also unlike a query, a reaction is allowed, and even encouraged, to change model state when it is called.
 
 The most common use of a reaction is to set an Entity property that is computed from other values, solely for the purpose of indexing on that property.  For example:
 
@@ -378,9 +382,51 @@ export class TodoList extends R.Entity {
     this.itemCount = this.items.length
   }
 ```
-This effectively defines `itemCount` to be a "computed" property that is kept in sync with the number of items in its relationship.  And index can then be defined that allows all lists to be sorted by the number of items they contain.
+This effectively defines `itemCount` to be a "computed" property that is kept in sync with the number of items in its relationship.  An index can then be defined that allows all lists to be sorted by the number of items they contain.
 
+While reactions may modify state, they still should be kept free of other side effects.
 
+#### Side Effects
+
+Reknow's actions, queries, and reactions should all be kept free of side effects.  However, real applications will need to make network requests, set timers, etc. - all of which would be considered "side effects".
+
+Reknow provides "effects" decorators that allow side effects to be triggered directly from state changes, using the `@R.afterAdd`, `@R.afterRemove`, `@R.afterChange`, and `@R.afterPropertyChange` decorators.  For example:
+
+```
+export class TodoListItem extends R.Entity {
+  @R.afterAdd sendNetworkRequest() {
+    ...
+  }
+```
+
+Effects are called at the end of an action, after all the state changes have been made.  For example, `sendNetworkRequest` would be called on the item if it was added to Reknow during the action.  Similarly, an `@R.afterRemove` method would be called if the item was removed from Reknow, and an `@R.afterChange` method would be called if any property of the Entity is changed during the action.
+
+The `@R.afterPropertyChange` decorator can narrow the effect to a specific property.  For example:
+
+```
+export class TodoListItem extends R.Entity {
+  @R.afterPropertyChange("name") onNameChange(oldName:string) {
+    ...
+  }
+```
+
+This would only be called if the "name" property changes during an action, and the method will be passed the old value of "name".
+
+Effect methods are encouraged to invoke side effects.  They should, however, be careful about changing model state, especially in a way that could trigger an endless loop of effects and model changes.
+
+#### Effects and Model-Driven Applications
+
+At first blush, the idea of triggering side effects from model changes may seem strange.  Why can't the application simply invoke those side effects at the same time it makes the model changes?
+
+An application is certainly free to do this, and in many cases this results in a simpler application.  But this approach runs into problems when the model could change outside of direct action by the application.  There are three main cases where this could happen:
+
+* Undo/Redo - Reknow can report all of an action's state changes to the application, expressed as a sequence of Entity add/remove/property change events.  Those events can easily be "reversed" into events that would undo those same changes when fed back in to Reknow.  This makes it fairly easy to implement an undo/redo system in Reknow.
+
+This will be a problem for an application that is triggering side-effects on its own, in parallel with making model changes.  If an "undo" is applied, for example, it will only reverse the changes in the model.  The application will have to take on the responsibility of also reversing any side effects contained in the undo, or re-triggering those side effects if a "redo" puts those changes back into the model.
+
+* Loading saved data - if an application contains state that needs to be persistently saved, - FIXME
+
+* Collaborative editing - FIXME
 
 
 
