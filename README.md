@@ -630,7 +630,7 @@ export const TodoListItemView: React.FC<{item: TodoListItem}> = (p) => {
   )
 }
 ```
-This component is passed a TodoListItem, and will rerender if the item's name changes.
+This component is passed a TodoListItem, and will rerender if the item's `name` or `isComplete` properties are changed.
 
 For convenience, the `useQuery` hook can also return the full Entity, in which case it will re-render the component if any property of the Entity changes:
 
