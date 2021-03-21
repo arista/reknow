@@ -388,9 +388,7 @@ While reactions may modify state, they still should be kept free of other side e
 
 #### Side Effects
 
-Reknow's actions, queries, and reactions should all be kept free of side effects.  However, real applications will need to make network requests, set timers, etc. - all of which would be considered "side effects".
-
-Reknow provides "effects" decorators that allow side effects to be triggered directly from state changes, using the `@R.afterAdd`, `@R.afterRemove`, `@R.afterChange`, and `@R.afterPropertyChange` decorators.  For example:
+Reknow's actions, queries, and reactions should all be kept free of side effects, such as network requests, timers, DOM changes, etc.  Real-world applications, of course, need to do all of these things.  For applications that wish for side effects to be "model-driven", Reknow provides "effects" decorators that allow side effects to be triggered in response to state changes.  These decorators are `@R.afterAdd`, `@R.afterRemove`, `@R.afterChange`, and `@R.afterPropertyChange`:
 
 ```
 export class TodoListItem extends R.Entity {
@@ -414,19 +412,246 @@ This would only be called if the "name" property changes during an action, and t
 
 Effect methods are encouraged to invoke side effects.  They should, however, be careful about changing model state, especially in a way that could trigger an endless loop of effects and model changes.
 
-#### Effects and Model-Driven Applications
+Effects allow an application to be entirely "model-driven", meaning that all application activity flows through changes to the model.  This enables functions like undo/redo, saving and loading application state, and even collaborative editing.
 
-At first blush, the idea of triggering side effects from model changes may seem strange.  Why can't the application simply invoke those side effects at the same time it makes the model changes?
+#### Services
 
-An application is certainly free to do this, and in many cases this results in a simpler application.  But this approach runs into problems when the model could change outside of direct action by the application.  There are three main cases where this could happen:
+Services are singleton instances of classes that provide access to the model without being tied to a specific Entity.  Just like Entity and Entities classes, a Service can use `@R.action`, `@R.reaction`, and `@R.query` decorators.
 
-* Undo/Redo - Reknow can report all of an action's state changes to the application, expressed as a sequence of Entity add/remove/property change events.  Those events can easily be "reversed" into events that would undo those same changes when fed back in to Reknow.  This makes it fairly easy to implement an undo/redo system in Reknow.
+A Service is typically implemented using this pattern:
 
-This will be a problem for an application that is triggering side-effects on its own, in parallel with making model changes.  If an "undo" is applied, for example, it will only reverse the changes in the model.  The application will have to take on the responsibility of also reversing any side effects contained in the undo, or re-triggering those side effects if a "redo" puts those changes back into the model.
+```ts
+class ShoppingCartServiceClass extends @R.Service {
+}
 
-* Loading saved data - if an application contains state that needs to be persistently saved, - FIXME
+export const ShoppingCartService = new ShoppingCartServiceClass()
+```
 
-* Collaborative editing - FIXME
+#### StateManager
+
+`StateManager` is Reknow's central class.  Every Reknow application must create a single `StateManager`, passing it all of the Entity classes and Service instances.  Additional options can also be invoked through the `StateManager`.  Applications typically create the `StateManager` in a `Models.ts` class:
+
+```ts
+import * as R from "reknow"
+import {TodoList} from "./TodoList"
+import {TodoListItem} from "./TodoListItem"
+import {ShoppingCartService} from "./ShoppingCartService"
+
+export const models = new R.StateManager({
+  entities: {
+    TodoList,
+    TodoListItem
+  }
+  services: {
+    ShoppingCartService
+  }
+})
+```
+
+Once this is run, the application can start invoking actions, queries, etc. directly on Entity, Entities, and Service instances.  Applications rarely need to access the StateManager directly after creating it.
+
+As an application grows, the central StateManager might end up becoming very large, as it imports and declares every Entity and Service in the application.  Reknow allows those declarations to be modularized, by simply declaring them in nested "namespaces".  For example:
+
+```ts
+export const models = new R.StateManager({
+  entities: {
+    todo: {
+      TodoList,
+      TodoListItem
+    },
+    shoppingCart: {
+      ShoppingCart,
+      ShoppingCartItem,
+    }
+  }
+  services: {
+    shoppingCart: {
+      ShoppingService
+    }
+  }
+})
+```
+
+These "modules" can then be broken out into separate files to make them easier to maintain.  For example:
+
+```ts
+import {todo} from "./todo"
+import {shoppingCart, shoppingCartServices} from "./shoppingCart"
+
+export const models = new R.StateManager({
+  entities: {
+    todo,
+    shoppingCart
+  }
+  services: {
+    shoppingCart: shoppingCartServices
+  }
+})
+```
+
+And `todo.ts` might look like this:
+
+```ts
+import {TodoList} from "./TodoList"
+import {TodoListItem} from "./TodoListItem"
+
+export const todo = {
+  TodoList,
+  TodoListItem
+}
+```
+
+The "namespaces" can be nested to any level within the StateManager declaration.  These namespaces are only an organizing tool - they don't affect the application directly, which is still directly accessing classes like `TodoList` and `TodoListItem`.
+
+However, the namespaces do show up when the StateManager reports actions and debugging to its assigned listeners (described below).  For example, a property change on a TodoListItem  would be reported as a change to a "todo.TodoListItem".
+
+#### Transaction and Debug Listeners
+
+When a StateManager is created, it can optionally be assigned a TransactionListener and a DebugListener:
+
+```ts
+export const models = new R.StateManager({
+  entities: {
+    todo: {
+      ...
+    }
+  },
+  listener: (e) => console.log(R.stringifyTransaction(e)),
+  debugListener: (e) => console.log(R.stringifyDebugEvent(e))
+})
+```
+
+The `listener` is notified at the end of every action with a "Transaction" object that describes the `@R.action` that triggered it, along with the complete list of resulting entity state changes.  For example:
+
+```json
+{
+  "action": {
+    "type": "EntityAction",
+    "entityType": "todo.TextInput",
+    "id": "2",
+    "name": "notifyValue",
+    "args": []
+  },
+  "stateChanges": [
+    {
+      "type": "EntityAdded",
+      "entityType": "todo.TodoList",
+      "id": "1",
+      "entity": {
+        "name": "Groceries",
+        "id": "1",
+        "itemCount": 0
+      }
+    },
+    {
+      "type": "EntityPropertyChanged",
+      "entityType": "todo.TodoList",
+      "id": "1",
+      "property": "todoAppId",
+      "newValue": "2"
+    },
+    {
+      "type": "EntityPropertyChanged",
+      "entityType": "todo.TextInput",
+      "id": "2",
+      "property": "value",
+      "newValue": "",
+      "oldValue": "Groceries"
+    }
+  ]
+}
+```
+
+This stream of reported transactions is sufficient to completely rebuild the application state "from scratch".  It can also be used to create "reversing" transactions that implement an undo/redo system.
+
+The listener can also be used to print to the console to help debug an application.  The `R.stringifyTransaction` function will format Transactions into a more compact format:
+
+```ts
+todo.TextInput#2.notifyValue()
+  Added todo.TodoList#1: {"name":"Groceries","id":"1","itemCount":0}
+  Changed todo.TodoList#1.todoAppId from undefined to 2
+  Changed todo.TextInput#2.value from Groceries to
+```
+
+This format uses a shorthand for referring to entities, in the form `{entity type (with "namespace")}#{entity id}.{property name}`.
+
+The `debugListener`, if specified, will be passed detailed events about the inner workings of Reknow, particularly around assigning and notifying subscribers of state changes.
+
+```
+Models.ts:18 Run useQuery "useQuery at TodoListView (https://192.168.56.102:8929/static/js/main.chunk.js:6453:83)"
+  Run query "useQuery at TodoListView (https://192.168.56.102:8929/static/js/main.chunk.js:6453:83)"
+    Add subscriber "useQuery at TodoListView (https://192.168.56.102:8929/static/js/main.chunk.js:6453:83)" to "todo.TodoList#1.incompleteItems"
+    Run query "todo.TodoList#1.incompleteItems"
+      Add subscriber "todo.TodoList#1.incompleteItems" to "todo.TodoList#1.id"
+      Add subscriber "todo.TodoList#1.incompleteItems" to "byComplete.1"
+```
+
+This tends to be an overwhelming amount of information (especially when viewing the raw JSON form), but it can occasionally be useful when tracking down unexpected behavior in the application.
+
+#### Reknow and React
+
+Reknow is a complete internal data management system unto itself.  Although it is designed to be useful with React, it has no direct connection to React.  That connection is provided by the `react-reknow` package, which provides React hooks `useQuery` and `useComponentEntity`.
+
+An application will typically set up the connection when creating the StateManager, like this:
+
+```ts
+import * as R from "reknow"
+import {ReactReknow} from "react-reknow"
+...
+
+export const models = new R.StateManager({
+ ...
+})
+
+export const {useQuery, useComponentEntity} = ReactReknow(models)
+```
+
+The `useQuery` hook takes a function as an argument, and returns the result of executing that function.  It uses Reknow's query facility to determine the function's dependencies, and forces the component to re-render if any of those dependencies changes.  For example:
+
+```tsx
+import React from "react"
+import {useQuery} from "./Models"
+import {TodoListItem} from "./TodoListItem"
+
+export const TodoListItemView: React.FC<{item: TodoListItem}> = (p) => {
+  const name = useQuery(() => p.item.name)
+  const isComplete = useQuery(() => p.item.isComplete)
+
+  return (
+    <>
+      <div>Don't forget to {name}</div>
+      { !isComplete? :
+        <button onClick={() => item.setComplete()}>
+          Done!
+        </button>
+        : null
+      }
+    </>
+  )
+}
+```
+This component is passed a TodoListItem, and will rerender if the item's name changes.
+
+For convenience, the `useQuery` hook can also return the full Entity, in which case it will re-render the component if any property of the Entity changes:
+
+```tsx
+export const TodoListItemView: React.FC<{item: TodoListItem}> = (p) => {
+  const item = useQuery(() => p.item)
+
+  return (
+    <>
+      <div>Don't forget to {item.name}</div>
+      { !item.isComplete? :
+        <button onClick={() => item.setComplete()}>
+          Done!
+        </button>
+        : null
+      }
+      ...
+```
+
+Note that no special facility is needed for React components to invoke actions on the Reknow model.  Here a component simply calls `item.setComplete()` in response to a UI action.
+
 
 
 
