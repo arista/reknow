@@ -505,6 +505,19 @@ The "namespaces" can be nested to any level within the StateManager declaration.
 
 However, the namespaces do show up when the StateManager reports actions and debugging to its assigned listeners (described below).  For example, a property change on a TodoListItem  would be reported as a change to a "todo.TodoListItem".
 
+#### Running Multiple StateManagers
+
+A simple application will typically register all of its Entity classes with a single StateManager instance.  However, Reknow doesn't prevent an application from running multiple StateManagers.  A complex application with multiple subsystems developed by multiple teams could end up with many independently-created StateManagers.  Or a Reknow application could include a library of React components that happens to use Reknow to manage its state in its own StateManager instance.
+
+All of this is perfectly fine, as long as it's understood that each StateManager manages its own "domain" of Entity classes independently.  Practically speaking, this means:
+
+* Each Entity class must be registered with at most one StateManager
+* Relationships (`hasMany`, `hasOne`, `belongsTo`) can only be established between Entity classes managed by the same StateManager.
+* An action managed by a StateManager will only manage the state changes in the Entities associated with that StateManager
+* A query managed by a StateManager will only track dependencies on the Entities associated with that StateManager
+
+There is no practical limit to the number of Entity classes, either minimum or maximum, that can be associated with a StateManager.  Even the simplest stateful React component can take advantage of Reknow, using a StateManager that manages a single Entity class.
+
 #### Transaction and Debug Listeners
 
 When a StateManager is created, it can optionally be assigned a TransactionListener and a DebugListener:
@@ -606,6 +619,8 @@ export const models = new R.StateManager({
 export const {useQuery, useComponentEntity} = ReactReknow(models)
 ```
 
+##### useQuery
+
 The `useQuery` hook takes a function as an argument, and returns the result of executing that function.  It uses Reknow's query facility to determine the function's dependencies, and forces the component to re-render if any of those dependencies changes.  For example:
 
 ```tsx
@@ -650,9 +665,35 @@ export const TodoListItemView: React.FC<{item: TodoListItem}> = (p) => {
       ...
 ```
 
-Note that no special facility is needed for React components to invoke actions on the Reknow model.  Here a component simply calls `item.setComplete()` in response to a UI action.
+Note that no special facility is needed for React components to invoke actions on the Reknow model.  Here a component simply calls `item.setComplete()` in response to a UI action.  Calling that method will likely involve some state changes (such as setting a `complete` flag to `true`), and if the `TodoListItem` is changed in the process, then the `TodoListItemView` will automatically be forced to re-render.
 
+##### useComponentEntity
 
+The `useComponentEntity` hook associates an Entity with the life cycle of a component.  It takes a function that returns an Entity, typically created as a new instance.  The hook will automatically add the Entity to Reknow (if it hasn't been already), and will remove it when the component is unmounted.  Like `useQuery`, the component is forced to re-render if that Entity is changed.
+
+For example:
+
+```ts
+export const TextInputView: React.FC<{}> = (params) => {
+  const textInput = useComponentEntity(() => new TextInput()))
+  ...
+}
+```
+
+Here a `TextInputView` React component is using a `TextInput` Reknow Entity to handle its state.  The `useComponentEntity` hook creates the `TextInput` instance, adds it to Reknow, and sets the `TextInputView` to be re-rendered whenever the `TextInput` is changed.  Later, when the `TextInputView` is removed from the component tree, the `TextInput` will also be removed from Reknow.
+
+This is useful for re-usable components, like this `TextInputView`, that are intended to be "dropped in" to an application without exposing the application to Reknow.
+
+This is also useful for "top-level" components that are intended represent the "root" state of the overall application:
+
+```ts
+export const TodoAppView: React.FC<{}> = (params) => {
+  const todoApp = useComponentEntity(() => new TodoApp())
+  ...
+}
+```
+
+The `TodoApp` Entity might have relationships and queries that ultimately provide access to all of the application's state, and the React component can pass those values to its children as appropriate.
 
 
 ## First Impressions
