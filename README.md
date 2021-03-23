@@ -8,32 +8,33 @@ Reknow is a state management library based on relational modeling concepts, desi
 
 Reknow organizes and maintains an application's internal state, separating that state from the application's presentation layer.  In a React application, Reknow occupies the same space as libraries like Redux or Recoil.
 
-Reknow borrows several concepts from relational modeling systems.  Developers who have used relational databases or object/relational mapping libraries should find many of the concepts familiar.  For example, a basic rule in Reknow is that model objects must not reference each other directly, but instead reference each other by id (or other property value).  Reknow uses indexes and synthetic properties to expose those relationships in ways that feel natural to developers.
+Reknow borrows several concepts from relational modeling systems.  Developers who have used relational databases or object/relational mapping libraries should find many of the concepts familiar.  For example, model objects in Reknow do not reference each other directly, but instead reference each other through property values, usually id's.  Reknow uses indexes and synthetic properties to expose those relationships in ways that feel natural to developers.
 
-That "natural feel" is a guiding principle of Reknow.  Reknow is designed to enable developers to model and maintain state naturally, while minimizing the patterns for updating or selecting data.  Applications can freely add and remove model instances, and even change instance property values directly.  Reknow will automatically detect these changes and take care of the downstream effects, such as notifying the appropriate React components.  Applications can also compute and assemble selected values from the model using straightforward functions or getter methods.  Reknow will automatically cache the results, while tracking what model objects and properties were referenced in those calculations, allowing Reknow to invalidate the cached values when those dependencies change.
+That "natural feel" is a guiding principle of Reknow.  Reknow is designed to enable developers to model and maintain state naturally, minimizing the patterns for updating or selecting data.  Applications can freely add and remove model instances, and even change instance property values directly.  Reknow will automatically detect these changes and take care of the downstream effects, such as updating indexes and re-rendering React components.  Applications can also compute and assemble selected values from the model using straightforward functions or getter methods.  Reknow will automatically cache the results, while tracking what model objects and properties were referenced in those calculations, allowing Reknow to invalidate the cached values when those dependencies change.
 
 Reknow uses JavaScript Proxies to make all of this possible.  These Proxies intercept calls to get or set property values, and allow Reknow to react accordingly.  For the most part, the application is unaware that it is using Proxies, and can be coded as if it were using model classes and instances directly.
 
-Reknow also uses these Proxies to interact with frameworks like React.  In Reknow, the underlying data is mutable, and new immutable copies are not created with each state change.  Instead, when a model object is changed, Reknow creates a new Proxy to refer to that model object.  This is sufficient to signal a data change to React, because it effectively presents React with a new object identity.  In other words, Reknow effects object identity changes by creating new Proxies to mutable data, instead of creating new copies of immutable data.
+Proxies also allow Reknow to interact with React, even though Reknow uses mutable model objects and does not create new immutable copies with every state change.  When a model object is changed, Reknow creates a new Proxy to refer to that model object.  This is sufficient to signal a data change to React, because it effectively presents React with a new object identity, even though the same model object is still being used "behind" that Proxy.
 
-Because Reknow detects state changes all the way down to the property level, it is able to provide a "stream" of state changes to applications that desire it.  The relational modeling pattern effectively boils every state change down to either adding a model object, removing a model object, or changing the property of a model object.  By adding a listener to Reknow, an application can be notified of all these state changes.  This allows applications to implement sophisticated undo/redo mechanisms, incrementally save document state as a stream of edits, or even broadcast state changes to collaborators to enable shared document viewing or editing.
+Because Reknow detects state changes all the way down to the property level, it is able to provide a "stream" of state changes to applications.  The relational modeling pattern effectively boils every state change down to either adding a model object, removing a model object, or changing the property of a model object.  By adding a listener to Reknow, an application can be notified of all these state changes.  This allows applications to implement sophisticated undo/redo mechanisms, incrementally save document state as a stream of edits, or even broadcast state changes to collaborators to enable shared document viewing or editing.
 
-The Reknow library itself has very few dependencies and can be used in Node.js or in browsers.  It works well with React, but has no direct connection to the React libraries - that connection is provided through a separate "react-reknow" library.  Reknow is designed primarily for TypeScript applications, but it can be used just as effectively with JavaScript.  It does make use of decorators, which are still "experimental" as of ES6, but also provides alternatives for environments where decorators are not supported.  All of Reknow's operations run synchronously, without the use of timers or Promises, and can be used from both async and non-async functions.
+The Reknow library itself has very few dependencies and can be used in Node.js or in browsers.  It works well with React, but has no direct connection to the React libraries - that connection is provided through a separate "react-reknow" library.  Reknow is designed primarily for TypeScript applications, but it can also be used effectively with JavaScript.  Reknow does make use of decorators, which are still "experimental" as of ES6, but alternatives are provided for environments where decorators are not supported.  All of Reknow's operations run synchronously, without the use of timers or Promises, and can be used from both async and non-async functions.
 
 ## Building An Application With Reknow
 
 The steps to build a Reknow application typically look something like this:
 
 * Design the classes that will model as much of the application's state as possible.  This includes both the data that the application manipulates (Topics, Posts, ShoppingCartItems, etc.), as well as the "view state" of the application (NavigationBreadcrumb, ErrorDialog, etc.).  Keep object properties as simple as possible, preferably sticking to strings, numbers, and booleans, remembering that more complex structures can be defined using Reknow's relational facilities.
-  * Add `@hasMany`, `@hasOne`, and `@belongsTo` declarations to the model classes to surface their various relationships.
-  * Add `@index` declarations to support other ways the application might access the data.
-  * Add `@query` decorators to mark out methods in the model classes that supply processed data to other application layers (such as React components).  These methods will cache their return values and invalidate automatically in response to the appropriate state changes.  Keep those methods as pure as possible without side effects or state changes.
-  * Add `@action` decorators to mark out "top-level" state-changing methods in the model classes.  Try to keep those methods as "pure" as possible, without side effects.
+  * Add `@hasMany`, `@hasOne`, and `@belongsTo` declarations to the model classes to surface their relationships expressed through matching property values.
+  * Add `@index` declarations to create automatically-maintained "hash" and "sort" structures of model objects
+  * Add `@query` decorators to mark out methods that generate computed values from the model objects, automatically invalidating their cached values when their dependencies change.  Keep those methods "pure" without side effects or state changes.
+  * Add `@action` decorators to declare state-changing methods in the model classes.  Keep those methods "pure", free of side effects or dependencies on anything outside the model.
   * Add `@afterAdd`, `@afterRemove`, and `@afterChange` decorators to methods that invoke side effects in response to the state changes in `@action` methods.
   * Add `@reaction` decorators to methods that perform state changes in response to other state changes (typically used to maintain "computed" properties that then feed into indexes).
 * Create a Reknow `StateManager` instance, passing it a list of all the model classes that it will be managing.
 * Build the presentation layer.  Assuming it is a React application:
   * Apply the `useQuery` hook from the `react-reknow` library to pull data directly from model objects.  `useQuery` will automatically trigger a component re-render whenever the underlying model object data changes.
+  * Apply the `useComponentyEntity` hook to automatically create and remove model objects tied to a React component's life cycle.
   * Invoke `@action` methods directly on model objects in response to user actions
   * Inovke `@action` methods at any time, actually, even in response to asynchronous events like Timers, within async methods, etc.
 
@@ -155,13 +156,25 @@ Entity id's must be strings, and they must be unique among all instances of a gi
 
 By default, if Reknow is generating the id, it will use a very simple counter to generate id's like "1", "2", etc.  The application can provide an alternate id generator (FIXME), which will be consulted whenever Reknow needs a new id.
 
+#### Entities `byId` Index
+
+Every Entities class (the singleton associated with each model class) has a built-in `byId` property that maps Entity id to Entity instance.  For example:
+
+```
+const item = TodoListItemEntities.byId["item22424"]
+```
+
+This property is read-only, is updated automatically, and contains those instances that have been added.  This facility is always available, although it is not often used by applications since indexes and relationships (described later) provide more convenient ways to access data.
+
 #### Entity Properties
 
-Entity classes should stick to "simple" properties as much as possible: strings, numbers, and booleans.  If an Entity needs to refer to other Entities, it should do so using id's and "relationships" rather than direct references.  Data structures like ordered lists (arrays) or key/value collections (objects), should also be implemented relationally.
+Entity instances can arbitrarily get and set properties as they normally would in JavaScript, without requiring any special declarations.  TypeScript applications must continue to declare their property types, as they normally would.
+
+In practice, Entities should stick to "simple" properties as much as possible: strings, numbers, and booleans.  If an Entity needs to refer to other Entities, it should do so using id's and "relationships" rather than direct references.  Data structures like ordered lists (arrays) or key/value collections (objects), should also be implemented relationally if possible.
 
 Having said that, Reknow doesn't specify or enforce restrictions on property types.  An application is free to use whatever values it wants for properties.  However, the only changes Reknow will detect and react to are new values being assigned to properties.  For a string, number, or boolean value, this will work naturally.  But if a property value is an array, then Reknow will only detect if the property is assigned a completely new array - it will not detect if the array itself is mutated.
 
-In some cases, this may be perfectly fine.  If a complex structure is read-only, or is treated as immutable, then it should work fine as a property value.  Or if the application has other ways to detect changes in the value, such as callbacks registered with the value, then it would be appropriate to store that value in Reknow.  This would be the case for system-provided objects, like an `XMLHttpRequest`, or a DOM `Node`, or a `Promise`.
+In some cases, this may be perfectly fine.  If a complex structure is read-only, or is treated as immutable, then it should work fine as a property value.  Or if the application has other ways to detect changes in the value, such as callbacks registered with the value, then it would be appropriate to store that as a property value.  This would be the case for system-provided objects, like an `XMLHttpRequest`, or a DOM `Node`, or a `Promise`.  An application is free to store such objects in Entity instances, keeping in mind that Reknow will not automatically respond to changes in those objects.
 
 #### State Changes and Actions
 
@@ -188,11 +201,13 @@ export class TodoListItem extends R.Entity {
 
 (alternatives to decorators are described later)
 
-All of the state changes that occur while executing an `@R.action` method will be collected into a single "action", whether it's a single property change or a more complex sequence of changes.  Reknow will wait until the end of the application's action before taking its own actions in response, such as reporting the action to its listeners, notifying the application of invalidated cached values, updating the affected React components, or running validators on the affected Entities (coming soon).
+The `@R.action` decorator declares that a method will be making state changes.  It also declares that the action will leave all affected instances in consistent and valid states, and that it will pass any declared validations once the action completes (FIXME - see the section later on validations).
 
-It is fine for `action` methods to call other `action` methods - only the "outermost" `action` will apply.  But before going and marking every method as an `action`, be aware that conceptually, an action should represent a "top-level" operation.  It should leave all affected model instances in valid and consistent states.
+All of the state changes that occur while executing an `@R.action` method will be collected into a single "action", whether it's a single property change on one instance or a more complex sequence of changes spanning multiple instances.  Reknow will wait until the end of the application's action before taking its own actions in response, such as reporting the action to its listeners, notifying the application of invalidated cached values, updating the affected React components, or running validators on the affected Entities (coming soon).
 
-Also be aware that action methods should be "pure", meaning that they depend only their inputs and the current state of the model, and they should have no side effects other than to make state changes to the model.
+It is fine for `action` methods to call other `action` methods - only the "outermost" `action` will apply.  But before going and marking every method as an `action`, be aware that conceptually, an action should represent a "top-level" operation and should leave all affected model instances in valid and consistent states.
+
+Action methods should be "pure", meaning that they depend only their inputs and the current state of the model, and they should have no side effects other than to make state changes to the model.
 
 #### Indexes
 
@@ -210,17 +225,19 @@ class Entities extends R.Entities {
 export const TodoListItemEntities = new Entities(TodoListItem)
 ```
 
-That line declares that `TodoListItemEntities.byName` will be an array of all the `TodoListItem` instances that have been added to Reknow, sorted by `name` in ascending order.  There's a lot packed into that line, so to break it down:
+The `@R.index` line declares that `TodoListItemEntities.byName` will be an array of all the `TodoListItem` instances that have been added to Reknow, sorted by `name` in ascending order.  There's a lot packed into that line, so to break it down:
 
 * `@R.index("+name")` is the decorator that declares the index
 * `byName!` is the name of the property that will provide access to the index.  The property will be "synthesized" by Reknow, so the `!` tells Typescript not to complain that its value isn't being set explicitly in the constructor.
 * `R.SortIndex<TodoListItem>` is the property's type.  This is effectively an alias for `TodoListItem[]`.
 
-This is an example of a "SortIndex", exposed to the application as an Array.  Reknow will automatically keep this Array sorted in ascending order by each instance's `name` property, updating it as instances are added, removed, or modified.  The application read access this structure freely, but is prevented from modifyin it.
+This is an example of a "SortIndex", exposed to the application as an Array.  Reknow will automatically keep this Array sorted in ascending order by each instance's `name` property, updating it as instances are added, removed, or modified.  The application may read this structure freely, but is prevented from modifying it.
 
 A SortIndex can sort by any number of properties, each in either ascending or descending order.  For example, `@R.index("+name", "-age")` will sort instances first by `name` in ascending order, then by `age` in descending order for instances that have the same `name`.  If instances have the same `name` and `age`, then Reknow will sort by entity id (ascending) as the last resort.
 
-An index can be directed to group instances with the same property value.  This is called a "HashIndex", and is declared by using `=` with the property name:
+Only `string`, `number`, and `boolean` (`false` < `true`) values can be sorted.  Attempts to sort by other types, or by values of different types, will result in an error.  The `null` value can also be included in sorts, and is considered to be less than any other value.
+
+Beyond sorting, an index can also be directed to group instances with the same property value.  This is called a "HashIndex", and is declared by using `=` with the property name:
 
 ```ts
 @R.index("=name", "+age") byNameAndAge!:R.HashIndex<SortIndex<TodoListItem>>
@@ -292,7 +309,7 @@ Indexes will only work on actual properties of Entity instances - they will not 
 
 #### Relationships
 
-As mentioned previously, Entities refer to each other through properties and id's rather than direct pointers.  For example, a `TodoList` may "own" multiple `TodoListItem` instances.  This can be implemented by defining a `todoListId` property on `TodoListItem`, which holds the id of the `TodoList` to which the item belongs.  When a TodoList wishes to get a list of its items, it effectively searches through all TodoListItems to find those whose `todoListId` match its id.  Practically, a HashIndex would be used to turn this search into a quick lookup.
+As mentioned previously, Entities refer to each other through properties and id's rather than direct pointers.  For example, a `TodoList` may "own" multiple `TodoListItem` instances.  This can be implemented by defining a `todoListId` property on `TodoListItem`, which holds the id of the `TodoList` to which the item belongs.  When a TodoList wishes to get a list of its items, it effectively searches through all TodoListItems to find those whose `todoListId` match its id.  Behind the scenes, Reknow would use a HashIndex to turn this search into a quick lookup.
 
 Reknow provides `@R.hasMany`, `@R.hasOne`, and `@R.belongsTo` decorators that simplify the implementation of relationships.  For example:
 
@@ -315,8 +332,8 @@ The decorator is ultimately declaring an `items` property which will be an array
 The `hasMany` decorator has three arguments: the "foreign" Entity class, the "foreign key", and a set of options.
 * The foreign Entity class is expressed indirectly through the return value of a Function, so as to avoid circular references during startup.
 * The "foreign key" is the property on the foreign Entity that is used to refer back to the TodoList's id - `todoListId` in our case.
-* The `sort` option declare that the resulting list of items should be sorted by each item's `createdAt` (ascending).
-* The `dependent` option declares that if the TodoList is removed, all of its items should also be removed automatically.
+* The `sort` option declares that the resulting list of items should be sorted by each item's `createdAt` (ascending).  Without this option, the items would be sorted by id.
+* The `dependent` option declares that if the TodoList is removed, all of its items should also be removed automatically.  Other options are `nullify`, meaning that all of its items will have their `todoListId` set to `null`, and `none` (the default), meaning that the items won't be modified if the instance is removed.
 
 With this declaration in place, the application can simply refer to `myTodoList.items` and receive an array of items whose `todoListId` has the same value as `myTodoList.id`, ordered by `item.createdAt`.  If another item sets its `todoListId` to that same list, then it will immediately "appear" in the array at the correct position.
 
@@ -332,7 +349,7 @@ The `@R.hasOne` declaration is similar to `@R.hasMany`, except that it results i
 
 #### Proxies and Object Identity
 
-As described previously, Reknow relies heavily on Javascript Proxies to implement its functionality.  Entity instances retrieved by the application are presented through Proxies, so that Reknow is able to monitor how the application is reading or modifying the properties of those Entities.  Indexes and relationships also follow this pattern, presenting data to the application through Proxies that mediate access and mutation.  All of this happens automatically without the application needing to do anything special to use those Proxies.
+As described previously, Reknow relies heavily on Javascript Proxies to implement its functionality.  Entity instances retrieved from Reknow by the application are presented through Proxies, so that Reknow is able to monitor how the application is reading or modifying the properties of those Entities.  Indexes and relationships also follow this pattern, presenting data to the application through Proxies that mediate access and mutation.  All of this happens automatically without the application needing to do anything special to use those Proxies.
 
 Underneath all the Proxies, Reknow maintains the "real" data structures internally, and those data structures are mutable.  When the application changes an Entity's property, that change eventually makes its way through the Proxy to the underlying instance, and that instance's property really is changed.  Reknow is not maintaining immutable structures or using a copy-on-write strategy.  This is true of Reknow's indexes as well.
 
@@ -346,7 +363,7 @@ The `Entity.currentEntity` property will return the most recent Proxy associated
 
 #### Queries
 
-A "query" is a function whose return value is cached, so that calling the function again will return the cached value without executing the function again.  As the query function executes, Reknow "watches" the function to see what Entity instances, properties, indexes, relationships, and other queries it references.  If any of those referenced values later changes, Reknow will invalidate the query's cached value.  If the query is called after that, it will execute its function and recompute the value, generating a possibly new set of referenced Entities and properties.
+A "query" is a function whose return value is cached, so that calling the query again will return the cached value without executing the function again.  As the query function executes, Reknow "watches" to see what Entity instances, properties, indexes, relationships, and other queries are referenced.  If any of those referenced values later changes, Reknow will invalidate the query's cached value.  If the query is called after that, it will execute its function and recompute the value, generating a possibly new set of referenced Entities and properties.
 
 (Note: there is no "query language" or other special facility for reading data from Entity instances and indexes.  The term "Query" has been appropriated from other relational systems, where it might have a different meaning)
 
@@ -365,7 +382,7 @@ While the getter was running, Reknow was building up a list of "dependencies", n
 
 A query can reference other queries as part of its computation.  Reknow will track those references as dependencies, and if any of those dependent queries is invalidated, the referring query will also be invalidated.
 
-Queries have a special case: if a query returns an Entity, then the query will be invalidated if any property of the Entity is changed.  This is a convenience that supports simplified usage in React, as will be described later.
+Queries have a special case: if a query function returns an Entity, then the query will be invalidated if any property of the Entity is changed.  This is a convenience that supports simplified usage in React, as will be described later.
 
 A query must be a "pure" function, depending solely on the current state of the model and avoiding any side effects.  It cannot take any inputs, and when declared with the `@R.query` decorator, it must be defined on a getter.  An `@R.query` may be defined on either an `Entity` or an `Entities` class.
 
@@ -373,7 +390,7 @@ A query must be a "pure" function, depending solely on the current state of the 
 
 A "reaction" is a combination of a query and an action.  Like a query, it is a function that Reknow "watches" to find its dependencies.  Unlike a query, Reknow will automatically call the function initially, and will automatically call the function again if a dependency changes.  Also unlike a query, a reaction is allowed, and even encouraged, to change model state when it is called.
 
-The most common use of a reaction is to set an Entity property that is computed from other values, solely for the purpose of indexing on that property.  For example:
+The most common use of a reaction is to set an Entity property that is computed from other values, usually for the purpose of indexing on that property.  Indexes can only operate on property values, not getter functions, so a reaction provides an equivalent solution.  For example:
 
 ```ts
 export class TodoList extends R.Entity {
@@ -382,9 +399,9 @@ export class TodoList extends R.Entity {
     this.itemCount = this.items.length
   }
 ```
-This effectively defines `itemCount` to be a "computed" property that is kept in sync with the number of items in its relationship.  An index can then be defined that allows all lists to be sorted by the number of items they contain.
+This effectively defines `itemCount` to be a "computed" property that is kept in sync with the number of items in its relationship.  An index can then be defined that allows all lists to be sorted by the number of items they contain.  Whenever the set of items changes, `computeItemCount` will be called to update `itemCount`, which will in turn trigger updates to the indexes.
 
-While reactions may modify state, they still should be kept free of other side effects.
+While reactions may modify state, they still should be kept free of other side effects.  Reactions also need to be wary of creating circular dependencies that trigger an endless cycle of updates.
 
 #### Side Effects
 
@@ -429,7 +446,7 @@ export const ShoppingCartService = new ShoppingCartServiceClass()
 
 #### StateManager
 
-`StateManager` is Reknow's central class.  Every Reknow application must create a single `StateManager`, passing it all of the Entity classes and Service instances.  Additional options can also be invoked through the `StateManager`.  Applications typically create the `StateManager` in a `Models.ts` class:
+`StateManager` is Reknow's central class.  Every Reknow application must create a single `StateManager`, passing it all of the Entity classes and Service instances to be managed by Reknow.  Additional options can also be passed to the `StateManager`.  Applications typically create the `StateManager` in a `Models.ts` file:
 
 ```ts
 import * as R from "reknow"
@@ -503,7 +520,7 @@ export const todo = {
 
 The "namespaces" can be nested to any level within the StateManager declaration.  These namespaces are only an organizing tool - they don't affect the application directly, which is still directly accessing classes like `TodoList` and `TodoListItem`.
 
-However, the namespaces do show up when the StateManager reports actions and debugging to its assigned listeners (described below).  For example, a property change on a TodoListItem  would be reported as a change to a "todo.TodoListItem".
+The namespaces do show up when the StateManager reports actions and debugging to its assigned listeners (described below).  For example, a property change on a TodoListItem  would be reported as a change to a "todo.TodoListItem".
 
 #### Running Multiple StateManagers
 
@@ -513,8 +530,8 @@ All of this is perfectly fine, as long as it's understood that each StateManager
 
 * Each Entity class must be registered with at most one StateManager
 * Relationships (`hasMany`, `hasOne`, `belongsTo`) can only be established between Entity classes managed by the same StateManager.
-* An action managed by a StateManager will only manage the state changes in the Entities associated with that StateManager
-* A query managed by a StateManager will only track dependencies on the Entities associated with that StateManager
+* An `@R.action` managed by a StateManager should not "span" Entities across different StateManagers
+* An `@R.query` managed by a StateManager will not track dependencies on Entities associated with other StateManagers
 
 There is no practical limit to the number of Entity classes, either minimum or maximum, that can be associated with a StateManager.  Even the simplest stateful React component can take advantage of Reknow, using a StateManager that manages a single Entity class.
 
