@@ -42,11 +42,35 @@ The steps to build a Reknow application typically look something like this:
 
 ```
 npx create-react-app todoapp --template typescript
+cd todoapp
 npm install --save reknow
 npm install --save react-reknow
+
+cp -r {path to reknow}/todoapp/src/* src/
+```
+Edit `tsconfig.json` to enable `experimentalDecorators`:
+
+```
+{
+  "compilerOptions": {
+    ...
+    "experimentalDecorators": true
+}
+```
+Optionally, add a .env file to set the port of the development server, to enable https, etc:
+
+```
+SKIP_PREFLIGHT_CHECK=true
+HTTPS=true
+BROWSER=none
+PORT=8929
+```
+Then start the create-react-app server:
+```
 npm start
 ```
-add experimentalDecorators to tsconfig
+When it comes up, you should be able to point your browser at the server and run the application.
+
 
 The example is a simple Todo list manager.  It allows the user to add lists, add items to those lists, mark items as "done", and to remove entire lists.  Items in each list are ordered by their creation time, most recent first.  Items marked as "done" are displayed with a strikethrough at the bottom of the list.  The lists offer a choice of ordering - either by creation time, alphabetically by list name, or by number of items in the list.
 
