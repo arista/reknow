@@ -38,20 +38,14 @@ The steps to build a Reknow application typically look something like this:
   * Invoke `@action` methods directly on model objects in response to user actions
   * Inovke `@action` methods at any time, actually, even in response to asynchronous events like Timers, within async methods, etc.
 
-## Sample Todo Application
+## Sample Todo Application Introduction
+Reknow includes a sample [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src) ([demo](https://arista.github.io/reknow/docs/todoapp/index.html)), a simple unstlyed React Todo list manager that allows the user to add lists, add items to those lists, mark items as "done", and to remove entire lists.  Items in each list are ordered by their creation time, most recent first.  Items marked as "done" are displayed with a strikethrough at the bottom of the list.  The lists offer a choice of ordering - either by creation time, alphabetically by list name, or by number of items in the list.
 
-Reknow includes a sample [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src), a simple React Todo list manager that allows the user to add lists, add items to those lists, mark items as "done", and to remove entire lists.  Items in each list are ordered by their creation time, most recent first.  Items marked as "done" are displayed with a strikethrough at the bottom of the list.  The lists offer a choice of ordering - either by creation time, alphabetically by list name, or by number of items in the list.
+Before diving into the code, it helps to understand the Reknow concepts in some detail.  This guide will come back to the sample application after introducing those concepts.
 
+### Building the Todo Application
 
-
-The application's data is modeled using `TodoApp`, `TodoList`, and `TodoListItem`, with one-to-many relationships between them:
-
-```
-TodoApp --< TodoList --< TodoListItem
-```
-
-A `TextInput` is also modeled, to demonstrate the use of a "standalone" reusable stateful component.
-
+If you want to build and run the sample application locally, you can do so using create-react-app:
 
 ```
 npx create-react-app todoapp --template typescript
@@ -83,8 +77,6 @@ Then start the create-react-app server:
 npm start
 ```
 When it comes up, you should be able to point your browser at the server and run the application.
-
-
 
 ### Concepts
 
@@ -750,3 +742,12 @@ Both the `useQuery` and `useComponentEntity` hooks take an optional name as a se
 
 This name doesn't impact the behavior of the application, but it does appear in the events sent to the StateManager's `debugListener`.  Most applications won't use this facility until they are trying to understand why some component is or is not updating.  In that scenario, the application can enable the `debugListener` on the StateManager and start adding names to narrow down the behavior.
 
+## Sample Todo Application
+
+The application's data is modeled using `TodoApp`, `TodoList`, and `TodoListItem`, with one-to-many relationships between them:
+
+```
+TodoApp --< TodoList --< TodoListItem
+```
+
+A `TextInput` is also modeled, to demonstrate the use of a "standalone" reusable stateful component.
