@@ -15,6 +15,7 @@ export const models = new R.StateManager({
     },
   },
   listener: (e) => console.log(R.stringifyTransaction(e)),
+  // Uncomment to see information about queries, subscriptions, and invalidations
   //debugListener: e=>console.log(R.stringifyDebugEvent(e)),
 })
 
