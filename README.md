@@ -967,4 +967,101 @@ There are a couple special cases to note.  The first is the sort ordering of the
 ```
 Here we've chosen to mark the method as an `@R.query` just as an illustration.  As a reminder, that causes the getter to cache its value, so that the next time it is called, it will return the same value.  But if any of its dependents change, such as the value of `listSortOrder`, or the list of items held by the returned relationship, then the query will be invalidated and recalculated when next called.  In this case, the caching behavior isn't particularly helpful since the method is just doing a simple lookup, but for more expensive calculations the declaration may be worthwhile.
 
-The other interesting case is the way each list displays its items, with the incomplete items at the top and the incomplete items at the bottom, with each sub-list sorted by creation time.  There are several ways to implement this, but in our case we'll use a custom index to show one way to do this.
+The other interesting case is the way each list displays its items, with the incomplete items at the top and the complete items at the bottom, with each sub-list sorted by creation time.  There are several ways to implement this, but in our case we'll use this as an opportunity to demonstrate custom indexes.
+
+In [TodoListItem](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListItem.ts) we define an index:
+
+```
+class Entities extends R.Entities<TodoListItem> {
+  @R.index("=todoListId", "=complete", "+createdAt") byComplete!: R.HashIndex<
+    R.HashIndex<R.SortIndex<TodoListItem>>
+  >
+}
+
+export const TodoListItemEntities = new Entities(TodoListItem)
+```
+
+As described previously, this causes Reknow to maintain a structure of objects indexed by "todoListId", each pointing to an object indexed by the value of "complete", each pointing to a list of TodoListItems.  Keeping in mind that all object keys are converted to strings, that structure might look like this:
+
+```
+{
+  "13": {
+    "true": [
+      <<TodoListItem>>,
+      <<TodoListItem>>,
+      ...
+      ...
+    ],
+    "false": [
+      <<TodoListItem>>,
+      <<TodoListItem>>,
+      ...
+      ...
+    ],
+  },
+  ...
+}
+```
+The class also now exports `TodoListItemEntities` (the singleton, not the `Entities` class), since it now has something in it that may be of interest to the application.
+
+With this index in place, each [TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts) can return its complete and incomplete items by traversing that index structure:
+
+```
+  @R.query get completeItems() {
+    return TodoListItemEntities.byComplete[this.id]?.true || []
+  }
+
+  @R.query get incompleteItems() {
+    return TodoListItemEntities.byComplete[this.id]?.false || []
+  }
+```
+Note the `?.` and `|| []` used to protect against values not being found in the index, since Reknow will not keep empty objects or arrays around in its indexes.  Also note the `.true` and `.false`, which shouldn't be confused with actual boolean values - they're just shorthand for `["true"]` and `["false"]`.
+
+Once again we mark the method with `@R.query` just for illustration.  Because the methods are simple lookups, caching their values probably isn't a big help.  On the other hand, if we had chosen to implement the methods using some computation without an index, then caching the result might make more sense.  For example:
+
+```
+  @R.query get completeItems() {
+    return this.items.filter(item => item.complete)
+  }
+
+  @R.query get incompleteItems() {
+    return this.items.filter(item => !item.complete)
+  }
+```
+
+### Reactions
+
+We have one remaining function, which is the ability to sort lists by the number of items they contain.  We want to use an index to do this so it can be expressed as a simple `todoListsByItemCount` relationship.  Indexes can only operate on actual properties of an instance, which means that we need to maintain an `itemCount` property for each list, keeping that property up to date whenever the list of items changes.
+
+[TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts) shows how to do this with a `@R.reaction`:
+
+```
+  @R.reaction computeItemCount() {
+    this.itemCount = this.items.length
+  }
+```
+
+### TextInput
+
+We haven't spent much time looking at [TextInput](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TextInput.ts), except to note that it's an example of a reusable React component using Reknow for its state.  Beyond holding data, there isn't much else to note about it, except that its `onValue` property is a Function.  This is perfectly fine with Reknow, as long as it's understood that Reknow will only consider that property to have changed if it is assigned a new Function - the Function returning a new value, for example, would not be considered a property change by Reknow.
+
+### Models class
+
+The [Models](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/Models.ts) file is where the Entities are registered with a Reknow `StateManager`.  Each Entity class is imported and included in the `entities` initializer (in this case, placed in a `todo` namespace just for illustration).
+
+The `StateManager` is also configured with a couple listeners that let you see some of the inner workings of Reknow in the console.  These outputs are formatted for readability - if you want to the see the "raw" JSON being emitted, you can replace them with `(e) => console.log(JSON.stringify(e, null, 2))`.
+
+```
+  listener: (e) => console.log(R.stringifyTransaction(e)),
+  debugListener: (e) => console.log(R.stringifyDebugEvent(e)),
+```
+
+The Models fils also handles the connection to react-reknow, setting up the `useQuery` and `useComponentEntity` hooks that will be used by the application's React components.
+
+```
+export const {useQuery, useComponentEntity} = ReactReknow(models)
+```
+
+### React components
+
+Building React components with Reknow is fairly straightforward.  Components can directly access Entities, properties, relationships, indexes, etc. out of Reknow, and components are free to invoke actions on model objects directly.
