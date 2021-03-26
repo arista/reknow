@@ -20,28 +20,11 @@ Because Reknow detects state changes all the way down to the property level, it 
 
 The Reknow library itself has very few dependencies and can be used in Node.js or in browsers.  It works well with React, but has no direct connection to the React libraries - that connection is provided through a separate "react-reknow" library.  Reknow is designed primarily for TypeScript applications, but it can also be used effectively with JavaScript.  Reknow does make use of decorators, which are still "experimental" as of ES6, but alternatives are provided for environments where decorators are not supported.  All of Reknow's operations run synchronously, without the use of timers or Promises, and can be used from both async and non-async functions.
 
-## Building An Application With Reknow
+## Sample Application
 
-The steps to build a Reknow application typically look something like this:
-
-* Design the classes that will model as much of the application's state as possible.  This includes both the data that the application manipulates (Topics, Posts, ShoppingCartItems, etc.), as well as the "view state" of the application (NavigationBreadcrumb, ErrorDialog, etc.).  Keep object properties as simple as possible, preferably sticking to strings, numbers, and booleans, remembering that more complex structures can be defined using Reknow's relational facilities.
-  * Add `@hasMany`, `@hasOne`, and `@belongsTo` declarations to the model classes to surface their relationships expressed through matching property values.
-  * Add `@index` declarations to create automatically-maintained "hash" and "sort" structures of model objects
-  * Add `@query` decorators to mark out methods that generate computed values from the model objects, automatically invalidating their cached values when their dependencies change.  Keep those methods "pure" without side effects or state changes.
-  * Add `@action` decorators to declare state-changing methods in the model classes.  Keep those methods "pure", free of side effects or dependencies on anything outside the model.
-  * Add `@afterAdd`, `@afterRemove`, and `@afterChange` decorators to methods that invoke side effects in response to the state changes in `@action` methods.
-  * Add `@reaction` decorators to methods that perform state changes in response to other state changes (typically used to maintain "computed" properties that then feed into indexes).
-* Create a Reknow `StateManager` instance, passing it a list of all the model classes that it will be managing.
-* Build the presentation layer.  Assuming it is a React application:
-  * Apply the `useQuery` hook from the `react-reknow` library to pull data directly from model objects.  `useQuery` will automatically trigger a component re-render whenever the underlying model object data changes.
-  * Apply the `useComponentyEntity` hook to automatically create and remove model objects tied to a React component's life cycle.
-  * Invoke `@action` methods directly on model objects in response to user actions
-  * Inovke `@action` methods at any time, actually, even in response to asynchronous events like Timers, within async methods, etc.
-
-## Sample Todo Application Introduction
 Reknow includes a sample [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src) ([demo](https://arista.github.io/reknow/docs/todoapp/index.html)), a simple unstlyed React Todo list manager that allows the user to add lists, add items to those lists, mark items as "done", and to remove entire lists.  Items in each list are ordered by their creation time, most recent first.  Items marked as "done" are displayed with a strikethrough at the bottom of the list.  The lists offer a choice of ordering - either by creation time, alphabetically by list name, or by number of items in the list.
 
-Before diving into the code, it helps to understand the Reknow concepts in some detail.  This guide will come back to the sample application after introducing those concepts.
+Before diving into the code, it helps to understand the Reknow concepts in some detail.  This guide will come back to the sample application after covering those concepts.
 
 ### Building the Todo Application
 
@@ -67,7 +50,6 @@ Edit `tsconfig.json` to enable `experimentalDecorators`:
 Optionally, add a `.env` file to set the port of the development server, to enable https, etc:
 
 ```
-SKIP_PREFLIGHT_CHECK=true
 HTTPS=true
 BROWSER=none
 PORT=8929
@@ -78,17 +60,37 @@ npm start
 ```
 When it comes up, you should be able to point your browser at the server and run the application.
 
+## Building An Application With Reknow
+
+### Typical Development Process
+
+The steps to build a typical Reknow application look something like this:
+
+* Design the classes that will model as much of the application's state as possible.  This includes both the data that the application manipulates (Topics, Posts, ShoppingCartItems, etc.), as well as the "view state" of the application (NavigationBreadcrumb, ErrorDialog, etc.).  Keep object properties as simple as possible, preferably sticking to strings, numbers, and booleans, remembering that more complex structures can be defined using Reknow's relational facilities.
+  * Add `@hasMany`, `@hasOne`, and `@belongsTo` declarations to the model classes to surface their relationships expressed through matching property values.
+  * Add `@index` declarations to create automatically-maintained "hash" and "sort" structures of model objects
+  * Add `@query` decorators to mark out methods that generate computed values from the model objects, automatically invalidating their cached values when their dependencies change.  Keep those methods "pure" without side effects or state changes.
+  * Add `@action` decorators to declare state-changing methods in the model classes.  Keep those methods "pure", free of side effects or dependencies on anything outside the model.
+  * Add `@afterAdd`, `@afterRemove`, and `@afterChange` decorators to methods that invoke side effects in response to the state changes in `@action` methods.
+  * Add `@reaction` decorators to methods that perform state changes in response to other state changes (typically used to maintain "computed" properties that then feed into indexes).
+* Create a Reknow `StateManager` instance, passing it a list of all the model classes that it will be managing.
+* Build the presentation layer.  Assuming it is a React application:
+  * Apply the `useQuery` hook from the `react-reknow` library to pull data directly from model objects.  `useQuery` will automatically trigger a component re-render whenever the underlying model object data changes.
+  * Apply the `useComponentyEntity` hook to automatically create and remove model objects tied to a React component's life cycle.
+  * Invoke `@action` methods directly on model objects in response to user actions
+  * Inovke `@action` methods at any time, actually, even in response to asynchronous events like Timers, within async methods, etc.
+
 ### Concepts
 
 #### Importing Reknow
 
-The sample app uses the pattern of importing Reknow into its own namespace:
+Applications typically import Reknow into its own namespace:
 
 ```
 import * as R from "reknow"
 ```
 
-A Reknow model file typically uses many reknow exports, so it's often more convenient to import the whole namespace rather than importing individual exports.  The file can then reference Reknow exports off of that namespace, for example: `@R.hasMany`.
+A Reknow model file typically uses many reknow exports, so it's often more convenient to import the whole namespace rather than importing individual exports.  The file can then reference Reknow exports off of that namespace, for example: `extends R.Entity` or `@R.hasMany` (a decorator).
 
 #### Entity and Entities classes
 
@@ -742,12 +744,227 @@ Both the `useQuery` and `useComponentEntity` hooks take an optional name as a se
 
 This name doesn't impact the behavior of the application, but it does appear in the events sent to the StateManager's `debugListener`.  Most applications won't use this facility until they are trying to understand why some component is or is not updating.  In that scenario, the application can enable the `debugListener` on the StateManager and start adding names to narrow down the behavior.
 
-## Sample Todo Application
+## Examining the Sample TodoApp
 
-The application's data is modeled using `TodoApp`, `TodoList`, and `TodoListItem`, with one-to-many relationships between them:
+With the main Reknow concepts covered, we see how they are applied in the sample application.  As described previously, the sample application is a Todo list manager with multiple todo lists and items and the ability to sort lists in a few different ways.
+
+### Modeling the Application's Data
+
+The application's data is modeled using `TodoApp`, `TodoList`, and `TodoListItem` classes, with one-to-many relationships between them:
 
 ```
 TodoApp --< TodoList --< TodoListItem
 ```
 
 A `TextInput` is also modeled, to demonstrate the use of a "standalone" reusable stateful component.
+
+We start by sketching out what properties are needed in each class:
+
+* _TodoApp_: id, listSortOrder
+* _TodoList_: id, todoAppId, name, itemCount
+* _TodoListItem_: id, todoListId, name, createdAt, complete
+
+Remember that model objects reference each other indirectly, typically through id's.  So a TodoList, for example, has no property that directly references its items - rather, the TodoListItem has a `todoListId` property that references the TodoList that contains it.
+
+The `TextInput` demonstrates a reusable component, in this case a simple text box with a button for taking action on that text.  Its data model consists of the currently-entered value, and the function to be called when the user clicks the button:
+
+* _TextInput_: value, onValue
+
+### Create the Model Classes
+
+Once we've designed our basic data model, we can create the "skeleton" of each class, deciding what properties need to be provided in the constructor, what properties will be set later, and what properties will be computed from other properties.
+
+Starting with [TodoListItem](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListItem.ts), the "skeleton" of that class' file looks something like this:
+
+```
+import * as R from "reknow"
+
+export class TodoListItem extends R.Entity {
+  @R.id id!: string
+  todoListId!: string
+  complete = false
+
+  constructor(public name: string, public createdAt = new Date().toISOString()) {
+    super()
+  }
+}
+
+class Entities extends R.Entities<TodoListItem> {}
+new Entities(TodoListItem)
+```
+
+Both `name` and `createdAt` are set in the constructor (createdAt defaulting to the current Date in stringified form), while `id` will be set automatically by Reknow and `todoListId` will be set later by the application.  We expect `complete` to be set based on a user interaction.
+
+We also start with a blank skeleton for the corresponding `Entities` class.
+
+The [TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts) class looks similar:
+
+```
+import * as R from "reknow"
+
+export class TodoList extends R.Entity {
+  @R.id id!: string
+  todoAppId!: string
+  itemCount = 0
+
+  constructor(public name: string) {
+    super()
+  }
+}
+
+class Entities extends R.Entities<TodoList> {}
+new Entities(TodoList)
+```
+
+The `itemCount` will be computed dynamically, and will be used to populate an index for sorting purposes.
+
+The [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoApp.ts) follows the same pattern.  We also see a `ListSortOrder` type acting as a TypeScript enumeration:
+
+```
+import * as R from "reknow"
+
+export type ListSortOrder = "byCreatedAt" | "byName" | "byItemCount"
+
+export class TodoApp extends R.Entity {
+  @R.id id!: string
+  listSortOrder: ListSortOrder = "byCreatedAt"
+}
+
+class Entities extends R.Entities<TodoApp> {}
+new Entities(TodoApp)
+```
+
+### Define Relationships
+
+With the properties defined, we can give the data some structure by defining relationships:
+
+```
+TodoApp --< TodoList --< TodoListItem
+```
+
+Starting with [TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts):
+
+```
+  @R.hasMany(() => TodoListItem, "todoListId", {
+    sort: "+createdAt",
+    dependent: "remove",
+  })
+  items!: Array<TodoListItem>
+```
+
+This declares that a TodoList has many TodoListItems, each identified by a `todoListId` property that matches the TodoList's id.  Those items will appear in an `items` property as an array of TodoListItems.  That property will be managed by Reknow and won't be set explicitly by the application, hence the `!` in the declaration.  Furthermore, the resulting array will be sorted by each item's `createdAt` property in ascending order, and if the list is removed, all of its items will also be removed.
+
+Behind the scenes, Reknow will create and maintain an index on `TodoListItem` organized by `("=todoListId", "+createdAt")`.  The `items` property effectively acts like a getter that looks up the appropriate `todoListId` in that index.  A `TodoList` instance itself contains no `items`.
+
+The [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoApp.ts) is similar in that it "owns" a list of TodoLists, but it defines multiple relationships for accessing that same list with different orderings:
+
+```
+  @R.hasMany(() => TodoList, "todoAppId", {dependent: "remove"})
+  todoLists!: Array<TodoList>
+
+  @R.hasMany(() => TodoList, "todoAppId", {sort: "+name"})
+  todoListsByName!: Array<TodoList>
+
+  @R.hasMany(() => TodoList, "todoAppId", {sort: "+createdAt"})
+  todoListsByCreatedAt!: Array<TodoList>
+
+  @R.hasMany(() => TodoList, "todoAppId", {sort: "-itemCount"})
+  todoListsByItemCount!: Array<TodoList>
+```
+
+The first declaration will be the "main" relationship - it's the one that the application will use to add new items, and is also responsible for removing the lists when the TodoApp is removed.  The remaining relationships retrieve the same items using different sort orderings.  Again, none of these relationships are actual data on the `TodoApp` - each acts as a lookup into an index that Reknow automatically creates on `TodoList`.
+
+For completeness, we also define `@R.belongsTo` relationships that go in the "opposite" direction, so that a [TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts) can reference its "owning" `TodoApp`:
+
+```
+  @R.belongsTo(() => TodoApp, "todoAppId") todoApp!: TodoApp
+```
+
+and a [TodoListItem](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListItem.ts) can reference its "owning" list:
+
+```
+  @R.belongsTo(() => TodoList, "todoListId") todoList!: TodoList
+```
+
+The application doesn't actually use these values, but it's good to declare them since they help give more structure to the data.
+
+### Define Actions
+
+With the data modeled and structured, we can now define the actions we expect the application to take on the data.  In our case, those are:
+
+* add a new list
+* add an item to a list
+* mark an item as complete
+* select a different sort ordering for the lists
+
+To add a new list, [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoApp.ts) defines this method, marking it with `@R.action` since it will be modifying state:
+
+```
+  @R.action addList(value: string) {
+    const todoList = new TodoList(value).addEntity()
+    this.todoLists.push(todoList)
+  }
+```
+It uses the pattern of creating and adding the model object to Reknow in a single step, which again is good practice so that the application doesn't accidentally use a "raw" unproxied `TodoList`.  It then sets up the relationship between the TodoApp and the new TodoList by `push`ing it into the relationship.  Behind the scenes, all that `push` call does is set the `todoAppId` property of the `TodoList`.  The `TodoApp` could do that instead of calling `push` with the exact same effect, but the `push` call makes the intention a little clearer for someone reading the code later.
+
+Adding an item to a list is similar, as shown in [TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts):
+
+```
+  @R.action addItem(value: string) {
+    const item = new TodoListItem(value).addEntity()
+    this.items.push(item)
+  }
+```
+
+Marking an item as complete is found in [TodoListItem](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListItem.ts):
+
+```
+  @R.action setComplete() {
+    this.complete = true
+  }
+```
+
+Note that `@R.action` can be used with setters, but that can be awkward, since you need to define a corresponding getter and a different "backing" property:
+
+```
+  this._complete = false
+
+  @R.action set complete(complete:boolean) {
+    this._complete = complete
+  }
+
+  get complete() {
+    return this._complete
+  }
+```
+
+Selecting a sort ordering for the TodoLists is found in [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoApp.ts)
+```
+  @R.action setListSortOrder(val: ListSortOrder) {
+    this.listSortOrder = val
+  }
+```
+
+Note that this only sets a property.  We'll see in the next section how the sort order is actually changed.
+
+### Select Data
+
+The app's UI will by driven by the data in the model.  Most of the data we need is already defined: the relationships allow the UI to step through lists and items in each list, while each model's properties provide the data to be displayed for each list and item.
+
+There are a couple special cases to note.  The first is the sort ordering of the lists, which the user can select by name, creation time, or number of items.  We've chosen to implement that by defining three separate relationships, each referencing the same list of items but ordered in different ways.  The choice of sort order is specified in the `listSortOrder` property.  To implement this, we'll define a getter on [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoApp.ts) that does what we want:
+
+```
+  @R.query get sortedTodoLists() {
+    switch (this.listSortOrder) {
+      case "byName":
+        return this.todoListsByName
+      case "byItemCount":
+        return this.todoListsByItemCount
+      default:
+        return this.todoListsByCreatedAt
+    }
+  }
+```
+Here we've chosen to mark the method as an `@R.query` just as an illustration.  As a reminder, that causes the getter to cache its value, so that the next time it is called, it will return the same value.  But if any of its dependents change, such as the value of `listSortOrder`, or the list of items held by the returned relationship, then the query will be invalidated and recalculated when next called.  In this case, the caching behavior isn't particularly helpful since the method is just doing a simple lookup, but for more expensive calculations the declaration may be worthwhile.
+
+The other interesting case is the way each list displays its items, with the incomplete items at the top and the incomplete items at the bottom, with each sub-list sorted by creation time.  There are several ways to implement this, but in our case we'll use a custom index to show one way to do this.
