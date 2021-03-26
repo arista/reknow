@@ -1065,3 +1065,13 @@ export const {useQuery, useComponentEntity} = ReactReknow(models)
 ### React components
 
 Building React components with Reknow is fairly straightforward.  Components can directly access Entities, properties, relationships, indexes, etc. out of Reknow, and components are free to invoke actions on model objects directly.
+
+Where things get tricky is subscribing a React component to changes in Reknow model objects.  This is where the `useQuery` hook comes into play.  Consider [TodoListView](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListView.tsx), which takes a `TodoList` as a parameter:
+
+```
+export const TodoListView: React.FC<{todoList: TodoList}> = (params) => {
+  const todoList = useQuery(() => params.todoList)
+  const incompleteItems = useQuery(() => todoList.incompleteItems)
+  const completeItems = useQuery(() => todoList.completeItems)
+  ...
+```
