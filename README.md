@@ -1121,15 +1121,15 @@ With that in mind, here are the dependency and invalidation rules:
 
 * If a query accesses a property of an Object, then the query will be invalidated if that property changes.
 
- * "Accessing a property" means:
-  * Retrieving the property's value (`myEntity.name`)
-  * Referencing the property with `Object.hasOwnProperty()`
-  * Retrieving the property's descriptor with `Object.getOwnPropertyDescriptor()`
+    * "Accessing a property" means:
+        * Retrieving the property's value (`myEntity.name`)
+        * Referencing the property with `Object.hasOwnProperty()`
+        * Retrieving the property's descriptor with `Object.getOwnPropertyDescriptor()`
 
- * "Property changes" means:
-  * The property is added to the Object
-  * The property is removed from the Object (`delete myEntity.name`)
-  * The property's value changes (where `newValue !== oldValue`)
+    * "Property changes" means:
+        * The property is added to the Object
+        * The property is removed from the Object (`delete myEntity.name`)
+        * The property's value changes (where `newValue !== oldValue`)
 
 
 * All rules only apply to string property names.  Symbol property names are effectively ignored by Reknow - they are passed straight to the underlying Entity without any dependency detection.
