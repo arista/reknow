@@ -1066,7 +1066,11 @@ export const {useQuery, useComponentEntity} = ReactReknow(models)
 
 Building React components with Reknow is fairly straightforward.  Components can directly access Entities, properties, relationships, indexes, etc. out of Reknow, and components are free to invoke actions on model objects directly.
 
-Where things get tricky is subscribing a React component to changes in Reknow model objects.  This is where the `useQuery` hook comes into play.  Consider [TodoListView](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListView.tsx), which takes a `TodoList` as a parameter:
+Where things get tricky is reacting to changes in Reknow model objects.  When a model object changes, Reknow tends to minimize the impact on the resulting React components, so as to avoid needless re-rendering.  In exchange for this efficiency, React components must explicitly subscribe to the model object changes that will cause them to re-render.
+
+This is where the `useQuery` hook comes into play.  `useQuery` will evaluate a function, and if any dependency of that function changes, the component will re-render.  In general, each component is responsible for wrapping its change-sensitive data with `useQuery`.  This is true even if the component is passed a Reknow model object as a parameter.
+
+Consider [TodoListView](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListView.tsx), which takes a `TodoList` as a parameter:
 
 ```
 export const TodoListView: React.FC<{todoList: TodoList}> = (params) => {
@@ -1075,3 +1079,57 @@ export const TodoListView: React.FC<{todoList: TodoList}> = (params) => {
   const completeItems = useQuery(() => todoList.completeItems)
   ...
 ```
+Even if the underlying `todoList` is changed, the component will not necessarily re-render (we'll see why in a bit).  Instead, the `TodoListView` needs to explicitly declare what data should cause it to rerender, which it does through `useQuery`.
+
+The first `useQuery` takes the `todoList` parameter and simply returns it.  This will cause the component to re-render if any "own" property of `todoList` changes.  So if the list's `name` changes, the component will re-render.
+
+Keep in mind that `TodoList` only has a few "own" properties: `id`, `todoAppId`, `name`, and `itemCount`.  `TodoList` does have relationships like `incompleteItems` and `completeItems` which the component will use to render the lists of items.  But those relationships are not "own" properties - they're synthetic getters that perform lookups on indexes.  So that first `useQuery` won't capture the dependency on those lists.  Instead, each of those relationships must be wrapped in its own `useQuery`.
+
+And even then, `useQuery` on a relationship will only cause a re-render if the list changes.  For example, if an item is added to or removed from `completeItems`, or if the order of `incompleteItems` changes, then the component will re-render.  But if an item in one of those lists just changes its `name`, that won't trigger a re-render on the component, since that won't affect the lists themselves.
+
+
+
+Relationships like `incompleteItems` and `completeItems`, are not considered "own" properties - they are synthetic getters that turn into index lookups behind the scenes.  So they each need their own `useQuery` wrapper.
+
+And even then, if 
+
+
+This component is called  by the `TodoAppView` like this:
+
+```
+export const TodoAppView: React.FC<{}> = (params) => {
+  ...
+          {lists.map((l) => (
+            <TodoListView key={l.id} todoList={l} />
+          ))}
+```
+
+
+## Reference
+
+### Invalidation Rules
+
+These are the rules that govern what dependencies are formed when evaluating an `@R.query` or `useQuery`, and what data changes will trigger those dependencies, resulting in the invalidation of an `@R.query` or a re-rendering of a `useQuery`.
+
+These rules are easier to understand if you know how Reknow stores its data internally.  From the perspective of dependencies and invalidation, Reknow only uses a few data structures, which it categorized into either "Objects" (key/value pairs) or "Arrays":
+
+* Entities - these are considered to be "Objects", holding only the Entity's "own" properties.  The Entity's relationships, queries, etc. are not considered part of the "own" properties.
+* HashIndexes - these are considered to be "Objects", in which each key maps to either an Entity, another HashIndex, or a SortIndex.  This includes the `byId` index automatically created for each `Entities`, indexes declared by the application, or indexes created implicitly by relationships.
+* SortIndexes - these are considered to be "Arrays", in which the elements are Entity instances.
+
+With that in mind, here are the dependency and invalidation rules:
+
+* If a query accesses a property of an Object, then the query will be invalidated if that property changes.
+
+** "Accessing a property" means:
+*** Retrieving the property's value (`myEntity.name`)
+*** Referencing the property with `Object.hasOwnProperty()`
+*** Retrieving the property's descriptor with `Object.getOwnPropertyDescriptor()`
+
+** "Property changes" means:
+*** The property is added to the Object
+*** The property is removed from the Object (`delete myEntity.name`)
+*** The property's value changes (where `newValue !== oldValue`)
+
+
+* All rules only apply to string property names.  Symbol property names are effectively ignored by Reknow - they are passed straight to the underlying Entity without any dependency detection.
