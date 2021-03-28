@@ -1111,15 +1111,15 @@ export const TodoAppView: React.FC<{}> = (params) => {
 
 These are the rules that govern what dependencies are formed when evaluating an `@R.query` or `useQuery`, and what data changes will trigger those dependencies, resulting in the invalidation of an `@R.query` or a re-rendering of a `useQuery`.
 
-These rules are easier to understand if you know how Reknow stores its data internally.  From the perspective of dependencies and invalidation, Reknow only uses a few data structures, which it categorized into either "Objects" (key/value pairs) or "Arrays":
+These rules are easier to understand if you know how Reknow stores its data internally.  From the perspective of dependencies and invalidation, Reknow only uses a few data structures, which it categorized into either "Reknow Objects" (key/value pairs) or "Reknow Arrays":
 
-* Entities - these are considered to be "Objects", holding only the Entity's "own" properties.  The Entity's relationships, queries, etc. are not considered part of the "own" properties.
-* HashIndexes - these are considered to be "Objects", in which each key maps to either an Entity, another HashIndex, or a SortIndex.  This includes the `byId` index automatically created for each `Entities`, indexes declared by the application, or indexes created implicitly by relationships.
-* SortIndexes - these are considered to be "Arrays", in which the elements are Entity instances.
+* _Entities_ - these are considered to be "Objects", holding only the Entity's "own" properties.  The Entity's relationships, queries, etc. are not considered part of the "own" properties.
+* _HashIndexes_ - these are considered to be "Objects", in which each key maps to either an Entity, another HashIndex, or a SortIndex.  This includes the `byId` index automatically created for each `Entities`, indexes declared by the application, and indexes created implicitly by relationships.
+* _SortIndexes_ - these are considered to be "Arrays", in which the elements are Entity instances.
 
 With that in mind, here are the dependency and invalidation rules:
 
-* If a query accesses a property of an Object, then the query will be invalidated if that property changes.
+* If a query accesses a property of a Reknow Object, then the query will be invalidated if that property changes.
 
     * "Accessing a property" means:
         * Retrieving the property's value (`myEntity.name`)
@@ -1131,5 +1131,33 @@ With that in mind, here are the dependency and invalidation rules:
         * The property is removed from the Object (`delete myEntity.name`)
         * The property's value changes (where `newValue !== oldValue`)
 
+    * This only applies to properties whose names are strings.  `Symbol` property names are effectively ignored by Reknow - they are passed straight to the underlying Entity without any dependency detection.
 
-* All rules only apply to string property names.  Symbol property names are effectively ignored by Reknow - they are passed straight to the underlying Entity without any dependency detection.
+* If a query accesses the keys of a Reknow Object, then the query will be invalidated if the Object's list of keys changes.
+
+    * "Accesses the keys of an Object" means:
+        * Iterating over the keys using a `for...in` loop
+        * Implicitly iterating over the keys using a `for...of` loop
+        * Calling methods that implicitly iterate over the keys, such as `JSON.stringify`
+        * Using `Object.keys()` on the Object
+        * Using `Object.getOwnPropertyNames()` on the Object
+        * Using `Reflect.ownKeys()` on the Object
+
+    * "List of keys changes" means:
+        * A new property is added to the Object
+        * An existing property is deleted from the Object
+
+* If a query returns a Reknow Object, then the query will be invalidated if any property of the Object changes, or if the Object's list of keys changes.
+
+* If a query accesses a Reknow Array, then the query will be invalidated if the Array changes.
+
+    * "Accesing a Reknow Array" means:
+        * Retrieving the length of the Array
+        * Retrieving an indexed element of the Array (`myArray[12]`)
+        * Retrieving the keys of the Array (same as "accesses the keys of an Object" above)
+
+* If a query retrieves the value of a another query, then the original query will be invalidated if the retrieved query is invalidated.
+
+These rules have several implications:
+
+* Entity properties only trigger invalidation if they are assigned a new value.
