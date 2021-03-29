@@ -1068,9 +1068,7 @@ Building React components with Reknow is fairly straightforward.  Components can
 
 Where things get tricky is reacting to changes in Reknow model objects.  When a model object changes, Reknow tends to minimize the impact on the resulting React components, so as to avoid needless re-rendering.  In exchange for this efficiency, React components must explicitly subscribe to the model object changes that will cause them to re-render.
 
-This is where the `useQuery` hook comes into play.  `useQuery` will evaluate a function, and if any dependency of that function changes, the component will re-render.  In general, each component is responsible for wrapping its change-sensitive data with `useQuery`.  This is true even if the component is passed a Reknow model object as a parameter.
-
-Consider [TodoListView](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListView.tsx), which takes a `TodoList` as a parameter:
+This is where the `useQuery` hook comes into play.  `useQuery` will evaluate a function, and if any dependency of that function changes, the component will re-render.  Consider [TodoListView](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListView.tsx), which takes a `TodoList` as a parameter:
 
 ```
 export const TodoListView: React.FC<{todoList: TodoList}> = (params) => {
@@ -1079,6 +1077,139 @@ export const TodoListView: React.FC<{todoList: TodoList}> = (params) => {
   const completeItems = useQuery(() => todoList.completeItems)
   ...
 ```
+
+We'll explain in a bit why those particular `useQuery` calls are needed.
+
+#### Rendering and Invoking Actions
+
+With the above data available, the component can now render its HTML using the usual React techniques:
+
+```
+  return (
+    <li>
+      <div>
+        List {todoList.name}
+        <button onClick={() => todoList.remove()}>Remove</button>
+      </div>
+      <ul>
+        {incompleteItems.map((item) => (
+          <TodoListItemView item={item} key={item.id} />
+        ))}
+        {completeItems.map((item) => (
+          <TodoListItemView item={item} key={item.id} />
+        ))}
+        Add new todo:
+        <TextInputView
+          caption="Add Item"
+          onValue={(v) => todoList.addItem(v)}
+        />
+      </ul>
+    </li>
+  )
+```
+A few things to note:
+
+* Values extracted from Entities can be used directly:
+
+```
+List {todoList.name}
+```
+
+* Actions on Reknow objects can be called directly in response to user actions:
+
+```
+<button onClick={() => todoList.remove()}>Remove</button>
+```
+
+* Reknow values can be passed to other components:
+```
+        {incompleteItems.map((item) => (
+          <TodoListItemView item={item} key={item.id} />
+        ))}
+```
+
+* When iterating over lists, React requires each nested list item to specify a `key`.  If the item is a Reknow object, the item's `id` can serve as that `key`.
+
+```
+          <TodoListItemView item={item} key={item.id} />
+```
+
+#### When to use `useQuery`
+
+As described earlier, Reknow tends to minimize the re-renderings that take place in response to a data change.  Components need to explicitly subscribe to data changes using `useQuery`, which will force a re-render if the `useQuery` references or returns Reknow data that later changes.
+
+The trick is understanding what causes Reknow data to appear to "change", and therefore trigger a re-render.  In general, changes are localized, and do not "ripple up" through structures like relationships and indexes.  For example, consider `TodoList`, and its relationship to `TodoListItem`:
+
+```
+TodoList
+  "own" properties: id, todoAppId, name, itemCount
+  items: HasMany TodoListItem
+    TodoListItem
+      "own" properties: id, todoListId, name, createdAt, complete
+```
+
+A `TodoList` has its "own" properties which it stores directly.  If any of those properties changes, then the `TodoList` is considered changed.  A `useQuery` that returns a `TodoList` will force a re-render in that case.
+
+```
+const todoList = useQuery(() => params.todoList)
+return <>The list's name is {todoList.name}</>
+```
+
+A `TodoList` also has an `items` relationship, but changes in that relationship are not considered changes in the `TodoList` itself.  If an item is added or removed, the `TodoList` is not considered changed, and a `useQuery` listening to just the `TodoList` will not trigger a re-render.  This code, for example, will not properly re-render:
+
+```
+const todoList = useQuery(() => params.todoList)
+return <>
+  The list's name is {todoList.name}
+  {todoList.items.map(item => <div>An item</div>)}
+</>
+```
+This component is only listening for changes on `todoList`, so changes to the `items` relationship will not trigger a re-render.  If the component wants to be re-rendered whenever the list of items changes, then it needs to subscribe to that list explicitly:
+
+```
+const todoList = useQuery(() => params.todoList)
+const items = useQuery(() => params.todoList.items)
+return <>
+  The list's name is {todoList.name}
+  {items.map(item => <div>An item</div>)}
+</>
+```
+
+The `items` relationship will be considered "changed" if the list of items changes or the ordering of those items changes.  So adding or removing items, or pointing elements at different items, will be considered "changes" and will force a re-render.
+
+But changes within each `TodoListItem` are not automatically considered changes to the `items` relationship.  For example, if one of the items changes its `name`, the `items` relationship will not be considered changed, and no re-render will be forced.  The `items` relationship is only considered changed if a `TodoListItem` changes a property that affects its membership or ordering in the `items` list.
+
+So this code will not re-render properly:
+
+```
+const todoList = useQuery(() => params.todoList)
+const items = useQuery(() => params.todoList.items)
+return <>
+  The list's name is {todoList.name}
+  {items.map(item => <div>Item: {item.name}</div>)}
+</>
+```
+
+
+If a component wants to display the most up-to-date `name` of each `TodoListItem`, then it needs to wrap each item in its own `useQuery` to explicitly signal that it wants to be notified on changes to the item.
+
+
+
+An Entity is considered "changed" only if one of its "own" properties changes.  For a `TodoList`, those "own" properties are only `id`, `todoAppId`, `name`, and `itemCount`.
+
+Changes in an Entity's relationships do not consider the Entity itself to have changed.
+
+
+
+
+There are a few caveats:
+
+* If your `useQuery` returns an Entity, then it will force a re-render if any of the Entity's "own" properties change.  Keep in mind that an Entity's "own" properties do not include "synthetic" properties like relationships and queries.  For example, `TodoList` only has a handful of "own" properties: `id`, `todoAppId`, `name`, and `itemCount`, and a `useQuery` returning the `TodoList` will force a re-render if any of those properties changes.  But it will not force a re-render if.
+
+
+
+In general, each component is responsible for wrapping its change-sensitive data with `useQuery`.  This is true even if the component is passed a Reknow model object as a parameter.
+
 Even if the underlying `todoList` is changed, the component will not necessarily re-render (we'll see why in a bit).  Instead, the `TodoListView` needs to explicitly declare what data should cause it to rerender, which it does through `useQuery`.
 
 The first `useQuery` takes the `todoList` parameter and simply returns it.  This will cause the component to re-render if any "own" property of `todoList` changes.  So if the list's `name` changes, the component will re-render.
@@ -1119,7 +1250,7 @@ These rules are easier to understand if you know how Reknow stores its data inte
 
 With that in mind, here are the dependency and invalidation rules:
 
-* If a query accesses a property of a Reknow Object, then the query will be invalidated if that property changes.
+* If a query accesses a property of a Reknow Object (Entity or HashIndex), then the query will be invalidated if that property changes.
 
     * "Accessing a property" means:
         * Retrieving the property's value (`myEntity.name`)
@@ -1133,7 +1264,7 @@ With that in mind, here are the dependency and invalidation rules:
 
     * This only applies to properties whose names are strings.  `Symbol` property names are effectively ignored by Reknow - they are passed straight to the underlying Entity without any dependency detection.
 
-* If a query accesses the keys of a Reknow Object, then the query will be invalidated if the Object's list of keys changes.
+* If a query accesses the keys of a Reknow Object (Entity or HashIndex), then the query will be invalidated if the Object's list of keys changes.
 
     * "Accesses the keys of an Object" means:
         * Iterating over the keys using a `for...in` loop
@@ -1147,17 +1278,24 @@ With that in mind, here are the dependency and invalidation rules:
         * A new property is added to the Object
         * An existing property is deleted from the Object
 
-* If a query returns a Reknow Object, then the query will be invalidated if any property of the Object changes, or if the Object's list of keys changes.
+* If a query returns a Reknow Object (Entity or HashIndex), then the query will be invalidated if any property of the Object changes, or if the Object's list of keys changes.
 
-* If a query accesses a Reknow Array, then the query will be invalidated if the Array changes.
+* If a query accesses a Reknow Array (SortIndex), then the query will be invalidated if the Array changes.
 
     * "Accesing a Reknow Array" means:
         * Retrieving the length of the Array
         * Retrieving an indexed element of the Array (`myArray[12]`)
         * Retrieving the keys of the Array (same as "accesses the keys of an Object" above)
 
+    * "Array changes" means:
+        * The length of the Array changes
+        * An element of the Array changes value (where `newValue !== oldValue`)
+
 * If a query retrieves the value of a another query, then the original query will be invalidated if the retrieved query is invalidated.
 
 These rules have several implications:
 
 * Entity properties only trigger invalidation if they are assigned a new value.
+* FIXME - relationships don't change an Entity
+* FIXME - relationships aren't changed by an member Entity changing
+
