@@ -1128,7 +1128,7 @@ List {todoList.name}
         ))}
 ```
 
-* When iterating over lists, React requires each nested list item to specify a `key`.  If the item is a Reknow object, the item's `id` can serve as that `key`.
+* When iterating over lists, React requires each nested list item to specify a `key`.  If the item is an Entity, the item's `id` can serve as that `key`.
 
 ```
           <TodoListItemView item={item} key={item.id} />
@@ -1158,6 +1158,7 @@ return <>The list's name is {todoList.name}</>
 A `TodoList` also has an `items` relationship, but changes in that relationship are not considered changes in the `TodoList` itself.  If an item is added or removed, the `TodoList` is not considered changed, and a `useQuery` listening to just the `TodoList` will not trigger a re-render.  This code, for example, will not properly re-render:
 
 ```
+// WRONG
 const todoList = useQuery(() => params.todoList)
 return <>
   The list's name is {todoList.name}
@@ -1167,6 +1168,7 @@ return <>
 This component is only listening for changes on `todoList`, so changes to the `items` relationship will not trigger a re-render.  If the component wants to be re-rendered whenever the list of items changes, then it needs to subscribe to that list explicitly:
 
 ```
+// RIGHT
 const todoList = useQuery(() => params.todoList)
 const items = useQuery(() => params.todoList.items)
 return <>
@@ -1182,6 +1184,7 @@ But changes within each `TodoListItem` are not automatically considered changes 
 So this code will not re-render properly:
 
 ```
+// WRONG
 const todoList = useQuery(() => params.todoList)
 const items = useQuery(() => params.todoList.items)
 return <>
@@ -1189,6 +1192,28 @@ return <>
   {items.map(item => <div>Item: {item.name}</div>)}
 </>
 ```
+To get this to re-render properly, each `item` must individually subscribe using its own `useQuery`.  Because of the [Rules of Hooks](https://reactjs.org/docs/hooks-overview.html#rules-of-hooks), we can't call `useQuery` in loops or condition, so we need to break out the `TodoListItem` into its own component, so that each item gets its own `useQuery` call:
+
+
+```
+// RIGHT
+const TodoListView: React.FC<{todoList: TodoList}> = (params) => {
+  const todoList = useQuery(() => params.todoList)
+  const items = useQuery(() => params.todoList.items)
+  return <>
+    The list's name is {todoList.name}
+    {items.map(item => <TodoListItemView item={item} key={item.id}/>)}
+  </>
+}
+
+const TodoListItemView: React.FC<{item: TodoListItem}> = (params) => {
+  const item = useQuery(() => params.item)
+  return <>
+    Item: {item.name}
+  </>
+}
+```
+
 
 
 If a component wants to display the most up-to-date `name` of each `TodoListItem`, then it needs to wrap each item in its own `useQuery` to explicitly signal that it wants to be notified on changes to the item.
