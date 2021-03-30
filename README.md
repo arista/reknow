@@ -1134,18 +1134,18 @@ List {todoList.name}
           <TodoListItemView item={item} key={item.id} />
 ```
 
-#### When to use `useQuery`
+#### When to Use `useQuery`
 
 As described earlier, Reknow tends to minimize the re-renderings that take place in response to a data change.  Components need to explicitly subscribe to data changes using `useQuery`, which will force a re-render if the `useQuery` references or returns Reknow data that later changes.
 
-The trick is understanding what causes Reknow data to appear to "change", and therefore trigger a re-render.  In general, changes are localized, and do not "ripple up" through structures like relationships and indexes.  For example, consider `TodoList`, and its relationship to `TodoListItem`:
+The trick is understanding what causes Reknow data to appear to "change", and therefore trigger a re-render.  In general, changes are localized, and do not "bubble up" through structures like relationships and indexes.  For example, consider `TodoList`, and its relationship to `TodoListItem`:
 
-```
-TodoList
-  "own" properties: id, todoAppId, name, itemCount
-  items: HasMany TodoListItem
-    TodoListItem
-      "own" properties: id, todoListId, name, createdAt, complete
+
+* TodoList
+    * Has "own" properties: id, todoAppId, name, itemCount
+    * HasMany "items" (relationship to TodoListItem)
+        * TodoListItem
+            * Has "own" properties: id, todoListId, name, createdAt, complete
 ```
 
 A `TodoList` has its "own" properties which it stores directly.  If any of those properties changes, then the `TodoList` is considered changed.  A `useQuery` that returns a `TodoList` will force a re-render in that case.
@@ -1213,55 +1213,61 @@ const TodoListItemView: React.FC<{item: TodoListItem}> = (params) => {
   </>
 }
 ```
+With all this in place, every component is properly subscribed to the data it needs, and changes in the data will force a re-render of only the affected components.
 
+#### Other `useQuery` Scenarios
 
+The `useQuery` hook can access any data available through Reknow.  As described earlier, this might include references to Entities, their properties, and their relationships, as long as it's properly understood what changes will force re-renders.
 
-If a component wants to display the most up-to-date `name` of each `TodoListItem`, then it needs to wrap each item in its own `useQuery` to explicitly signal that it wants to be notified on changes to the item.
+If a `useQuery` accesses `@R.query` methods on Entity, Entities, or Service instances, then when the `@R.query` is invalidated, the `useQuery` will force a re-render.
 
+If a `useQuery` accesses indexes on Entities instances, then changes to the indexes will force re-rendering.  Index changes are similar to Entity changes, in that the changes are localized and do not "bubble up" through the layers of index structures.  A HashIndex or SortIndex object will only "change" if its list of keys changes, or if those keys point to new values.
 
+#### `useComponentEntity`
 
-An Entity is considered "changed" only if one of its "own" properties changes.  For a `TodoList`, those "own" properties are only `id`, `todoAppId`, `name`, and `itemCount`.
+The other React hook used by Reknow is `useComponentEntity`.  This is similar to `useQuery`, except that it will automatically manage the Reknow lifecycle of a returned Entity: it will call `addEntity()` when first called, and will call `removeEntity()` when the component is unmounted.
 
-Changes in an Entity's relationships do not consider the Entity itself to have changed.
+This is typically used when a Reknow Entity instance is intended to be "paired" with a React component instance.  For example, the [TextInputView](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TextInputView.tsx) component keeps its state in a [TextInput](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TextInput.ts) Entity.  The two are connected by `useComponentEntity`:
+```
+  const textInput = useComponentEntity(() => new TextInput("", onValue))
+```
+The component can now be assured of having its own `TextInput` instance which it can read and write.  Users of the `<TextInputView/>` don't even need to be aware of Reknow's involvement.
 
+The other main use case is the management of a "top-level" component and its associated "top-level" Entity.  React applications are often "bootstrapped" by a component which initializes the application and its data.  For example, in [App.tsx](https://github.com/arista/reknow/tree/main/docs/todoapp/src/App.tsx), the application is booted by a "top-level" `<TodoAppView/>`:
 
-
-
-There are a few caveats:
-
-* If your `useQuery` returns an Entity, then it will force a re-render if any of the Entity's "own" properties change.  Keep in mind that an Entity's "own" properties do not include "synthetic" properties like relationships and queries.  For example, `TodoList` only has a handful of "own" properties: `id`, `todoAppId`, `name`, and `itemCount`, and a `useQuery` returning the `TodoList` will force a re-render if any of those properties changes.  But it will not force a re-render if.
-
-
-
-In general, each component is responsible for wrapping its change-sensitive data with `useQuery`.  This is true even if the component is passed a Reknow model object as a parameter.
-
-Even if the underlying `todoList` is changed, the component will not necessarily re-render (we'll see why in a bit).  Instead, the `TodoListView` needs to explicitly declare what data should cause it to rerender, which it does through `useQuery`.
-
-The first `useQuery` takes the `todoList` parameter and simply returns it.  This will cause the component to re-render if any "own" property of `todoList` changes.  So if the list's `name` changes, the component will re-render.
-
-Keep in mind that `TodoList` only has a few "own" properties: `id`, `todoAppId`, `name`, and `itemCount`.  `TodoList` does have relationships like `incompleteItems` and `completeItems` which the component will use to render the lists of items.  But those relationships are not "own" properties - they're synthetic getters that perform lookups on indexes.  So that first `useQuery` won't capture the dependency on those lists.  Instead, each of those relationships must be wrapped in its own `useQuery`.
-
-And even then, `useQuery` on a relationship will only cause a re-render if the list changes.  For example, if an item is added to or removed from `completeItems`, or if the order of `incompleteItems` changes, then the component will re-render.  But if an item in one of those lists just changes its `name`, that won't trigger a re-render on the component, since that won't affect the lists themselves.
-
-
-
-Relationships like `incompleteItems` and `completeItems`, are not considered "own" properties - they are synthetic getters that turn into index lookups behind the scenes.  So they each need their own `useQuery` wrapper.
-
-And even then, if 
-
-
-This component is called  by the `TodoAppView` like this:
+```
+function App() {
+  return (
+      <TodoAppView />
+  )
+}
+```
+The [TodoAppView.tsx](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoAppView.tsx) in turn uses `useComponentEntity` to create and manage the corresponding "top-level" Entity:
 
 ```
 export const TodoAppView: React.FC<{}> = (params) => {
+  const todoApp = useComponentEntity(() => new TodoApp())
   ...
-          {lists.map((l) => (
-            <TodoListView key={l.id} todoList={l} />
-          ))}
-```
+```  
 
+
+## Reknow Integration
 
 ## Reference
+
+### API Reference
+
+#### Entity
+
+#### Entities
+
+#### Service
+
+#### StateManager
+
+#### Query
+
+#### Transaction
 
 ### Invalidation Rules
 
