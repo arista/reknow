@@ -3,7 +3,6 @@ import {ENTITIES_KEY} from "./Entity"
 import {EntitiesState} from "./EntitiesState"
 import {Entity} from "./Entity"
 import {Service} from "./Service"
-import {Selector} from "./Selector"
 
 export type EntitiesDefinitionTree = {
   [name: string]: EntitiesDefinitionTreeEntry
@@ -138,12 +137,6 @@ export interface IndexEntry<E extends Entity> {
 }
 
 export type FunctionType = "method" | "getter" | "setter"
-
-export interface SelectorDependency<T> {
-  name: string
-  selector: () => T
-  lastValue: T
-}
 
 export type ConstructorFunction<T> = new (...args: Array<any>) => T
 

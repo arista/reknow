@@ -611,15 +611,6 @@ export class EntitiesState<E extends Entity> extends Proxied<
 
   get proxy() {
     const ret = super.proxy
-    const s = this.stateManager?.currentSelector
-    if (s != null) {
-      // FIXME - create the name and getter once and reuse it
-      s.addSelectorDependency(
-        `${this.name}.entitiesById`,
-        () => this.entitiesById,
-        ret
-      )
-    }
     return ret
   }
 
