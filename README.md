@@ -1262,7 +1262,7 @@ export const TodoAppView: React.FC<{}> = (params) => {
 
 #### Entity
 
-##### Instance Methods
+##### Entity Instance Methods
 
 ###### constructor
 `constructor()`
@@ -1283,22 +1283,35 @@ export const TodoAppView: React.FC<{}> = (params) => {
 `addEntity(id: string | null = null):this`
 
 ###### removeEntity
-`removeEntity():void'
+`removeEntity():void`
 
 ###### isSameEntity
 `isSameEntity(entity: Entity|null|undefined):boolean`
 
-##### Decorators
+##### Entity Decorators
 
-###### `@R.id` or `static id(propertyName:string)`
-###### `@R.action` or `static action(methodName:string)`
-###### `@R.query` or `static action(getterName:string)`
-###### `@R.reaction` or `static reaction(methodName:string)`
-###### `@R.hasMany` or `static reaction(methodName:string)`
+###### id
+`@R.id` or `static id(propertyName:string)`
+###### action
+`@R.action` or `static action(methodName:string)`
+###### query
+`@R.query` or `static action(getterName:string)`
+###### reaction
+`@R.reaction` or `static reaction(methodName:string)`
+###### hasMany
+`@R.hasMany` or `static hasMany(methodName:string)`
+###### hasOne
+`@R.hasOne` or `static hasOne(methodName:string)`
+###### belongsTo
+`@R.belongsTo` or `static hasOne(methodName:string)`
+###### afterAdd
+###### afterRemove
+###### afterChange
+###### afterPropertyChange
 
 #### Entities
 
-##### Instance Methods
+##### Entities Instance Methods
 
 ###### constructor
 `constructor(entityClass:EntityClass<E>)`
@@ -1324,8 +1337,25 @@ export const TodoAppView: React.FC<{}> = (params) => {
 ###### removeAll
 `removeAll():void`
 
+##### Entities Decorators
+
+###### action
+###### query
+###### reaction
+###### index
+###### uniqueIndex
 
 #### Service
+
+##### Service Instance Methods
+
+###### constructor
+
+##### Service Decorators
+
+###### action
+###### query
+###### reaction
 
 #### StateManager
 
