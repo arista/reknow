@@ -1146,7 +1146,6 @@ The trick is understanding what causes Reknow data to appear to "change", and th
     * HasMany "items" (relationship to TodoListItem)
         * TodoListItem
             * Has "own" properties: id, todoListId, name, createdAt, complete
-```
 
 A `TodoList` has its "own" properties which it stores directly.  If any of those properties changes, then the `TodoList` is considered changed.  A `useQuery` that returns a `TodoList` will force a re-render in that case.
 
