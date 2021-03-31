@@ -10,7 +10,6 @@ import {Action} from "./Types"
 import {notNull} from "./Utils"
 import {StateChange} from "./Types"
 import {Listeners} from "./Listeners"
-import {Selector} from "./Selector"
 import {EntityState} from "./EntityState"
 import {copyInstance} from "./Utils"
 import {EntityAdded} from "./Types"
@@ -42,7 +41,6 @@ export class StateManager {
   debugListener: Listener<DebugEvent> | null
   entitiesStates: Array<EntitiesState<any>> = []
   serviceStates: Array<ServiceState> = []
-  currentSelector: Selector<any> | null = null
   currentChangeSubscriber: ChangeSubscriber | null = null
   // FIXME - remove this
   queuedChangeNotifications: Array<ChangeSubscriber> | null = null
@@ -83,7 +81,6 @@ export class StateManager {
       serviceState.clearState()
     }
     this.transaction = null
-    this.currentSelector = null
     this.currentChangeSubscriber = null
     this.queuedChangeNotifications = null
     this.pendingEffects = null
@@ -243,16 +240,6 @@ export class StateManager {
       stateChange.oldValue = oldValue
     }
     this.recordStateChange(stateChange)
-  }
-
-  whileEvaluatingSelector<T>(selector: Selector<any>, f: () => T): T {
-    const previousSelector = this.currentSelector
-    this.currentSelector = selector
-    try {
-      return f()
-    } finally {
-      this.currentSelector = previousSelector
-    }
   }
 
   whileEvaluatingChangeSubscriber<T>(

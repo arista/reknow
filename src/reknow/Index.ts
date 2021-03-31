@@ -29,18 +29,6 @@ export class Index<E extends Entity> {
 
   get proxy() {
     const ret = this.entries.proxy
-
-    // FIXME - should all this come out eventually?
-    const s = this.stateManager?.currentSelector
-    if (s != null) {
-      // FIXME - create the name and getter once and reuse it
-      s.addSelectorDependency(
-        `${this.entitiesState.name}.${this.name}`,
-        () => this.proxy,
-        ret
-      )
-    }
-
     return ret
   }
 

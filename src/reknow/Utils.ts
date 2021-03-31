@@ -14,7 +14,6 @@ import {SortedList} from "./Types"
 import {Entity} from "./Entity"
 import {EntityState} from "./EntityState"
 import {IndexSchema} from "./Types"
-import {Selector} from "./Selector"
 import {ManyHashIndexEntries} from "./ManyHashIndexEntries"
 import {UniqueHashIndexEntries} from "./UniqueHashIndexEntries"
 import {SortIndexEntries} from "./SortIndexEntries"
@@ -474,54 +473,6 @@ export function sortArgToSortDirective(sortArg: string): SortDirective {
     }
   } else {
     return {prop: sortArg, dir: "asc"}
-  }
-}
-
-/** Used by selectors to determine if a newly-computed value is
- * different from a previously-computed value.  This checks "one level
- * deep" into arrays and objects, to see if their keys and values are
- * ===.
- *
- * NOTE - this is no longer used by selectors.  If v1 and v2 are both
- * proxies to the same underlying value, then using this would make it
- * appear that the old value issAemValue as the new value, even though
- * the value has actually changed.
- */
-export function isSameValue(v1: any, v2: any): boolean {
-  if (v1 === v2) {
-    return true
-  } else if (v1 == null && v2 == null) {
-    return true
-  } else if (v1 == null || v2 == null) {
-    return false
-  } else if (v1 instanceof Entity || v2 instanceof Entity) {
-    return false
-  } else if (v1 instanceof EntityState || v2 instanceof EntityState) {
-    return false
-  } else if (Array.isArray(v1) && Array.isArray(v2)) {
-    if (v1.length !== v2.length) {
-      return false
-    }
-    for (let i = 0; i < v1.length; i++) {
-      if (v1[i] !== v2[i]) {
-        return false
-      }
-    }
-    return true
-  } else if (typeof v1 === "object" && typeof v2 === "object") {
-    for (let p1 in v1) {
-      if (v1[p1] !== v2[p1]) {
-        return false
-      }
-    }
-    for (let p2 in v2) {
-      if (v1[p2] !== v2[p2]) {
-        return false
-      }
-    }
-    return true
-  } else {
-    return false
   }
 }
 
