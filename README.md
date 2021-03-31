@@ -1250,8 +1250,11 @@ export const TodoAppView: React.FC<{}> = (params) => {
   ...
 ```  
 
-
 ## Reknow Integration
+
+## Validations
+
+## Using With JavaScript
 
 ## Reference
 
@@ -1259,7 +1262,68 @@ export const TodoAppView: React.FC<{}> = (params) => {
 
 #### Entity
 
+##### Instance Methods
+
+###### constructor
+`constructor()`
+
+###### entityId
+`get entityId():string`
+
+###### entityName
+`get entityName():string`
+
+###### currentEntity
+`get currentEntity():this`
+
+###### isEntityRemoved
+`get isEntityRemoved():boolean`
+
+###### addEntity
+`addEntity(id: string | null = null):this`
+
+###### removeEntity
+`removeEntity():void'
+
+###### isSameEntity
+`isSameEntity(entity: Entity|null|undefined):boolean`
+
+##### Decorators
+
+###### `@R.id` or `static id(propertyName:string)`
+###### `@R.action` or `static action(methodName:string)`
+###### `@R.query` or `static action(getterName:string)`
+###### `@R.reaction` or `static reaction(methodName:string)`
+###### `@R.hasMany` or `static reaction(methodName:string)`
+
 #### Entities
+
+##### Instance Methods
+
+###### constructor
+`constructor(entityClass:EntityClass<E>)`
+
+###### byId
+`get byId(): ById<E>`
+
+###### add
+`add(entity: E, id: string | null = null):E`
+
+###### update
+`update(entity: E, id: string | null = null):E`
+
+###### addObject
+`addObject(entity: Object, id: string | null = null):E`
+
+###### updateObject
+`updateObject(entity: Object, id: string | null = null):E`
+
+###### remove
+`remove(entity: E):void`
+
+###### removeAll
+`removeAll():void`
+
 
 #### Service
 
