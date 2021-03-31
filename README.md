@@ -1242,13 +1242,14 @@ function App() {
   )
 }
 ```
+
 The [TodoAppView.tsx](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoAppView.tsx) in turn uses `useComponentEntity` to create and manage the corresponding "top-level" Entity:
 
 ```
 export const TodoAppView: React.FC<{}> = (params) => {
   const todoApp = useComponentEntity(() => new TodoApp())
   ...
-```  
+```
 
 ## Reknow Integration
 
