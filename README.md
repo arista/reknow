@@ -1252,11 +1252,37 @@ export const TodoAppView: React.FC<{}> = (params) => {
 
 ## Reknow Data Integration
 
+Besides using Entity instances, Reknow provides several facilities for moving data into and out of a Reknow StateManager.  This can be useful for programs that want to save data to an external system, to load data from API responses, etc.
+
+### Transaction Listener
+
+As described previously, the StateManager can be configured with a `listener` function that will be notified of every `Transaction`.  In Reknow terminology, a `Transaction` is an `Action` paired with all of its resulting Entity `StateChange` events.  Each `Transaction` has a simple structure, which can be converted easily to and from JSON (assuming all of the Entities involved have "JSON-able" property values).
+
+The data contained in a Transaction is sufficient to reconstruct the Reknow state.  If an application saved every Transaction from the start of the program, then reapplied those Transactions in order to a fresh StateManager, it should end up with the exact same state.
+
+### Applying Transactions
+
+An application can apply Transactions directly into a StateManager, effecting all of the state changes described by that Transaction.  This allows an application to receive and apply Transactions from some external source.  It also allows an application to create and apply its own Transactions - "Undo" is the most common example of this, where an application takes a Transaction, creates its "inverse", then applies that inverse.
+
+When applying a Transaction, an application can choose to either apply the state changes in the Transaction, or to invoke the Action specified by the Transaction.  In the latter case, Reknow would be invoking the specified method on the specified Entity, Entities, or Service, passing in the specified arguments.  This may be useful for applications in a collaborative editing situation, where applying actions may be easier than trying to resolve conflicting state changes.
+
+When a Transaction is applied, there are some slight differences between the normal events around a Reknow action:
+
+* `@R.reaction` methods are not called.  This is because all of the effects of the reaction should already be incorporated into the Transaction's state changes.
+* Affcted queries *are* invalidated, as normal
+* Effects (`@R.afterAdd`, `@R.afterRemove`, etc.) *are* called after the Transaction is applied
+* The Transaction is *not* reported to the StateManager's Transaction listener
+
+### Adding Objects
+
+### Dumping and Restoring State
 
 
 ## Validations
 
 ## Using With JavaScript
+
+## Testing
 
 ## Reference
 
@@ -1425,4 +1451,6 @@ These rules have several implications:
 * Entity properties only trigger invalidation if they are assigned a new value.
 * FIXME - relationships don't change an Entity
 * FIXME - relationships aren't changed by an member Entity changing
+
+### Anatomy of an Action
 
