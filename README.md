@@ -1262,7 +1262,7 @@ The data contained in a Transaction is sufficient to reconstruct the Reknow stat
 
 ### Applying Transactions
 
-An application can apply Transactions directly into a StateManager, effecting all of the state changes described by that Transaction.  This allows an application to receive and apply Transactions from some external source.  It also allows an application to create and apply its own Transactions - "Undo" is the most common example of this, where an application takes a Transaction, creates its "inverse", then applies that inverse.
+An application can apply Transactions directly into a StateManager by calling `applyTransaction()`, effecting all of the state changes described by that Transaction.  This allows an application to receive and apply Transactions from some external source.  It also allows an application to create and apply its own Transactions - "Undo" is the most common example of this, where an application takes a Transaction, creates its "inverse", then applies that inverse.
 
 When applying a Transaction, an application can choose to either apply the state changes in the Transaction, or to invoke the Action specified by the Transaction.  In the latter case, Reknow would be invoking the specified method on the specified Entity, Entities, or Service, passing in the specified arguments.  This may be useful for applications in a collaborative editing situation, where applying actions may be easier than trying to resolve conflicting state changes.
 
@@ -1275,8 +1275,100 @@ When a Transaction is applied, there are some slight differences between the nor
 
 ### Adding Objects
 
-### Dumping and Restoring State
+Sometimes it is more convnient to add data to Reknow without creating Entity instances.  For example, if JSON data is received from a network request, an application may prefer to add that data directly into Reknow without converting it to an Entity instance first, especially if that Entity instance is going to be around just long enough to call `addEntity()` on it.
 
+In these situations, an application can call `addEntityObject()` on the appropriate Entities instance.  For example, instead of calling this:
+
+```
+const todoList = TodoListEntities.add(new TodoList("shopping"))
+```
+
+An application could call this instead:
+
+```
+const todoList = TodoListEntities.addObject({name: "shopping"})
+```
+
+Internally, Reknow will create a `TodoList` instance and assign it all the properties from that Object (just `name`, in this case).  After that, it will follow the normal process of adding an Entity: assigning an id (if one isn't already specified), calling `@R.reaction`s, and calling `@R.afterAdd` effects.
+
+Note, however, that the `constructor` function is *not* called on the `TodoList`.  So any initialization that would happen in the constructor would not take place in this instance.  For example:
+
+```
+export class TodoList extends R.Entity {
+  itemCount = 0
+  constructor(public name: string) {
+    super()
+  }
+  @R.reaction computeItemCount() {
+    this.itemCount = this.items.length
+  }
+}
+```
+
+The constructor would not be called, nor would `itemCount` be set automatically to 0.  In this case, this isn't a problem since the constructor doesn't do anything except assign `name`, and `itemCount` is assigned later in the `computeItemCount` reaction.
+
+### Adding Object Graphs
+
+The real power of `addObject` is its ability to add entire "graphs" of Objects.  If the added Object contains properties that correspond to the Entity's relationships, then those Objects will be added as well.  For example:
+
+```
+const obj = {
+  name: "shopping",
+  items: [
+    {name: "milk", complete: false, createdAt: "2021-04-02T09:48:40.911Z"},
+    {name: "eggs", complete: false, createdAt: "2021-04-02T09:48:48.000Z"}
+  ]
+}
+const todoList = TodoListEntities.addObject(obj)
+```
+This will result in a `TodoList` being created and added, and also two `TodoListItem` instances being created and added, and having their `todoListId` properties set to point at the `id` of the `TodoList`.
+
+`addObject` will work to any depth of objects and their relationships, and will work through `@R.hasMany`, `@R.hasOne`, and `@R.belongsTo` relationships.
+
+`addObject` will also remember which Object resulted in which `Entity` instance, and will reuse those same `Entity` instances if the same Objects are encountered.  This means that the Object that's passed in doesn't have to be a strict tree, but can be an entire graph of Objects, and `addObject` will correctly sort out the instances and connect them relationally.
+
+### Updating Objects
+
+The `addObject()` call will only add new instances, and will result in an error if an instance is added with the same id as an existing already-added instance.
+
+The `updateObject()` behaves similarly to `addObject()`, except that if an object's data includes its id value, Reknow will see if an instance already exists with that same id.  If so, then it will update the properties of that instance with the properties from the Object.  If not, or if the Object didn't specify an id, then a new instance will be added and assigned that id.  This same behavior will "cascade" through all of the Entity's relationships provided by the Object.
+
+### Exporting and Importing State
+
+`StateManager.exportEntities()` will return an object that represents all of the Entity instances that have been added to it.  The object will be in this `EntitiesExport` form:
+
+```
+{
+  entities: {
+    <entity type>: {
+      byId: {
+        <entity id>: {
+          <entity's "own" properties>
+        },
+        ...
+      }
+    },
+    ...
+  }
+}
+```
+
+The `entity type` is the name of the Entity as it was declared to the `StateManager`.  For example:
+
+```
+export const models = new R.StateManager({
+  entities: {
+    todo: {
+      TodoList,
+  ...
+```
+The name used for `TodoList` would be "todo.TodoList".
+
+Each entity in the resulting structure will only contain its "own" properties.  Relationships are not expressed directly here.  Assuming all of the properties as JSON-friendly (strings, numbers, booleans, null), this entire structure can be converted to JSON and stored or sent elsewhere.
+
+The `importEntities()` method does the reverse.  It takes an `EntitiesExport` structure and adds all of the Entities it contains.  The same caveats apply to `addObject` and `applyTransaction`, in that the constructors of the objects are not called, the `@R.reaction` methods are not called, effects *are* called, and the Transaction is not reported to the listener.
+
+The `importEntitiesForUpdate()` is similar, except that it follows the same rules as `updateObject()`, in that it will modify existing Entity instances in place, if they have id's that match those specified in the supplied `EntitiesExport`.
 
 ## Validations
 
