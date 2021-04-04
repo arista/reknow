@@ -1254,6 +1254,8 @@ export const TodoAppView: React.FC<{}> = (params) => {
 
 Besides using Entity instances, Reknow provides several facilities for moving data into and out of a Reknow StateManager.  This can be useful for programs that want to save data to an external system, to load data from API responses, etc.
 
+Note that using these mechanisms to bring data into Reknow will bypass any type safety that TypeScript provides.  Property values are copied directly from provided Objects into Reknow Entities without regard for their TypeScript declarations.  An application is responsible for "sanitizing" any data it plans to use this way, perhaps using something like [JSON Schema](https://json-schema.org/).
+
 ### Transaction Listener
 
 As described previously, the StateManager can be configured with a `listener` function that will be notified of every `Transaction`.  In Reknow terminology, a `Transaction` is an `Action` paired with all of its resulting Entity `StateChange` events.  Each `Transaction` has a simple structure, which can be converted easily to and from JSON (assuming all of the Entities involved have "JSON-able" property values).
@@ -1262,20 +1264,17 @@ The data contained in a Transaction is sufficient to reconstruct the Reknow stat
 
 ### Applying Transactions
 
-An application can apply Transactions directly into a StateManager by calling `applyTransaction()`, effecting all of the state changes described by that Transaction.  This allows an application to receive and apply Transactions from some external source.  It also allows an application to create and apply its own Transactions - "Undo" is the most common example of this, where an application takes a Transaction, creates its "inverse", then applies that inverse.
+An application can apply Transactions directly into a StateManager by calling `applyTransaction()`, effecting all of the state changes described by that Transaction.  This allows an application to receive and apply Transactions from some external source.  It also allows an application to create and apply its own Transactions.  "Undo" is the most common example of this, where an application takes a Transaction, creates its "inverse", then applies that inverse.
 
 When applying a Transaction, an application can choose to either apply the state changes in the Transaction, or to invoke the Action specified by the Transaction.  In the latter case, Reknow would be invoking the specified method on the specified Entity, Entities, or Service, passing in the specified arguments.  This may be useful for applications in a collaborative editing situation, where applying actions may be easier than trying to resolve conflicting state changes.
 
-When a Transaction is applied, there are some slight differences between the normal events around a Reknow action:
+When a Transaction is applied, the Transaction is *not* reported to the StateManager's Transaction listener.  However, the rest of the usual action sequence does take place: `@R.reaction` methods are called, `@R.query` methods are invalidated, and effects (e.g., `@R.afterAdd`) are called.
 
-* `@R.reaction` methods are not called.  This is because all of the effects of the reaction should already be incorporated into the Transaction's state changes.
-* Affcted queries *are* invalidated, as normal
-* Effects (`@R.afterAdd`, `@R.afterRemove`, etc.) *are* called after the Transaction is applied
-* The Transaction is *not* reported to the StateManager's Transaction listener
+If a Transaction includes an `addEntity`, then an Entity instance of the correct type is created, populated with the specified property values, and added to Reknow.  However, the instance's `constructor` method is *not* called as part of its creation.
 
 ### Adding Objects
 
-Sometimes it is more convnient to add data to Reknow without creating Entity instances.  For example, if JSON data is received from a network request, an application may prefer to add that data directly into Reknow without converting it to an Entity instance first, especially if that Entity instance is going to be around just long enough to call `addEntity()` on it.
+Sometimes it is more convnient to add data to Reknow without creating Entity instances.  For example, if JSON data is received from a network request, an application may prefer to add that data directly into Reknow without converting it to an Entity instance first.
 
 In these situations, an application can call `addEntityObject()` on the appropriate Entities instance.  For example, instead of calling this:
 
@@ -1325,7 +1324,7 @@ This will result in a `TodoList` being created and added, and also two `TodoList
 
 `addObject` will work to any depth of objects and their relationships, and will work through `@R.hasMany`, `@R.hasOne`, and `@R.belongsTo` relationships.
 
-`addObject` will also remember which Object resulted in which `Entity` instance, and will reuse those same `Entity` instances if the same Objects are encountered.  This means that the Object that's passed in doesn't have to be a strict tree, but can be an entire graph of Objects, and `addObject` will correctly sort out the instances and connect them relationally.
+`addObject` will also remember which Object resulted in which `Entity` instance, and will reuse those same `Entity` instances if the same Objects are encountered during that call.  This means that the Object that's passed in doesn't have to be a strict tree, but can be an entire graph of Objects, and `addObject` will correctly sort out the instances and connect them relationally.
 
 ### Updating Objects
 
@@ -1366,96 +1365,182 @@ The name used for `TodoList` would be "todo.TodoList".
 
 Each entity in the resulting structure will only contain its "own" properties.  Relationships are not expressed directly here.  Assuming all of the properties as JSON-friendly (strings, numbers, booleans, null), this entire structure can be converted to JSON and stored or sent elsewhere.
 
-The `importEntities()` method does the reverse.  It takes an `EntitiesExport` structure and adds all of the Entities it contains.  The same caveats apply to `addObject` and `applyTransaction`, in that the constructors of the objects are not called, the `@R.reaction` methods are not called, effects *are* called, and the Transaction is not reported to the listener.
+The `importEntities()` method does the reverse.  It takes an `EntitiesExport` structure and adds all of the Entities it contains.  The same caveats apply to `addObject` and `applyTransaction`, in that the constructors of the objects are not called, and the Transaction is not reported to the listener.
 
 The `importEntitiesForUpdate()` is similar, except that it follows the same rules as `updateObject()`, in that it will modify existing Entity instances in place, if they have id's that match those specified in the supplied `EntitiesExport`.
 
 ## Validations
 
+FIXME - coming soon!
+
 ## Using With JavaScript
 
+While Reknow was designed to work well with TypeScript, it can also be used with JavaScript.  The main adjustment is in the use of decorators.  Reknow uses decorators declared on properties, not just methods, and those decorators are not supported by JavaScript.  There may also be some environments where decorators cannot be used at all, since they are not (as of this writing) an officially adopted part of the language.
+
+To address this, Reknow provides alternative ways of specifying the various decorators that are used.  This is accomplished by calling static methods that mirror the decorators directly on the `Entity`, `Entities`, or `Service` class.
+
+For example, in TypeScript, decorators might be used like this:
+
+```
+export class TodoListItem extends R.Entity {
+  @R.id id!: string
+  @R.belongsTo(() => TodoList, "todoListId") todoList!: TodoList
+  @R.action setComplete() {
+    ...
+  }
+  ...
+}
+```
+
+In Javascript, it would look like this:
+
+```
+export class TodoListItem extends R.Entity {
+  setComplete() {
+    ...
+  }
+  ...
+}
+TodoListItem.id("id")
+TodoListItem.belongsTo("todoList", () => TodoList, "todoListId")
+TodoListItem.action("setComplete")
+```
+
+Each decorator has a corresponding static method call, in which the name of the property or method appears as the first argument.
+
+These declarations must be made before the class is added to the StateManager.
+
 ## Testing
+
+FIXME - reset StateManager, mocking
 
 ## Reference
 
 ### API Reference
 
-#### Entity
+#### Entity Reference
 
 ##### Entity Instance Methods
 
+The following properties and methods are available to instances of `Entity` and its application-defined subclasses.  Decorators are specified elsewhere (FIXME)
+
 ###### constructor
-`constructor()`
+Constructor `constructor()`
+
+If an Entity class has a constructor, it should start by calling `super()` as usual.  As mentioned elsewhere (FIXME), there are situations where an Entity instance might be created and added without calling its constructor.  If an application anticipates being in such a situation, it should avoid doing anything more in its constructor than assigning its parameters to properties.  Other initializations can be performed in `@R.reaction` methods.
 
 ###### entityId
-`get entityId():string`
+Read-only property `entityId:string`
+
+Returns the id associated with the Entity.  Throws an exception if the Entity has not yet been added.
+
+###### entityTypeName
+Read-only property `entityTypeName:string`
+
+Returns the name assigned to the Entity's class when it was added to the StateManager - e.g., `todo.TodoListItem`.  Throws an exception if the Entity has not yet been added.
 
 ###### entityName
-`get entityName():string`
+Read-only property `entityName:string`
+
+Returns the full name used by the Entity for debugging purposes, defined as `{entityTypeName}#{entityId}`.  Throws an exception if the Entity has not yet been added.
 
 ###### currentEntity
-`get currentEntity():this`
+Read-only property `currentEntity:this`
+
+Returns the current Proxy version of the Entity.  If a property of the Entity is changed, its current Proxy is discarded, and a new Proxy will be created with the next call to `currentEntity`.  Throws an exception if the Entity has not yet been added.
 
 ###### isEntityRemoved
-`get isEntityRemoved():boolean`
+Read-only property `isEntityRemoved:boolean`
+
+Returns true if the Entity had been previously added, and is now removed.  The Entity should no longer be used, and should not be re-added.
 
 ###### addEntity
-`addEntity(id: string | null = null):this`
+Method `addEntity(id: string | null = null):this`
+
+Adds an Entity.  The Entity is assigned an id, is added to all appropriate indexes, and any `@R.reaction` methods are called.  At the end of the action, any declared `@R.afterAdd` methods will be called.
+
+The id assigned to the Entity follows these rules:
+
+* If an `id` is passed to `addEntity` then that becomes the id
+* If the Entity specifies an `@R.id` property and that property is non-null, then that becomes the id
+* If the StateManager was configured with an `idGenerator`, then that method is called
+* The StateManager's default id generator is called (a simple counter)
+
+An exception is thrown if the id is already assigned to another Entity of the same type.
 
 ###### removeEntity
-`removeEntity():void`
+Method `removeEntity():void`
+
+Removes an Entity.  The Entity is removed from all appropriate indexes and any `@R.reaction` and `@R.query` methods on the Entity will no longer receive invalidations.
+
+If the Entity declares relationships with a `dependent` value specified, then the appropriate action is taken on the Entities in that relationship.  See (FIXME).
+
+At the end of the action, any declared `@R.afterRemove` methods will be called.
 
 ###### isSameEntity
-`isSameEntity(entity: Entity|null|undefined):boolean`
+Method `isSameEntity(entity: Entity|null|undefined):boolean`
 
-##### Entity Decorators
+Returns true if the Entity is the same underlying instance as the given `entity`.  Because a single Entity instance can be represented by multiple Proxy instances, this method effectively determines if two Proxies are "pointing" at the same Entity.
 
-###### id
-`@R.id` or `static id(propertyName:string)`
-###### action
-`@R.action` or `static action(methodName:string)`
-###### query
-`@R.query` or `static action(getterName:string)`
-###### reaction
-`@R.reaction` or `static reaction(methodName:string)`
-###### hasMany
-`@R.hasMany` or `static hasMany(methodName:string)`
-###### hasOne
-`@R.hasOne` or `static hasOne(methodName:string)`
-###### belongsTo
-`@R.belongsTo` or `static hasOne(methodName:string)`
-###### afterAdd
-###### afterRemove
-###### afterChange
-###### afterPropertyChange
-
-#### Entities
+#### Entities Reference
 
 ##### Entities Instance Methods
 
+The following properties and methods are available to instances of `Entities` and its application-defined subclasses.  Decorators are specified elsewhere (FIXME).
+
+Each application `Entity` subclass is expected to define an associated `Entities` subclass, and to create a singleton instance of that `Entities` class
+
 ###### constructor
-`constructor(entityClass:EntityClass<E>)`
+Constructor `constructor(entityClass:EntityClass<E>)`
+
+Creates an `Entities`, specifying the `Entity` class with which it is associated.  Applications should rarely, if ever, need to override this constructor.
 
 ###### byId
-`get byId(): ById<E>`
+Read-only property `byId:ById<E>`
+
+Provides access to all Entity instances that have been added.  The property's value is an object whose keys are the Entity id's, and whose values are the Entity instances.
 
 ###### add
-`add(entity: E, id: string | null = null):E`
+Method `add(entity: E, id: string | null = null):E`
+
+Adds an Entity instance.  See (FIXME).
 
 ###### update
-`update(entity: E, id: string | null = null):E`
+Method `update(entity: E, id: string | null = null):E`
+
+Similar to `add`, except that it behaves differently if another Entity exists with the id that would be assigned to this Entity.  In that case, all of the "own" properties from the entity are copied into the existing Entity.
 
 ###### addObject
-`addObject(entity: Object, id: string | null = null):E`
+Method `addObject(entity: Object, id: string | null = null):E`
+
+Creates and adds a new Entity instance, copying its "own" properties from the given `entity`.  The same id generation and effects are followed as (FIXME).  Note that the Entity instance is created without calling its constructor, which includes TypeScript's property initializations:
+
+```
+export class TodoListItem extends R.Entity {
+  // NOT CALLED when created through `addObject`
+  complete = false
+```
+
+In addition, if an Entity declares relationships, and the `entity` object specifies properties corresponding to those relationships, then `addObject` will be called recursively on those property values, and the resulting Entities will be assigned to the relationships.  If the same Object is encountered multiple times in this process, then the same created Entity instance will be reused.
 
 ###### updateObject
-`updateObject(entity: Object, id: string | null = null):E`
+Method `updateObject(entity: Object, id: string | null = null):E`
+
+Similar to `addObject`, except that it follows the rules for `update`.  If Entities already exist with the same id, then they will be modified rather than new Entities being created, and those same update rules will be followed recursively through relationships.
+
+If an existing Entity is modified, then only those properties specified in the `entity` Object will be copied.  Other properties will not be affected, or removed.
+
+Similarly, when calling through `@R.hasMany` relationships, the Entity Objects will be added to the existing relationship, rather than replacing it.  For `@R.hasOne` and `@R.belongsTo`, the Entity Objects may end up replacing the existing Entity.
 
 ###### remove
-`remove(entity: E):void`
+Method `remove(entity: E):void`
+
+Removes an Entity instance.  See (FIXME).
 
 ###### removeAll
-`removeAll():void`
+Method `removeAll():void`
+
+Convenience method that calls `remove` for every Entity instance.
 
 ##### Entities Decorators
 
@@ -1476,6 +1561,27 @@ The `importEntitiesForUpdate()` is similar, except that it follows the same rule
 ###### action
 ###### query
 ###### reaction
+
+#### Decorators
+
+##### id
+`@R.id` or `static id(propertyName:string)`
+##### action
+`@R.action` or `static action(methodName:string)`
+##### query
+`@R.query` or `static action(getterName:string)`
+##### reaction
+`@R.reaction` or `static reaction(methodName:string)`
+##### hasMany
+`@R.hasMany` or `static hasMany(methodName:string)`
+##### hasOne
+`@R.hasOne` or `static hasOne(methodName:string)`
+##### belongsTo
+`@R.belongsTo` or `static hasOne(methodName:string)`
+##### afterAdd
+##### afterRemove
+##### afterChange
+##### afterPropertyChange
 
 #### StateManager
 
