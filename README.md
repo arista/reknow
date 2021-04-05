@@ -1542,52 +1542,180 @@ Method `removeAll():void`
 
 Convenience method that calls `remove` for every Entity instance.
 
-##### Entities Decorators
-
-###### action
-###### query
-###### reaction
-###### index
-###### uniqueIndex
-
 #### Service
 
 ##### Service Instance Methods
 
 ###### constructor
 
-##### Service Decorators
+Constructor `constructor()`
 
-###### action
-###### query
-###### reaction
-
-#### Decorators
-
-##### id
-`@R.id` or `static id(propertyName:string)`
-##### action
-`@R.action` or `static action(methodName:string)`
-##### query
-`@R.query` or `static action(getterName:string)`
-##### reaction
-`@R.reaction` or `static reaction(methodName:string)`
-##### hasMany
-`@R.hasMany` or `static hasMany(methodName:string)`
-##### hasOne
-`@R.hasOne` or `static hasOne(methodName:string)`
-##### belongsTo
-`@R.belongsTo` or `static hasOne(methodName:string)`
-##### afterAdd
-##### afterRemove
-##### afterChange
-##### afterPropertyChange
+Creates a Service instance.  Applications should rarely, if ever, need to override this constructor.
 
 #### StateManager
 
 #### Query
 
 #### Transaction
+
+#### Decorators
+
+##### id
+`@R.id` or `static id(propertyName:string)`
+
+May only be specified for a string property of an `Entity` class.
+
+Designates a property to contain an Entity's id.  If the property has a value when the Entity is added, then that property's value becomes the Entity's id (unless overridden by an id passed explicitly to the `addEntity` call).  Otherwise, that property will be set to the id assigned to the Entity.
+
+##### action
+`@R.action` or `static action(methodName:string)`
+
+May only be specified for a non-getter/setter method of an `Entity`, `Entities`, or `Service` class.
+
+Indicates that the given method will execute in the context of an action.  If an action is not in place when the method is called, then an action will be started before the method executes, and will be ended when the method finishes executig.  If an action is already in place when the method is called, then the method is executed without additional processing.
+
+##### query
+`@R.query` or `static action(getterName:string)`
+
+May only be specified for a getter in an `Entity`, `Entities`, or `Service` class.
+
+##### reaction
+`@R.reaction` or `static reaction(methodName:string)`
+
+May only be specified for a non-getter/setter method of an `Entity`, `Entities`, or `Service` class.
+
+##### hasMany
+```
+@R.hasMany<E extends Entity>(
+  foreignEntityFunc: () => EntityClass<E>,
+  foreignKey: string,
+  options: HasManyOptions | null = null
+)
+
+type HasManyOptions {
+  primaryKey?: string
+  dependent?: "none" | "remove" | "nullify"
+  sort?: HasManySort
+}
+```
+OR
+```
+static hasMany(propertyName, foreignEntityFunc, foreignKey, options)
+```
+
+May only be specified for a property of an `Entity` class.
+
+Declares a "hasMany" relationship between an instance of the "primary" Entity class (the one declaring the relationship), and instances of a "foreign" Entity class (which may be the same class).  The relationship will appear as a property of type `Array<E>`.
+
+The instances in the relationship will be those "foreign" Entity instances whose foreignKey property `===` the "primary" Entity instance's primaryKey.  By default the primaryKey is the Entity's id, but a different primary key property can be specified in the options.
+
+By default the instances in the relationships are ordered by their id.  This sort ordering can be overridden by specifying a `sort` option, which can take on these forms:
+
+* `"name"`: the name of the property, assumed to be ascending order
+* `"+name"` or `"-name"`: the name of the property in ascending or descending order
+* `[...]`: an array of the above forms, in any combination, specifying the comparison priority for sorts.  If two elements have the same value for the first property, then the second property will be compared, etc.
+
+In all cases, the Entity id's are used as the final comparison between instances.  `null` property values are considered to be less than all other values.
+
+The `dependent` option declares what happens to foreign Entities in the relationship if the primary Entity is removed, or if instances are removed from the relationship:
+
+* `"none"` (default): nothing happens to the foreign instances
+* `"remove"`: the foreign instances are removed (i.e., equivalent of calling `remove()`)
+* `"nullify"`: the foreign key property on the foreign instances are set to `null`
+
+The array property is partially mutable - items can be added or removed or replaced, but attempts to reorder the elements of the array will be ignored.  An entirely new array can even be assigned to the property.  If an Entity is added, then its foreignKey property wlil be set to the primaryKey.  The array elements will always follow the specified sort order.  If a mutation causes an element to be removed (`pop()`, `items[0] = newValue`, etc.), the removed element will follow the `dependent` option above, except that the `"none"` option is treated the same as `"nullify"`.
+
+##### hasOne
+```
+@R.hasOne<E extends Entity>(
+  foreignEntityFunc: () => EntityClass<E>,
+  foreignKey: string,
+  options: HasOneOptions | null = null
+)
+
+type HasOneOptions {
+  primaryKey?: string
+  dependent?: "none" | "remove" | "nullify"
+}
+```
+OR
+```
+static hasOne(propertyName, foreignEntityFunc, foreignKey, options)
+```
+
+May only be specified for a property of an `Entity` class.
+
+Declares a "hasOne" relationship between an instance of the "primary" Entity class (the one declaring the relationship), and zero or one instance of a "foreign" Entity class (which may be the same class).  The relationship will appear as a property of type `E|null`.
+
+The instance in the relationship will be the "foreign" Entity instance whose foreignKey property `===` the "primary" Entity instance's primaryKey.  By default the primaryKey is the Entity's id, but a different primary key property can be specified in the options.  If no "foreign" Entity matches, then the relationship's value is `null`.
+
+The `dependent` option declares what happens to the foreign Entity if the primary Entity is removed, or if the foreign Entity is replaced:
+
+* `"none"` (default): nothing happens to the foreign instance
+* `"remove"`: the foreign instance is removed (i.e., equivalent of calling `remove()`)
+* `"nullify"`: the foreign key property on the foreign instance is set to `null`
+
+The property is mutable, in that it can be assigned a different foreign Entity, or `null`.  If a different foreign Entity is assigned, then its foreignKey is set to the value of the primary key.  If a foreign Entity is removed or replaced, then the removed element will follow the `dependent` option above, except that the `"none"` option is treated the same as `"nullify"`.
+
+A `hasMany` declaration will implicitly create or use a `uniqueIndex` on the foreign Entity, which enforces uniqueness of the foreignKey property.  If that uniqueness is ever violated (two Entity instances are assigned the same foreignKey property value), an exception is thrown immediately.
+
+##### belongsTo
+```
+belongsTo<E extends Entity>(
+  foreignEntityFunc: () => EntityClass<E>,
+  primaryKey: string,
+  options: BelongsToOptions | null = null
+)
+
+type BelongsToOptions {
+  foreignKey?: string | null
+  dependent?: "none" | "remove" | null
+}
+```
+OR
+```
+static hasOne(propertyName, foreignEntityFunc, primaryKey, options)
+```
+
+May only be specified for a property of an `Entity` class.
+
+Declares a "belongsTo" relationship between an instance of the "primary" Entity class (the one declaring the relationship), and zero or one instance of a "foreign" Entity class (which may be the same class).  The relationship will appear as a property of type `E|null`.
+
+The instance in the relationship will be the "foreign" Entity instance whose foreignKey property `===` the "primary" Entity instance's primaryKey.  By default the foreignKey is the foreign Entity's id, but a different foreign key property can be specified in the options.  If no "foreign" Entity matches, then the relationship's value is `null`.
+
+The `dependent` option declares what happens to the foreign Entity if the primary Entity is removed, or if the foreign Entity is replaced (note that it is not typical to specify a `dependent` option on a `belongsTo` relationship):
+
+* `"none"` (default): nothing happens to the foreign instance
+* `"remove"`: the foreign instance is removed (i.e., equivalent of calling `remove()`)
+* `"nullify"`: the foreign key property on the foreign instance is set to `null`
+
+The property is mutable, in that it can be assigned a different foreign Entity, or `null`.  If a different foreign Entity is assigned, then the primary Entity's primaryKey value is set to the value of the foreign Entity's foreignKey.  If a foreign Entity is removed or replaced, then the removed element will follow the `dependent` option above, except that the `"none"` option is treated the same as `"nullify"`.
+
+A `belongsTo` declaration will implicitly create or use a `uniqueIndex` on the foreign Entity, which enforces uniqueness of the foreignKey property.  If that uniqueness is ever violated (two Entity instances are assigned the same foreignKey property value), an exception is thrown immediately.
+
+##### afterAdd
+
+May only be specified for a non-getter/setter method of an `Entity` class.
+
+##### afterRemove
+
+May only be specified for a non-getter/setter method of an `Entity` class.
+
+##### afterChange
+
+May only be specified for a non-getter/setter method of an `Entity` class.
+
+##### afterPropertyChange
+
+May only be specified for a non-getter/setter method of an `Entity` class.
+
+##### index
+
+May only be specified for a property of an `Entities` class.
+
+##### uniqueIndex
+
+May only be specified for a property of an `Entities` class.
 
 ### Invalidation Rules
 
