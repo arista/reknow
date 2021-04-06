@@ -1561,28 +1561,46 @@ Creates a Service instance.  Applications should rarely, if ever, need to overri
 #### Decorators
 
 ##### id
-`@R.id` or `static id(propertyName:string)`
+`@R.id` or `static id(propertyName)`
 
 May only be specified for a string property of an `Entity` class.
 
 Designates a property to contain an Entity's id.  If the property has a value when the Entity is added, then that property's value becomes the Entity's id (unless overridden by an id passed explicitly to the `addEntity` call).  Otherwise, that property will be set to the id assigned to the Entity.
 
 ##### action
-`@R.action` or `static action(methodName:string)`
+`@R.action` or `static action(methodName)`
 
 May only be specified for a non-getter/setter method of an `Entity`, `Entities`, or `Service` class.
 
-Indicates that the given method will execute in the context of an action.  If an action is not in place when the method is called, then an action will be started before the method executes, and will be ended when the method finishes executig.  If an action is already in place when the method is called, then the method is executed without additional processing.
+Indicates that the given method will execute in the context of an action.  If an action is not in place when the method is called, then an action will be started before the method executes, and will be ended when the method finishes executing.  If an action is already in place when the method is called, then the method is executed without additional processing.
+
+Action methods should perform no other side effects besides modifying Reknow state, and should rely on no other data besides their parameters and existing Reknow state.
 
 ##### query
-`@R.query` or `static action(getterName:string)`
+`@R.query` or `static action(getterName)`
 
 May only be specified for a getter in an `Entity`, `Entities`, or `Service` class.
 
-##### reaction
-`@R.reaction` or `static reaction(methodName:string)`
+Indicates that the given method will be executed as a Query.  Its return value will be cached and returned on subsequent calls without executing the body of the method.  If the query's result is invalidated, then the cached value will be discarded and recomputed the next time the method is called.  When the body of the method executes, Reknow will record its dependencies and subscribe to changes in those dependencies, invalidating the query's result if any dependency changes.  The rules for what constitutes an invalidating change are described in FIXME.
 
-May only be specified for a non-getter/setter method of an `Entity`, `Entities`, or `Service` class.
+If an `@R.query` is called by another query, then the called query itself becomes a dependent of the calling query.  If the called query's result is later invalidated, the calling query will also invalidate its result.
+
+If `@R.query` is specified for an Entity, then the query is "disconnected" when the Entity is removed, meaning that it no longer subscribes to changes, nor does it publish invalidations to calling queries.
+
+Query methods should rely solely on existing Reknow state, and should not modify that state or perform other side effects or use data outside of Reknow.
+
+##### reaction
+`@R.reaction` or `static reaction(methodName)`
+
+May only be specified for a non-getter/setter no-argument method of an `Entity`, `Entities`, or `Service` class.
+
+Indicates that the given method will be executed as a Reaction.  The method will be executed once on startup (for an `Entities` or `Service` class), or upon being added (for an `Entity` class).  As the body of the reaction executes, Reknow will record its dependencies and subscribe to changes in those dependencies.  If a dependency later changes as part of some action, the reaction will be called at the end of that action.
+
+Reaction methods should perform no other side effects besides modifying Reknow state, and should rely on no other data besides existing Reknow state.
+
+Reactions are typically used to set "computed" properties derived from other state values.  While an `@R.query` can achieve the same effect, the advantage of using an `@R.action` is that it can assign the result of its computation to an "own" property, which can then be indexed, unlike `@R.query` methods which cannot be used to drive indexes.
+
+Applications do not typically call `@R.reaction` methods directly.
 
 ##### hasMany
 ```
@@ -1694,26 +1712,54 @@ The property is mutable, in that it can be assigned a different foreign Entity, 
 A `belongsTo` declaration will implicitly create or use a `uniqueIndex` on the foreign Entity, which enforces uniqueness of the foreignKey property.  If that uniqueness is ever violated (two Entity instances are assigned the same foreignKey property value), an exception is thrown immediately.
 
 ##### afterAdd
+`@R.afterAdd` or `static afterAdd(methodName)`
 
-May only be specified for a non-getter/setter method of an `Entity` class.
+May only be specified for a non-getter/setter no-argument method of an `Entity` class.
+
+Declares an "effect" to be called after an Entity has been added to Reknow.
+
+Effects are performed after the action has completed and are technically considered to be occurring outside of the action.  An effect may perform side effects, interact with other systems, access any data, and even initiate other Reknow actions.
 
 ##### afterRemove
+`@R.afterRemove` or `static afterRemove(methodName)`
 
-May only be specified for a non-getter/setter method of an `Entity` class.
+May only be specified for a non-getter/setter no-argument method of an `Entity` class.
+
+Declares an "effect" to be called after an Entity has been removed from Reknow.
+
+Effects are performed after the action has completed and are technically considered to be occurring outside of the action.  An effect may perform side effects, interact with other systems, access any data, and even initiate other Reknow actions.
 
 ##### afterChange
+`@R.afterChange` or `static afterChange(methodName)`
 
-May only be specified for a non-getter/setter method of an `Entity` class.
+May only be specified for a non-getter/setter no-argument method of an `Entity` class.
+
+Declares an "effect" to be called after an "own" property of an Entity has been changed.
+
+Effects are performed after the action has completed and are technically considered to be occurring outside of the action.  An effect may perform side effects, interact with other systems, access any data, and even initiate other Reknow actions.
 
 ##### afterPropertyChange
+`@R.afterPropertyChange(propertyName:string)`
+OR
+`static afterChange(methodName, propertyName)`
 
-May only be specified for a non-getter/setter method of an `Entity` class.
+May only be specified for a non-getter/setter method of an `Entity` class.  The method must accept a single `oldValue` parameter.
+
+Declares an "effect" to be called after the specified "own" property of an Entity has changed.  The method will be passed a single argument containing the previous value of the property.
+
+Effects are performed after the action has completed and are technically considered to be occurring outside of the action.  An effect may perform side effects, interact with other systems, access any data, and even initiate other Reknow actions.
 
 ##### index
+`@R.index(...terms: Array<string>)` or `static index(name, ...terms)`
 
 May only be specified for a property of an `Entities` class.
 
+Declares that a property will hold an automatically-maintained structure that organizes the Entity instances associated with the `Entities` class according to the specified `terms`.  These terms direct the structure to either group Entities by matching "own" property values (HashIndex), or sort them by a set of property values (SortIndex), or a combination of the two.
+
+The terms specify an ordered list of property names, each prefixed with either `=`, `+`, or `-`.  Any combination and number of terms and prefixes may be used, but all `=` terms must appear before any `+` or `-` terms.
+
 ##### uniqueIndex
+`@R.uniqueIndex(...terms: Array<string>)` or `static uniqueIndex(name, ...terms)`
 
 May only be specified for a property of an `Entities` class.
 
