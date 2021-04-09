@@ -18,6 +18,7 @@ import {ById} from "./Types"
 import {IndexDecorator} from "./Types"
 import {indexSchemaProperties} from "./Utils"
 import {addProperty} from "./Utils"
+import {removeProperty} from "./Utils"
 import {addNonEnumerableProperty} from "./Utils"
 import {isPlainObject} from "./Utils"
 import {plainObjectToInstance} from "./Utils"
@@ -95,6 +96,17 @@ export class EntitiesState<E extends Entity> extends Proxied<
     // FIXME - clear out selectors somehow?
   }
 
+  releaseClasses() {
+    this.releaseEntityDeclarations
+    this.releaseEntitiesDeclarations
+    this.disconnectEntitiesState()
+  }
+
+  disconnectEntitiesState() {
+    this.entities._entitiesState = null
+    ;((this.entityClass as unknown) as InternalEntityClass<any>).entitiesState = null
+  }
+
   get entitiesClass() {
     return this.entities.constructor
   }
@@ -110,6 +122,12 @@ export class EntitiesState<E extends Entity> extends Proxied<
     this.idPropertyName = this.entityDeclarations.idPropertyName
   }
 
+  releaseEntityDeclarations() {
+    for (const r of this.entityDeclarations.relationships) {
+      r.release(this)
+    }
+  }
+
   applyEntitiesDeclarations() {
     const entitiesDeclarations = EntitiesDeclarations.forClass(
       this.entitiesClass
@@ -121,6 +139,15 @@ export class EntitiesState<E extends Entity> extends Proxied<
     this.addEntitiesReactions(entitiesDeclarations)
   }
 
+  releaseEntitiesDeclarations() {
+    const entitiesDeclarations = EntitiesDeclarations.forClass(
+      this.entitiesClass
+    )
+    for (const d of entitiesDeclarations.indexDecorators) {
+      this.removeIndexFromDecorator(d)
+    }
+  }
+
   addPropertyToEntitiesInstance<T>(
     name: string,
     getter: (() => T) | null = null,
@@ -129,12 +156,20 @@ export class EntitiesState<E extends Entity> extends Proxied<
     addProperty(this.entities, name, getter, setter)
   }
 
+  removePropertyFromEntitiesInstance<T>(name: string) {
+    removeProperty(this.entities, name)
+  }
+
   addInstancePropertyToEntityClass<T>(
     name: string,
     getter: (() => T) | null = null,
     setter: ((val: T) => void) | null = null
   ) {
     addProperty(this.entityClass.prototype, name, getter, setter)
+  }
+
+  removeInstancePropertyFromEntityClass<T>(name: string) {
+    removeProperty(this.entityClass.prototype, name)
   }
 
   addIndexFromDecorator(d: IndexDecorator) {
@@ -147,6 +182,10 @@ export class EntitiesState<E extends Entity> extends Proxied<
       return index.proxy
     }
     this.addPropertyToEntitiesInstance(d.name, getter)
+  }
+
+  removeIndexFromDecorator(d: IndexDecorator) {
+    this.removePropertyFromEntitiesInstance(d.name)
   }
 
   findOrCreateIndex(schema: IndexSchema, baseName: string): Index<any> {

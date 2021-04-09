@@ -146,7 +146,7 @@ export type EntityClass<E extends Entity> = {
 }
 
 export type InternalEntityClass<E extends Entity> = {
-  entitiesState: EntitiesState<E>
+  entitiesState: EntitiesState<E>|null
 }
 
 export type ById<E extends Entity> = {[id: string]: E}

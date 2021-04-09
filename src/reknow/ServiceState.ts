@@ -18,8 +18,17 @@ export class ServiceState {
     public stateManager: StateManager,
     public service: Service
   ) {
+    service._serviceState = this
     this.addQueries()
     this.addReactions()
+  }
+
+  releaseClasses() {
+    this.disconnectServiceState()
+  }
+
+  disconnectServiceState() {
+    this.service._serviceState = null
   }
 
   toAction(name: string, args: Array<any>): Action {
