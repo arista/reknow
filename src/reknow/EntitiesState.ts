@@ -186,21 +186,6 @@ export class EntitiesState<E extends Entity> extends Proxied<
     return `${this.name}.${name}`
   }
 
-  /** If a relationship is declared using this form:
-   *
-   *  @hasMany(ScorePages, "scoreId") scorePages!: Array<ScorePage>
-   *
-   * Typescript will actually define a scorePages property with value
-   * "undefined", which will overshadow the scorePages getter created
-   * in the prototype for the relationship.  So when the entity is
-   * added, we need to go through and delete those properties.
-   **/
-  removeRelationshipProperties(entity: E) {
-    for (const r of this.relationships) {
-      delete (entity as any)[r.name]
-    }
-  }
-
   extractRelationshipProperties(entity: E) {
     let ret: {[name: string]: any} | null = null
     for (const r of this.relationships) {
