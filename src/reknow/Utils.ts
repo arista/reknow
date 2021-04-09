@@ -691,6 +691,13 @@ export function addProperty<T>(
   Object.defineProperty(target, name, pd)
 }
 
+export function removeProperty<T>(
+  target: Object,
+  name: string
+) {
+  delete (target as any)[name]
+}
+
 export function addNonEnumerableProperty<T>(
   target: Object,
   name: symbol,

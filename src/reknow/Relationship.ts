@@ -7,15 +7,16 @@ import {EntitiesState} from "./EntitiesState"
  * for an entity */
 export abstract class Relationship {
   _foreignEntitiesState: EntitiesState<any> | null = null
+
   constructor(
     public name: string,
     public foreignEntityFunc: () => EntityClass<any>
   ) {}
+
   get foreignEntitiesState(): EntitiesState<any> {
     if (this._foreignEntitiesState == null) {
       const entityClass = (this.foreignEntityFunc() as unknown) as InternalEntityClass<any>
-      const entitiesState: EntitiesState<any> = entityClass.entitiesState
-      // FIXME - if entitiesState is null, that could indicate that the entity class hasn't been added to the StateManager
+      const entitiesState: EntitiesState<any>|null = entityClass.entitiesState
       if (entitiesState == null) {
         throw new Error(
           `Class ${
@@ -27,6 +28,11 @@ export abstract class Relationship {
     }
     return this._foreignEntitiesState
   }
+
+  release(entitiesState:EntitiesState<any>) {
+    entitiesState.removeInstancePropertyFromEntityClass(this.name)
+  }
+
   abstract apply(entitiesState: EntitiesState<any>): void
   abstract primaryRemoved<P extends Entity>(primary: P): void
   abstract get isMany(): boolean

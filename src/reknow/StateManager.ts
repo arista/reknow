@@ -89,6 +89,15 @@ export class StateManager {
     this.pendingEffects = null
   }
 
+  releaseClasses() {
+    for (const entitiesState of this.entitiesStates) {
+      entitiesState.releaseClasses()
+    }
+    for (const serviceState of this.serviceStates) {
+      serviceState.releaseClasses()
+    }
+  }
+
   initializeEntities(
     entitiesDefinitionTree: EntitiesDefinitionTree | null | undefined
   ) {
@@ -123,14 +132,13 @@ export class StateManager {
     )
     for (const name in flattenedDefinitions) {
       const service = flattenedDefinitions[name]
-      const serviceState = new ServiceState(name, this, service)
-      this.serviceStates.push(serviceState)
       if (service._serviceState != null) {
         throw new Error(
           `Attempt to register Service class multiple times ("${name}" and "${service._serviceState.name}")`
         )
       }
-      service._serviceState = serviceState
+      const serviceState = new ServiceState(name, this, service)
+      this.serviceStates.push(serviceState)
     }
   }
 
