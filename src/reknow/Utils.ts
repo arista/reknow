@@ -681,7 +681,9 @@ export function addProperty<T>(
   getter: (() => T) | null = null,
   setter: ((val: T) => void) | null = null
 ) {
-  const pd: PropertyDescriptor = {}
+  const pd: PropertyDescriptor = {
+    configurable: true
+  }
   if (getter != null) {
     pd.get = getter
   }

@@ -97,8 +97,8 @@ export class EntitiesState<E extends Entity> extends Proxied<
   }
 
   releaseClasses() {
-    this.releaseEntityDeclarations
-    this.releaseEntitiesDeclarations
+    this.releaseEntityDeclarations()
+    this.releaseEntitiesDeclarations()
     this.disconnectEntitiesState()
   }
 
