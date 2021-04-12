@@ -8,9 +8,6 @@ import * as R from "../Reknow"
 
 describe("Reactions", () => {
   class User extends R.Entity {
-    static get entities(): _Users {
-      return Users
-    }
     constructor(public name: string, public age: number) {
       super()
     }
@@ -32,9 +29,6 @@ describe("Reactions", () => {
   beforeEach(() => (r1counters = {u1: 0, u2: 0}))
 
   class Job extends R.Entity {
-    static get entities(): _Jobs {
-      return Jobs
-    }
     constructor(public name: string, public userId: string) {
       super()
     }
@@ -42,14 +36,14 @@ describe("Reactions", () => {
   class _Jobs extends R.Entities<Job> {}
   const Jobs = new _Jobs(Job)
 
-  const AppModel = new R.StateManager({
-    entities: {User, Job},
-  })
+  let AppModel!: R.StateManager
   const action = <T>(f: () => T): T => {
     return AppModel.action(f)
   }
   beforeEach(() => {
-    AppModel.clearState()
+    AppModel = new R.StateManager({
+      entities: {User, Job},
+    })
   })
 
   describe("Reactions created through the StateManager", () => {
