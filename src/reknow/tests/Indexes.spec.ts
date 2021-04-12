@@ -16,12 +16,12 @@ describe("Indexes", () => {
       @R.index("+name", "-age") index3!: R.SortIndex<User>
     }
     const Users = new _Users(User)
-    const AppModel = new R.StateManager({entities: {User}})
+    let AppModel!: R.StateManager
     const action = <T>(f: () => T) => {
       AppModel.action(f)
     }
     beforeEach(() => {
-      AppModel.clearState()
+      AppModel = new R.StateManager({entities: {User}})
     })
 
     it("should update itself as expected with entity changes", () => {

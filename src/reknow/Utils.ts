@@ -682,7 +682,7 @@ export function addProperty<T>(
   setter: ((val: T) => void) | null = null
 ) {
   const pd: PropertyDescriptor = {
-    configurable: true
+    configurable: true,
   }
   if (getter != null) {
     pd.get = getter
@@ -693,10 +693,7 @@ export function addProperty<T>(
   Object.defineProperty(target, name, pd)
 }
 
-export function removeProperty<T>(
-  target: Object,
-  name: string
-) {
+export function removeProperty<T>(target: Object, name: string) {
   delete (target as any)[name]
 }
 
