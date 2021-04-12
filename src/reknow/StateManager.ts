@@ -27,6 +27,9 @@ import {Query} from "./Query"
 import {QueryNotifyAt} from "./Types"
 import {PendingQueryNotifications} from "./PendingQueryNotifications"
 import {DebugEvent} from "./DebugEvents"
+import {EntitiesExport} from "./Types"
+import {EntityTypeExport} from "./Types"
+import {EntityPropertiesExport} from "./Types"
 
 export interface StateManagerConfig {
   entities?: EntitiesDefinitionTree
@@ -359,5 +362,25 @@ export class StateManager {
     } else {
       return f()
     }
+  }
+
+  exportEntities(): EntitiesExport {
+    const ret: EntitiesExport = {entities: {}}
+    for (const entitiesState of this.entitiesStates) {
+      const entityType: EntityTypeExport = {}
+      ret.entities[entitiesState.name] = entityType
+
+      for (const id in entitiesState.byId) {
+        const entityState = entitiesState.byId[id]
+        const entity: EntityPropertiesExport = {}
+        entityType[id] = entity
+
+        for (const name in entityState.target) {
+          const value = entityState.target[name]
+          entity[name] = value
+        }
+      }
+    }
+    return ret
   }
 }

@@ -237,3 +237,17 @@ export interface EntitiesStateDump {
 }
 
 export type QueryNotifyAt = "transactionEnd" | "afterTransaction"
+
+export interface EntitiesExport {
+  entities: {
+    [entityName: string]: EntityTypeExport
+  }
+}
+
+export interface EntityTypeExport {
+  [entityId: string]: EntityPropertiesExport
+}
+
+export interface EntityPropertiesExport {
+  [name: string]: any
+}
