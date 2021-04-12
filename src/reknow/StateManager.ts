@@ -132,11 +132,18 @@ export class StateManager {
     )
     for (const name in flattenedDefinitions) {
       const service = flattenedDefinitions[name]
+      // FIXME - is there an instance when we actually want to do this
+      // check?  When testing, we may want to reuse classes in new
+      // StateManager instances, and in React development we might want
+      // hot-reloading which will reuse classes.  Is it just for
+      // production?  Is that worth making this a feature?
+      /*
       if (service._serviceState != null) {
         throw new Error(
           `Attempt to register Service class multiple times ("${name}" and "${service._serviceState.name}")`
         )
       }
+      */
       const serviceState = new ServiceState(name, this, service)
       this.serviceStates.push(serviceState)
     }

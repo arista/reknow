@@ -67,11 +67,19 @@ export class EntitiesState<E extends Entity> extends Proxied<
     super({}, stateManager)
 
     // Connect the Entities to this
+
+    // FIXME - is there an instance when we actually want to do this
+    // check?  When testing, we may want to reuse classes in new
+    // StateManager instances, and in React development we might want
+    // hot-reloading which will reuse classes.  Is it just for
+    // production?  Is that worth making this a feature?
+    /*
     if (entities._entitiesState != null) {
       throw new Error(
         `Attempt to register Entities class multiple times ("${name}" and "${entities._entitiesState.name}")`
       )
     }
+    */
     entities._entitiesState = this
 
     // Connect the Entity class to this
@@ -104,7 +112,8 @@ export class EntitiesState<E extends Entity> extends Proxied<
 
   disconnectEntitiesState() {
     this.entities._entitiesState = null
-    ;((this.entityClass as unknown) as InternalEntityClass<any>).entitiesState = null
+    ;((this
+      .entityClass as unknown) as InternalEntityClass<any>).entitiesState = null
   }
 
   get entitiesClass() {
