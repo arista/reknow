@@ -65,7 +65,7 @@ export class EntityDeclarations {
       name,
       foreignEntityFunc,
       foreignKey,
-      options
+      options,
     })
   }
 
@@ -81,7 +81,7 @@ export class EntityDeclarations {
       name,
       foreignEntityFunc,
       foreignKey,
-      options
+      options,
     })
   }
 
@@ -97,7 +97,7 @@ export class EntityDeclarations {
       name,
       foreignEntityFunc,
       primaryKey,
-      options
+      options,
     })
   }
 
