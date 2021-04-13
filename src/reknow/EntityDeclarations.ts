@@ -8,9 +8,10 @@ import {AfterPropertyChangeDecorator} from "./Types"
 import {replaceFunction} from "./Utils"
 import {Entity} from "./Entity"
 import {FunctionType} from "./Types"
-import {HasMany} from "./HasMany"
-import {HasOne} from "./HasOne"
-import {BelongsTo} from "./BelongsTo"
+import {RelationshipDecorator} from "./Types"
+import {HasManyDecorator} from "./Types"
+import {HasOneDecorator} from "./Types"
+import {BelongsToDecorator} from "./Types"
 import {HasManyOptions} from "./Types"
 import {HasOneOptions} from "./Types"
 import {BelongsToOptions} from "./Types"
@@ -28,7 +29,7 @@ import {AFTER_PROPERTY_CHANGE_USAGE} from "./Decorators"
  * class is added to the StateManager.
  */
 export class EntityDeclarations {
-  relationships: Array<Relationship> = []
+  relationships: Array<RelationshipDecorator> = []
   reactions: Array<ReactionDecorator> = []
   queries: Array<QueryDecorator> = []
   afterAdds: Array<AfterAddDecorator> = []
@@ -59,8 +60,13 @@ export class EntityDeclarations {
     foreignKey: string,
     options: HasManyOptions | null
   ) {
-    const r = new HasMany(name, foreignEntityFunc, foreignKey, options)
-    this.addRelationship(proto, r)
+    this.addRelationship(proto, {
+      type: "HasManyDecorator",
+      name,
+      foreignEntityFunc,
+      foreignKey,
+      options
+    })
   }
 
   static addHasOne<E extends Entity>(
@@ -70,8 +76,13 @@ export class EntityDeclarations {
     foreignKey: string,
     options: HasOneOptions | null
   ) {
-    const r = new HasOne(name, foreignEntityFunc, foreignKey, options)
-    this.addRelationship(proto, r)
+    this.addRelationship(proto, {
+      type: "HasOneDecorator",
+      name,
+      foreignEntityFunc,
+      foreignKey,
+      options
+    })
   }
 
   static addBelongsTo<E extends Entity>(
@@ -81,11 +92,16 @@ export class EntityDeclarations {
     primaryKey: string,
     options: BelongsToOptions | null
   ) {
-    const r = new BelongsTo(name, foreignEntityFunc, primaryKey, options)
-    this.addRelationship(proto, r)
+    this.addRelationship(proto, {
+      type: "BelongsToDecorator",
+      name,
+      foreignEntityFunc,
+      primaryKey,
+      options
+    })
   }
 
-  static addRelationship(proto: Object, r: Relationship) {
+  static addRelationship(proto: Object, r: RelationshipDecorator) {
     EntityDeclarations.forPrototype(proto).relationships.push(r)
   }
 

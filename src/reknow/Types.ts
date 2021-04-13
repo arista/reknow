@@ -223,6 +223,35 @@ export interface AfterPropertyChangeDecorator {
   f: (oldValue: any) => void
 }
 
+export type RelationshipDecorator =
+  HasManyDecorator |
+  HasOneDecorator |
+  BelongsToDecorator
+
+export interface HasManyDecorator {
+  type: "HasManyDecorator",
+  name: string,
+  foreignEntityFunc: () => EntityClass<any>,
+  foreignKey: string,
+  options: HasManyOptions | null
+}
+
+export interface HasOneDecorator {
+  type: "HasOneDecorator",
+  name: string,
+  foreignEntityFunc: () => EntityClass<any>,
+  foreignKey: string,
+  options: HasOneOptions | null
+}
+
+export interface BelongsToDecorator {
+  type: "BelongsToDecorator",
+  name: string,
+  foreignEntityFunc: () => EntityClass<any>,
+  primaryKey: string,
+  options: BelongsToOptions | null
+}
+
 export interface ArrayChangesResults<T> {
   add: Array<T>
   remove: Array<T>

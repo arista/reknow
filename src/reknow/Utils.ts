@@ -22,8 +22,19 @@ import {HasManySort} from "./Types"
 import {HasManySortElement} from "./Types"
 import {ArrayChangesResults} from "./Types"
 import {ConstructorFunction} from "./Types"
-import {EntityClass} from "./Types"
 import {EntitiesDefinitionTreeEntry} from "./Types"
+import {RelationshipDecorator} from "./Types"
+import {HasManyDecorator} from "./Types"
+import {HasOneDecorator} from "./Types"
+import {BelongsToDecorator} from "./Types"
+import {HasManyOptions} from "./Types"
+import {HasOneOptions} from "./Types"
+import {BelongsToOptions} from "./Types"
+import {EntityClass} from "./Types"
+import {Relationship} from "./Relationship"
+import {HasMany} from "./HasMany"
+import {HasOne} from "./HasOne"
+import {BelongsTo} from "./BelongsTo"
 
 export function notNull<T>(val: T | null | undefined): T {
   if (val == null) {
@@ -816,5 +827,16 @@ export function currentEntity<T>(val: T): T {
     return val.currentEntity
   } else {
     return val
+  }
+}
+
+export function relationshipFromRelationshipDecorator(r:RelationshipDecorator):Relationship {
+  switch(r.type) {
+  case "HasManyDecorator":
+    return new HasMany(r.name, r.foreignEntityFunc, r.foreignKey, r.options)
+  case "HasOneDecorator":
+    return new HasOne(r.name, r.foreignEntityFunc, r.foreignKey, r.options)
+  case "BelongsToDecorator":
+    return new BelongsTo(r.name, r.foreignEntityFunc, r.primaryKey, r.options)
   }
 }

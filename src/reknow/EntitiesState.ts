@@ -27,6 +27,7 @@ import {copyProperties} from "./Utils"
 import {Query} from "./Query"
 import {FunctionType} from "./Types"
 import {toMemberName} from "./Utils"
+import {relationshipFromRelationshipDecorator} from "./Utils"
 import {ENTITY_STATE_KEY} from "./Entity"
 
 export type EntityStateById<E extends Entity> = {[id: string]: EntityState<E>}
@@ -125,14 +126,15 @@ export class EntitiesState<E extends Entity> extends Proxied<
   }
 
   applyEntityDeclarations() {
-    for (const r of this.entityDeclarations.relationships) {
+    for (const rdecl of this.entityDeclarations.relationships) {
+      const r = relationshipFromRelationshipDecorator(rdecl)
       r.apply(this)
     }
     this.idPropertyName = this.entityDeclarations.idPropertyName
   }
 
   releaseEntityDeclarations() {
-    for (const r of this.entityDeclarations.relationships) {
+    for (const r of this.relationships) {
       r.release(this)
     }
   }
