@@ -20,26 +20,25 @@ export type ServiceDefinitions = {[name: string]: Service}
 
 export interface Transaction {
   action: Action
-  stateChanges: Array<StateChange<Entity>>
+  stateChanges: Array<StateChange>
 }
 
-export type StateChange<E extends Entity> =
-  | EntityAdded<E>
-  | EntityRemoved<E>
-  | EntityPropertyChanged
+export type ObjectWithProperties = {[name: string]: any}
 
-export interface EntityAdded<E extends Entity> {
+export type StateChange = EntityAdded | EntityRemoved | EntityPropertyChanged
+
+export interface EntityAdded {
   type: "EntityAdded"
   entityType: string
   id: string
-  entity: E
+  entity: ObjectWithProperties
 }
 
-export interface EntityRemoved<E extends Entity> {
+export interface EntityRemoved {
   type: "EntityRemoved"
   entityType: string
   id: string
-  entity: E
+  entity: ObjectWithProperties
 }
 
 export interface EntityPropertyChanged {

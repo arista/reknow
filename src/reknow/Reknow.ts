@@ -70,9 +70,9 @@ export type SortIndex<E extends _Entity> = _SortIndex<E>
 export type QueryNotifyAt = _QueryNotifyAt
 
 export type Transaction = _Transaction
-export type StateChange<E extends _Entity> = _StateChange<E>
-export type EntityAdded<E extends _Entity> = _EntityAdded<E>
-export type EntityRemoved<E extends _Entity> = _EntityRemoved<E>
+export type StateChange = _StateChange
+export type EntityAdded = _EntityAdded
+export type EntityRemoved = _EntityRemoved
 export type EntityPropertyChanged = _EntityPropertyChanged
 export type Action = _Action
 export type EntitiesAction = _EntitiesAction

@@ -30,6 +30,7 @@ import {DebugEvent} from "./DebugEvents"
 import {EntitiesExport} from "./Types"
 import {EntityTypeExport} from "./Types"
 import {EntityPropertiesExport} from "./Types"
+import {applyTransaction} from "./Transactions"
 
 export interface StateManagerConfig {
   entities?: EntitiesDefinitionTree
@@ -43,6 +44,7 @@ export class StateManager {
   transactionListeners = new Listeners<Transaction>()
   debugListener: Listener<DebugEvent> | null
   entitiesStates: Array<EntitiesState<any>> = []
+  entitiesStatesByName: {[name: string]: EntitiesState<any>} = {}
   serviceStates: Array<ServiceState> = []
   currentChangeSubscriber: ChangeSubscriber | null = null
   // FIXME - remove this
@@ -115,6 +117,7 @@ export class StateManager {
         entityClass
       )
       this.entitiesStates.push(entitiesState)
+      this.entitiesStatesByName[name] = entitiesState
     }
 
     // Do a second pass to set up relationships, etc. based on the
@@ -210,14 +213,14 @@ export class StateManager {
     }
   }
 
-  recordStateChange(stateChange: StateChange<any>) {
+  recordStateChange(stateChange: StateChange) {
     const transaction = notNull(this.transaction)
     transaction.stateChanges.push(stateChange)
   }
 
   recordEntityAdded<E extends Entity>(e: EntityState<E>) {
     const entityStateSnapshot = copyInstance(e.entity)
-    const stateChange: EntityAdded<E> = {
+    const stateChange: EntityAdded = {
       type: "EntityAdded",
       entityType: e.entitiesState.name,
       id: e.id,
@@ -228,7 +231,7 @@ export class StateManager {
 
   recordEntityRemoved<E extends Entity>(e: EntityState<E>) {
     const entityStateSnapshot = copyInstance(e.entity)
-    const stateChange: EntityRemoved<E> = {
+    const stateChange: EntityRemoved = {
       type: "EntityRemoved",
       entityType: e.entitiesState.name,
       id: e.id,
@@ -377,6 +380,10 @@ export class StateManager {
     } else {
       return f()
     }
+  }
+
+  applyTransaction(transaction: Transaction) {
+    applyTransaction(this, transaction)
   }
 
   exportEntities(): EntitiesExport {
