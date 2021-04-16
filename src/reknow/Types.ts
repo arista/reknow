@@ -38,7 +38,7 @@ export interface EntityRemoved {
   type: "EntityRemoved"
   entityType: string
   id: string
-  entity: ObjectWithProperties
+  entity?: ObjectWithProperties
 }
 
 export interface EntityPropertyChanged {
@@ -89,6 +89,10 @@ export interface InitializeAction {
 
 export type Listener<E> = (e: E) => void
 export type TransactionListener = Listener<Transaction>
+
+export interface ActionOptions {
+  suppressReportedTransaction?: boolean
+}
 
 export type SortDirectives = Array<SortDirective>
 

@@ -31,6 +31,7 @@ import {EntitiesExport} from "./Types"
 import {EntityTypeExport} from "./Types"
 import {EntityPropertiesExport} from "./Types"
 import {applyTransaction} from "./Transactions"
+import {ActionOptions} from "./Types"
 
 export interface StateManagerConfig {
   entities?: EntitiesDefinitionTree
@@ -152,7 +153,11 @@ export class StateManager {
     }
   }
 
-  whileInAction<T>(action: Action, f: () => T): T {
+  whileInAction<T>(
+    action: Action,
+    f: () => T,
+    options: ActionOptions | null = null
+  ): T {
     return this.withDebugEvent(
       () => {
         return {type: "ActionDebugEvent", action}
@@ -176,8 +181,10 @@ export class StateManager {
 
           // Apply any effects
           this.applyPendingEffects()
-          // Pass the transaction to any listeners
-          this.transactionListeners.notify(transaction)
+          if (!options?.suppressReportedTransaction) {
+            // Pass the transaction to any listeners
+            this.transactionListeners.notify(transaction)
+          }
 
           // If this is the outermost transaction and it's returning an
           // Entity, make sure we're returning the latest Proxy.

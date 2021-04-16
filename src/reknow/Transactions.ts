@@ -7,6 +7,7 @@ import {StateManager} from "./StateManager"
 import {EntityAdded} from "./Types"
 import {EntityRemoved} from "./Types"
 import {EntityPropertyChanged} from "./Types"
+import {ActionOptions} from "./Types"
 
 export function stringifyTransaction(t: Transaction) {
   let ret = stringifyAction(t.action)
@@ -58,21 +59,32 @@ export function applyTransaction(
   stateManager: StateManager,
   transaction: Transaction
 ) {
-  stateManager.action(() => {
-    for (const stateChange of transaction.stateChanges) {
-      switch (stateChange.type) {
-        case "EntityAdded":
-          applyEntityAdded(stateManager, stateChange)
-          break
-        case "EntityRemoved":
-          applyEntityRemoved(stateManager, stateChange)
-          break
-        case "EntityPropertyChanged":
-          applyEntityPropertyChanged(stateManager, stateChange)
-          break
+  const action: Action = {type: "UnnamedAction"}
+  const options: ActionOptions = {
+    suppressReportedTransaction: true,
+  }
+  if (stateManager.transaction != null) {
+    throw new Error(`applyTransaction may not be called while in an @R.action`)
+  }
+  stateManager.whileInAction(
+    action,
+    () => {
+      for (const stateChange of transaction.stateChanges) {
+        switch (stateChange.type) {
+          case "EntityAdded":
+            applyEntityAdded(stateManager, stateChange)
+            break
+          case "EntityRemoved":
+            applyEntityRemoved(stateManager, stateChange)
+            break
+          case "EntityPropertyChanged":
+            applyEntityPropertyChanged(stateManager, stateChange)
+            break
+        }
       }
-    }
-  })
+    },
+    options
+  )
 }
 
 function applyEntityAdded(stateManager: StateManager, s: EntityAdded) {
@@ -94,7 +106,7 @@ function applyEntityPropertyChanged(
     s.entityType,
     s.id
   ) as any
-  if (s.hasOwnProperty(s.newValue)) {
+  if (s.hasOwnProperty("newValue")) {
     entity[s.property] = s.newValue
   } else {
     delete entity[s.property]
@@ -120,7 +132,7 @@ function getEntity(
   const entities = getEntities(stateManager, entityType)
   const entity = entities.byId[id]
   if (entity == null) {
-    throw new Error(`Entity ${entityType}#${id}  not found`)
+    throw new Error(`Entity ${entityType}#${id} not found`)
   }
   return entity
 }
