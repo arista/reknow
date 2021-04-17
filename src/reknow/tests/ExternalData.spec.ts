@@ -1,48 +1,48 @@
 import * as R from "../Reknow"
 
 describe("StateManager External Data Integrations", () => {
-  describe("exportEntities", () => {
-    class User extends R.Entity {
-      @R.id id!: string
-      employed?: boolean
-      public constructor(
-        public name: string,
-        public age: number | null = null
-      ) {
-        super()
-      }
-
-      @R.hasMany(() => Job, "userId") jobs!: Array<Job>
+  class User extends R.Entity {
+    @R.id id!: string
+    employed?: boolean
+    public constructor(
+      public name: string,
+      public age: number | null = null
+    ) {
+      super()
     }
-    class _UserEntities extends R.Entities<User> {}
-    const UserEntities = new _UserEntities(User)
 
-    class Job extends R.Entity {
-      @R.id id!: string
-      public constructor(public userId: string, public name: string) {
-        super()
-      }
-    }
-    class _JobEntities extends R.Entities<Job> {
-      @R.index("+name") byName!: R.SortIndex<Job>
-    }
-    const JobEntities = new _JobEntities(Job)
+    @R.hasMany(() => Job, "userId") jobs!: Array<Job>
+  }
+  class _UserEntities extends R.Entities<User> {}
+  const UserEntities = new _UserEntities(User)
 
-    const stateManager = new R.StateManager({
-      entities: {
-        User,
-        a: {
-          b: {
-            Job,
-          },
+  class Job extends R.Entity {
+    @R.id id!: string
+    public constructor(public userId: string, public name: string) {
+      super()
+    }
+  }
+  class _JobEntities extends R.Entities<Job> {
+    @R.index("+name") byName!: R.SortIndex<Job>
+  }
+  const JobEntities = new _JobEntities(Job)
+
+  const stateManager = new R.StateManager({
+    entities: {
+      User,
+      a: {
+        b: {
+          Job,
         },
       },
-    })
+    },
+  })
 
-    beforeEach(() => {
-      stateManager.clearState()
-    })
+  beforeEach(() => {
+    stateManager.clearState()
+  })
 
+  describe("exportEntities", () => {
     it("should export an empty StateManager", () => {
       const expected = {
         entities: {
@@ -105,5 +105,25 @@ describe("StateManager External Data Integrations", () => {
       }
       expect(stateManager.exportEntities()).toEqual(expected)
     })
+  })
+  describe("importEntities", () => {
+    xit("should handle an empty exports", () => {})
+    xit("should import a single entity", () => {})
+    xit("should import multiple entities of the same type", () => {})
+    xit("should import multiple entity types", () => {})
+    xit("should error if an entity type is not found", () => {})
+    xit("should error if an entity with the same id already exists", () => {})
+    xit("should error if already in an action", () => {})
+    xit("should not report the transaction", () => {})
+  })
+  describe("importEntitiesForUpdate", () => {
+    xit("should handle an empty exports", () => {})
+    xit("should import a single entity", () => {})
+    xit("should import multiple entities of the same type", () => {})
+    xit("should import multiple entity types", () => {})
+    xit("should error if an entity type is not found", () => {})
+    xit("should update if an entity with the same id already exists", () => {})
+    xit("should error if already in an action", () => {})
+    xit("should not report the transaction", () => {})
   })
 })

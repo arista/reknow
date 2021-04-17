@@ -204,7 +204,7 @@ export class StateManager {
     return this.whileInAction(action, f)
   }
 
-  whileInSuppressedTransaction<T>(f: () => T):T {
+  whileInSuppressedTransaction<T>(f: () => T): T {
     const action: Action = {type: "UnnamedAction"}
     const options: ActionOptions = {
       suppressReportedTransaction: true,
@@ -214,7 +214,7 @@ export class StateManager {
     }
     return this.whileInAction(action, f, options)
   }
-  
+
   withTransaction<T>(t: Transaction, f: () => T): T {
     const oldTransaction = this.transaction
     this.transaction = t
@@ -424,7 +424,7 @@ export class StateManager {
     return ret
   }
 
-  getEntitiesState<T extends Entity>(entityType:string):EntitiesState<T> {
+  getEntitiesState<T extends Entity>(entityType: string): EntitiesState<T> {
     const entitiesState = this.entitiesStatesByName[entityType]
     if (entitiesState == null) {
       throw new Error(`EntityType ${entityType} not found`)
@@ -432,25 +432,32 @@ export class StateManager {
     return entitiesState
   }
 
-  forEachExportedEntity(e:EntitiesExport, f:(entities:Entities<any>, id:string, props:EntityPropertiesExport)=>void) {
-    for(const entityType in e.entities) {
+  forEachExportedEntity(
+    e: EntitiesExport,
+    f: (
+      entities: Entities<any>,
+      id: string,
+      props: EntityPropertiesExport
+    ) => void
+  ) {
+    for (const entityType in e.entities) {
       const entities = this.getEntitiesState(entityType).entities
       const exportedEntities = e.entities[entityType]
-      for(const id in exportedEntities) {
+      for (const id in exportedEntities) {
         const exportedEntity = exportedEntities[id]
         f(entities, id, exportedEntity)
       }
     }
   }
 
-  importEntities(e:EntitiesExport) {
-    this.forEachExportedEntity(e, (entities, id, props)=>{
+  importEntities(e: EntitiesExport) {
+    this.forEachExportedEntity(e, (entities, id, props) => {
       entities.addObject(props, id)
     })
   }
 
-  importEntitiesForUpdate(e:EntitiesExport) {
-    this.forEachExportedEntity(e, (entities, id, props)=>{
+  importEntitiesForUpdate(e: EntitiesExport) {
+    this.forEachExportedEntity(e, (entities, id, props) => {
       entities.updateObject(props, id)
     })
   }
