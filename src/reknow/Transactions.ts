@@ -62,15 +62,15 @@ export function applyTransaction(
   stateManager.whileInSuppressedTransaction(() => {
     for (const stateChange of transaction.stateChanges) {
       switch (stateChange.type) {
-      case "EntityAdded":
-        applyEntityAdded(stateManager, stateChange)
-        break
-      case "EntityRemoved":
-        applyEntityRemoved(stateManager, stateChange)
-        break
-      case "EntityPropertyChanged":
-        applyEntityPropertyChanged(stateManager, stateChange)
-        break
+        case "EntityAdded":
+          applyEntityAdded(stateManager, stateChange)
+          break
+        case "EntityRemoved":
+          applyEntityRemoved(stateManager, stateChange)
+          break
+        case "EntityPropertyChanged":
+          applyEntityPropertyChanged(stateManager, stateChange)
+          break
       }
     }
   })
