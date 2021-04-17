@@ -59,32 +59,21 @@ export function applyTransaction(
   stateManager: StateManager,
   transaction: Transaction
 ) {
-  const action: Action = {type: "UnnamedAction"}
-  const options: ActionOptions = {
-    suppressReportedTransaction: true,
-  }
-  if (stateManager.transaction != null) {
-    throw new Error(`applyTransaction may not be called while in an @R.action`)
-  }
-  stateManager.whileInAction(
-    action,
-    () => {
-      for (const stateChange of transaction.stateChanges) {
-        switch (stateChange.type) {
-          case "EntityAdded":
-            applyEntityAdded(stateManager, stateChange)
-            break
-          case "EntityRemoved":
-            applyEntityRemoved(stateManager, stateChange)
-            break
-          case "EntityPropertyChanged":
-            applyEntityPropertyChanged(stateManager, stateChange)
-            break
-        }
+  stateManager.whileInSuppressedTransaction(() => {
+    for (const stateChange of transaction.stateChanges) {
+      switch (stateChange.type) {
+      case "EntityAdded":
+        applyEntityAdded(stateManager, stateChange)
+        break
+      case "EntityRemoved":
+        applyEntityRemoved(stateManager, stateChange)
+        break
+      case "EntityPropertyChanged":
+        applyEntityPropertyChanged(stateManager, stateChange)
+        break
       }
-    },
-    options
-  )
+    }
+  })
 }
 
 function applyEntityAdded(stateManager: StateManager, s: EntityAdded) {
@@ -117,11 +106,7 @@ function getEntities(
   stateManager: StateManager,
   entityType: string
 ): Entities<any> {
-  const entitiesState = stateManager.entitiesStatesByName[entityType]
-  if (entitiesState == null) {
-    throw new Error(`EntityType ${entityType} not found`)
-  }
-  return entitiesState.entities
+  return stateManager.getEntitiesState(entityType).entities
 }
 
 function getEntity(

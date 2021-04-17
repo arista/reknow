@@ -331,7 +331,7 @@ describe("applyTransaction", () => {
       ],
     }
     expect(() => sm.action(() => sm.applyTransaction(t))).toThrow(
-      new Error(`applyTransaction may not be called while in an @R.action`)
+      new Error(`An action must not be in place while making this call`)
     )
   })
   it("should not report to a transaction listener", () => {
