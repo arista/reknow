@@ -451,14 +451,18 @@ export class StateManager {
   }
 
   importEntities(e: EntitiesExport) {
-    this.forEachExportedEntity(e, (entities, id, props) => {
-      entities.addObject(props, id)
+    this.whileInSuppressedTransaction(() => {
+      this.forEachExportedEntity(e, (entities, id, props) => {
+        entities.addObject(props, id)
+      })
     })
   }
 
   importEntitiesForUpdate(e: EntitiesExport) {
-    this.forEachExportedEntity(e, (entities, id, props) => {
-      entities.updateObject(props, id)
+    this.whileInSuppressedTransaction(() => {
+      this.forEachExportedEntity(e, (entities, id, props) => {
+        entities.updateObject(props, id)
+      })
     })
   }
 }
