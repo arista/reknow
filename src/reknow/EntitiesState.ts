@@ -537,8 +537,13 @@ export class EntitiesState<E extends Entity> extends Proxied<
   }
 
   generateId(): string {
-    // FIXME - better id generator?
     // FIXME - make sure id isn't already used
+    if (this.stateManager.idGenerator != null) {
+      const id = this.stateManager.idGenerator(this.name)
+      if (id != null) {
+        return id
+      }
+    }
     return `${this.idGenerator++}`
   }
 

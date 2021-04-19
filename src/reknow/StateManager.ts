@@ -32,18 +32,21 @@ import {EntityTypeExport} from "./Types"
 import {EntityPropertiesExport} from "./Types"
 import {applyTransaction} from "./Transactions"
 import {ActionOptions} from "./Types"
+import {IdGenerator} from "./Types"
 
 export interface StateManagerConfig {
   entities?: EntitiesDefinitionTree
   services?: ServiceDefinitionTree
   listener?: Listener<Transaction>
   debugListener?: Listener<DebugEvent>
+  idGenerator?: IdGenerator
 }
 
 export class StateManager {
   transaction: Transaction | null = null
   transactionListeners = new Listeners<Transaction>()
   debugListener: Listener<DebugEvent> | null
+  idGenerator: IdGenerator | null
   entitiesStates: Array<EntitiesState<any>> = []
   entitiesStatesByName: {[name: string]: EntitiesState<any>} = {}
   serviceStates: Array<ServiceState> = []
@@ -62,6 +65,7 @@ export class StateManager {
       this.transactionListeners.add(config.listener)
     }
     this.debugListener = config.debugListener || null
+    this.idGenerator = config.idGenerator || null
     this.initializeEntities(config.entities)
     this.initializeServices(config.services)
     this.initialize()
