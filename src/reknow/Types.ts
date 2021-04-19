@@ -283,3 +283,6 @@ export interface EntityTypeExport {
 export interface EntityPropertiesExport {
   [name: string]: any
 }
+
+export type IdGenerator = (entityType:string)=>string|null
+
