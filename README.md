@@ -1338,7 +1338,7 @@ The `updateObject()` behaves similarly to `addObject()`, except that if an objec
 
 `StateManager.exportEntities()` will return an object that represents all of the Entity instances that have been added to it.  The object will be in this `EntitiesExport` form:
 
-```json
+```
 {
   entities: {
     <entity type>: {
