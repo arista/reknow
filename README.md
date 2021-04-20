@@ -1554,9 +1554,15 @@ Creates a Service instance.  Applications should rarely, if ever, need to overri
 
 #### StateManager
 
+FIXME
+
 #### Query
 
+FIXME
+
 #### Transaction
+
+FIXME
 
 #### Decorators
 
