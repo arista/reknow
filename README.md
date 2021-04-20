@@ -4,6 +4,8 @@ _knowledge before action_
 
 Reknow is a state management library based on relational modeling concepts, designed to support React applications written in either TypeScript or JavaScript.
 
+Table of Contents (FIXME)
+
 ## Introduction
 
 Reknow organizes and maintains an application's internal state, separating that state from the application's presentation layer.  In a React application, Reknow occupies the same space as libraries like Redux or Recoil.
@@ -40,7 +42,7 @@ cp -r {path to reknow}/docs/todoapp/* src/
 ```
 Edit `tsconfig.json` to enable `experimentalDecorators`:
 
-```
+```json
 {
   "compilerOptions": {
     ...
@@ -86,7 +88,7 @@ The steps to build a typical Reknow application look something like this:
 
 Applications typically import Reknow into its own namespace:
 
-```
+```ts
 import * as R from "reknow"
 ```
 
@@ -182,7 +184,7 @@ By default, if Reknow is generating the id, it will use a very simple counter to
 
 Every Entities class (the singleton associated with each model class) has a built-in `byId` property that maps Entity id to Entity instance.  For example:
 
-```
+```ts
 const item = TodoListItemEntities.byId["item22424"]
 ```
 
@@ -346,7 +348,7 @@ export class TodoList extends R.Entity {
 ```
 These declarations can look confusing at first, so to break it down:
 
-```
+```ts
 @R.hasMany(...) items!: Array<TodoListItem>
 ```
 The decorator is ultimately declaring an `items` property which will be an array of the items that belong to the `TodoList`.  The `!` in the declaration effectively tells Typescript that this is a "synthetic" property, and Typescript shouldn't complain that the property isn't set in the constructor.
@@ -393,7 +395,7 @@ An application can also associate a callback function with a query, which will b
 
 The easiest way to define a query is to use the `@R.query` decorator on an Entity getter method.
 
-```
+```ts
 @R.query get completeItems() {
   return this.items.filter(item => item.complete === true)
 }
@@ -429,7 +431,7 @@ While reactions may modify state, they still should be kept free of other side e
 
 Reknow's actions, queries, and reactions should all be kept free of side effects, such as network requests, timers, DOM changes, etc.  Real-world applications, of course, need to do all of these things.  For applications that wish for side effects to be "model-driven", Reknow provides "effects" decorators that allow side effects to be triggered in response to state changes.  These decorators are `@R.afterAdd`, `@R.afterRemove`, `@R.afterChange`, and `@R.afterPropertyChange`:
 
-```
+```ts
 export class TodoListItem extends R.Entity {
   @R.afterAdd sendNetworkRequest() {
     ...
@@ -440,7 +442,7 @@ Effects are called at the end of an action, after all the state changes have bee
 
 The `@R.afterPropertyChange` decorator can narrow the effect to a specific property.  For example:
 
-```
+```ts
 export class TodoListItem extends R.Entity {
   @R.afterPropertyChange("name") onNameChange(oldName:string) {
     ...
@@ -738,7 +740,7 @@ The `TodoApp` Entity might have relationships and queries that ultimately provid
 
 Both the `useQuery` and `useComponentEntity` hooks take an optional name as a second argument.  For example:
 
-```
+```ts
   const item = useQuery(() => p.item, "TodoListItemView.item")
 ```
 
@@ -776,7 +778,7 @@ Once we've designed our basic data model, we can create the "skeleton" of each c
 
 Starting with [TodoListItem](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListItem.ts), the "skeleton" of that class' file looks something like this:
 
-```
+```ts
 import * as R from "reknow"
 
 export class TodoListItem extends R.Entity {
@@ -799,7 +801,7 @@ We also start with a blank skeleton for the corresponding `Entities` class.
 
 The [TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts) class looks similar:
 
-```
+```ts
 import * as R from "reknow"
 
 export class TodoList extends R.Entity {
@@ -820,7 +822,7 @@ The `itemCount` will be computed dynamically, and will be used to populate an in
 
 The [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoApp.ts) follows the same pattern.  We also see a `ListSortOrder` type acting as a TypeScript enumeration:
 
-```
+```ts
 import * as R from "reknow"
 
 export type ListSortOrder = "byCreatedAt" | "byName" | "byItemCount"
@@ -844,7 +846,7 @@ TodoApp --< TodoList --< TodoListItem
 
 Starting with [TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts):
 
-```
+```ts
   @R.hasMany(() => TodoListItem, "todoListId", {
     sort: "+createdAt",
     dependent: "remove",
@@ -858,7 +860,7 @@ Behind the scenes, Reknow will create and maintain an index on `TodoListItem` or
 
 The [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoApp.ts) is similar in that it "owns" a list of TodoLists, but it defines multiple relationships for accessing that same list with different orderings:
 
-```
+```ts
   @R.hasMany(() => TodoList, "todoAppId", {dependent: "remove"})
   todoLists!: Array<TodoList>
 
@@ -876,13 +878,13 @@ The first declaration will be the "main" relationship - it's the one that the ap
 
 For completeness, we also define `@R.belongsTo` relationships that go in the "opposite" direction, so that a [TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts) can reference its "owning" `TodoApp`:
 
-```
+```ts
   @R.belongsTo(() => TodoApp, "todoAppId") todoApp!: TodoApp
 ```
 
 and a [TodoListItem](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListItem.ts) can reference its "owning" list:
 
-```
+```ts
   @R.belongsTo(() => TodoList, "todoListId") todoList!: TodoList
 ```
 
@@ -899,7 +901,7 @@ With the data modeled and structured, we can now define the actions we expect th
 
 To add a new list, [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoApp.ts) defines this method, marking it with `@R.action` since it will be modifying state:
 
-```
+```ts
   @R.action addList(value: string) {
     const todoList = new TodoList(value).addEntity()
     this.todoLists.push(todoList)
@@ -909,7 +911,7 @@ It uses the pattern of creating and adding the model object to Reknow in a singl
 
 Adding an item to a list is similar, as shown in [TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts):
 
-```
+```ts
   @R.action addItem(value: string) {
     const item = new TodoListItem(value).addEntity()
     this.items.push(item)
@@ -918,7 +920,7 @@ Adding an item to a list is similar, as shown in [TodoList](https://github.com/a
 
 Marking an item as complete is found in [TodoListItem](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListItem.ts):
 
-```
+```ts
   @R.action setComplete() {
     this.complete = true
   }
@@ -926,7 +928,7 @@ Marking an item as complete is found in [TodoListItem](https://github.com/arista
 
 Note that `@R.action` can be used with setters, but that can be awkward, since you need to define a corresponding getter and a different "backing" property:
 
-```
+```ts
   this._complete = false
 
   @R.action set complete(complete:boolean) {
@@ -939,7 +941,7 @@ Note that `@R.action` can be used with setters, but that can be awkward, since y
 ```
 
 Selecting a sort ordering for the TodoLists is found in [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoApp.ts)
-```
+```ts
   @R.action setListSortOrder(val: ListSortOrder) {
     this.listSortOrder = val
   }
@@ -953,7 +955,7 @@ The app's UI will by driven by the data in the model.  Most of the data we need 
 
 There are a couple special cases to note.  The first is the sort ordering of the lists, which the user can select by name, creation time, or number of items.  We've chosen to implement that by defining three separate relationships, each referencing the same list of items but ordered in different ways.  The choice of sort order is specified in the `listSortOrder` property.  To implement this, we'll define a getter on [TodoApp](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoApp.ts) that does what we want:
 
-```
+```ts
   @R.query get sortedTodoLists() {
     switch (this.listSortOrder) {
       case "byName":
@@ -971,7 +973,7 @@ The other interesting case is the way each list displays its items, with the inc
 
 In [TodoListItem](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListItem.ts) we define an index:
 
-```
+```ts
 class Entities extends R.Entities<TodoListItem> {
   @R.index("=todoListId", "=complete", "+createdAt") byComplete!: R.HashIndex<
     R.HashIndex<R.SortIndex<TodoListItem>>
@@ -983,7 +985,7 @@ export const TodoListItemEntities = new Entities(TodoListItem)
 
 As described previously, this causes Reknow to maintain a structure of objects indexed by "todoListId", each pointing to an object indexed by the value of "complete", each pointing to a list of TodoListItems.  Keeping in mind that all object keys are converted to strings, that structure might look like this:
 
-```
+```json
 {
   "13": {
     "true": [
@@ -1006,7 +1008,7 @@ The class also now exports `TodoListItemEntities` (the singleton, not the `Entit
 
 With this index in place, each [TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts) can return its complete and incomplete items by traversing that index structure:
 
-```
+```ts
   @R.query get completeItems() {
     return TodoListItemEntities.byComplete[this.id]?.true || []
   }
@@ -1019,7 +1021,7 @@ Note the `?.` and `|| []` used to protect against values not being found in the 
 
 Once again we mark the method with `@R.query` just for illustration.  Because the methods are simple lookups, caching their values probably isn't a big help.  On the other hand, if we had chosen to implement the methods using some computation without an index, then caching the result might make more sense.  For example:
 
-```
+```ts
   @R.query get completeItems() {
     return this.items.filter(item => item.complete)
   }
@@ -1035,7 +1037,7 @@ We have one remaining function, which is the ability to sort lists by the number
 
 [TodoList](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoList.ts) shows how to do this with a `@R.reaction`:
 
-```
+```ts
   @R.reaction computeItemCount() {
     this.itemCount = this.items.length
   }
@@ -1051,14 +1053,14 @@ The [Models](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/Mod
 
 The `StateManager` is also configured with a couple listeners that let you see some of the inner workings of Reknow in the console.  These outputs are formatted for readability - if you want to the see the "raw" JSON being emitted, you can replace them with `(e) => console.log(JSON.stringify(e, null, 2))`.
 
-```
+```ts
   listener: (e) => console.log(R.stringifyTransaction(e)),
   debugListener: (e) => console.log(R.stringifyDebugEvent(e)),
 ```
 
 The Models fils also handles the connection to react-reknow, setting up the `useQuery` and `useComponentEntity` hooks that will be used by the application's React components.
 
-```
+```ts
 export const {useQuery, useComponentEntity} = ReactReknow(models)
 ```
 
@@ -1070,7 +1072,7 @@ Where things get tricky is reacting to changes in Reknow model objects.  When a 
 
 This is where the `useQuery` hook comes into play.  `useQuery` will evaluate a function, and if any dependency of that function changes, the component will re-render.  Consider [TodoListView](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoListView.tsx), which takes a `TodoList` as a parameter:
 
-```
+```ts
 export const TodoListView: React.FC<{todoList: TodoList}> = (params) => {
   const todoList = useQuery(() => params.todoList)
   const incompleteItems = useQuery(() => todoList.incompleteItems)
@@ -1084,7 +1086,7 @@ We'll explain in a bit why those particular `useQuery` calls are needed.
 
 With the above data available, the component can now render its HTML using the usual React techniques:
 
-```
+```tsx
   return (
     <li>
       <div>
@@ -1111,13 +1113,13 @@ A few things to note:
 
 * Values extracted from Entities can be used directly:
 
-```
+```tsx
 List {todoList.name}
 ```
 
 * Actions on Reknow objects can be called directly in response to user actions:
 
-```
+```tsx
 <button onClick={() => todoList.remove()}>Remove</button>
 ```
 
@@ -1130,7 +1132,7 @@ List {todoList.name}
 
 * When iterating over lists, React requires each nested list item to specify a `key`.  If the item is an Entity, the item's `id` can serve as that `key`.
 
-```
+```tsx
           <TodoListItemView item={item} key={item.id} />
 ```
 
@@ -1149,14 +1151,14 @@ The trick is understanding what causes Reknow data to appear to "change", and th
 
 A `TodoList` has its "own" properties which it stores directly.  If any of those properties changes, then the `TodoList` is considered changed.  A `useQuery` that returns a `TodoList` will force a re-render in that case.
 
-```
+```tsx
 const todoList = useQuery(() => params.todoList)
 return <>The list's name is {todoList.name}</>
 ```
 
 A `TodoList` also has an `items` relationship, but changes in that relationship are not considered changes in the `TodoList` itself.  If an item is added or removed, the `TodoList` is not considered changed, and a `useQuery` listening to just the `TodoList` will not trigger a re-render.  This code, for example, will not properly re-render:
 
-```
+```tsx
 // WRONG
 const todoList = useQuery(() => params.todoList)
 return <>
@@ -1166,7 +1168,7 @@ return <>
 ```
 This component is only listening for changes on `todoList`, so changes to the `items` relationship will not trigger a re-render.  If the component wants to be re-rendered whenever the list of items changes, then it needs to subscribe to that list explicitly:
 
-```
+```tsx
 // RIGHT
 const todoList = useQuery(() => params.todoList)
 const items = useQuery(() => params.todoList.items)
@@ -1182,7 +1184,7 @@ But changes within each `TodoListItem` are not automatically considered changes 
 
 So this code will not re-render properly:
 
-```
+```tsx
 // WRONG
 const todoList = useQuery(() => params.todoList)
 const items = useQuery(() => params.todoList.items)
@@ -1194,7 +1196,7 @@ return <>
 To get this to re-render properly, each `item` must individually subscribe using its own `useQuery`.  Because of the [Rules of Hooks](https://reactjs.org/docs/hooks-overview.html#rules-of-hooks), we can't call `useQuery` in loops or condition, so we need to break out the `TodoListItem` into its own component, so that each item gets its own `useQuery` call:
 
 
-```
+```tsx
 // RIGHT
 const TodoListView: React.FC<{todoList: TodoList}> = (params) => {
   const todoList = useQuery(() => params.todoList)
@@ -1227,14 +1229,14 @@ If a `useQuery` accesses indexes on Entities instances, then changes to the inde
 The other React hook used by Reknow is `useComponentEntity`.  This is similar to `useQuery`, except that it will automatically manage the Reknow lifecycle of a returned Entity: it will call `addEntity()` when first called, and will call `removeEntity()` when the component is unmounted.
 
 This is typically used when a Reknow Entity instance is intended to be "paired" with a React component instance.  For example, the [TextInputView](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TextInputView.tsx) component keeps its state in a [TextInput](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TextInput.ts) Entity.  The two are connected by `useComponentEntity`:
-```
+```ts
   const textInput = useComponentEntity(() => new TextInput("", onValue))
 ```
 The component can now be assured of having its own `TextInput` instance which it can read and write.  Users of the `<TextInputView/>` don't even need to be aware of Reknow's involvement.
 
 The other main use case is the management of a "top-level" component and its associated "top-level" Entity.  React applications are often "bootstrapped" by a component which initializes the application and its data.  For example, in [App.tsx](https://github.com/arista/reknow/tree/main/docs/todoapp/src/App.tsx), the application is booted by a "top-level" `<TodoAppView/>`:
 
-```
+```tsx
 function App() {
   return (
       <TodoAppView />
@@ -1244,7 +1246,7 @@ function App() {
 
 The [TodoAppView.tsx](https://github.com/arista/reknow/tree/main/docs/todoapp/src/app/TodoAppView.tsx) in turn uses `useComponentEntity` to create and manage the corresponding "top-level" Entity:
 
-```
+```tsx
 export const TodoAppView: React.FC<{}> = (params) => {
   const todoApp = useComponentEntity(() => new TodoApp())
   ...
@@ -1278,13 +1280,13 @@ Sometimes it is more convnient to add data to Reknow without creating Entity ins
 
 In these situations, an application can call `addEntityObject()` on the appropriate Entities instance.  For example, instead of calling this:
 
-```
+```ts
 const todoList = TodoListEntities.add(new TodoList("shopping"))
 ```
 
 An application could call this instead:
 
-```
+```ts
 const todoList = TodoListEntities.addObject({name: "shopping"})
 ```
 
@@ -1292,7 +1294,7 @@ Internally, Reknow will create a `TodoList` instance and assign it all the prope
 
 Note, however, that the `constructor` function is *not* called on the `TodoList`.  So any initialization that would happen in the constructor would not take place in this instance.  For example:
 
-```
+```ts
 export class TodoList extends R.Entity {
   itemCount = 0
   constructor(public name: string) {
@@ -1310,7 +1312,7 @@ The constructor would not be called, nor would `itemCount` be set automatically 
 
 The real power of `addObject` is its ability to add entire "graphs" of Objects.  If the added Object contains properties that correspond to the Entity's relationships, then those Objects will be added as well.  For example:
 
-```
+```ts
 const obj = {
   name: "shopping",
   items: [
@@ -1336,7 +1338,7 @@ The `updateObject()` behaves similarly to `addObject()`, except that if an objec
 
 `StateManager.exportEntities()` will return an object that represents all of the Entity instances that have been added to it.  The object will be in this `EntitiesExport` form:
 
-```
+```json
 {
   entities: {
     <entity type>: {
@@ -1354,7 +1356,7 @@ The `updateObject()` behaves similarly to `addObject()`, except that if an objec
 
 The `entity type` is the name of the Entity as it was declared to the `StateManager`.  For example:
 
-```
+```ts
 export const models = new R.StateManager({
   entities: {
     todo: {
@@ -1381,7 +1383,7 @@ To address this, Reknow provides alternative ways of specifying the various deco
 
 For example, in TypeScript, decorators might be used like this:
 
-```
+```ts
 export class TodoListItem extends R.Entity {
   @R.id id!: string
   @R.belongsTo(() => TodoList, "todoListId") todoList!: TodoList
@@ -1394,7 +1396,7 @@ export class TodoListItem extends R.Entity {
 
 In Javascript, it would look like this:
 
-```
+```ts
 export class TodoListItem extends R.Entity {
   setComplete() {
     ...
@@ -1515,7 +1517,7 @@ Method `addObject(entity: Object, id: string | null = null):E`
 
 Creates and adds a new Entity instance, copying its "own" properties from the given `entity`.  The same id generation and effects are followed as (FIXME).  Note that the Entity instance is created without calling its constructor, which includes TypeScript's property initializations:
 
-```
+```ts
 export class TodoListItem extends R.Entity {
   // NOT CALLED when created through `addObject`
   complete = false
@@ -1609,7 +1611,7 @@ Reactions are typically used to set "computed" properties derived from other sta
 Applications do not typically call `@R.reaction` methods directly.
 
 ##### hasMany
-```
+```ts
 @R.hasMany<E extends Entity>(
   foreignEntityFunc: () => EntityClass<E>,
   foreignKey: string,
@@ -1623,7 +1625,7 @@ type HasManyOptions {
 }
 ```
 OR
-```
+```ts
 static hasMany(propertyName, foreignEntityFunc, foreignKey, options)
 ```
 
@@ -1650,7 +1652,7 @@ The `dependent` option declares what happens to foreign Entities in the relation
 The array property is partially mutable - items can be added or removed or replaced, but attempts to reorder the elements of the array will be ignored.  An entirely new array can even be assigned to the property.  If an Entity is added, then its foreignKey property wlil be set to the primaryKey.  The array elements will always follow the specified sort order.  If a mutation causes an element to be removed (`pop()`, `items[0] = newValue`, etc.), the removed element will follow the `dependent` option above, except that the `"none"` option is treated the same as `"nullify"`.
 
 ##### hasOne
-```
+```ts
 @R.hasOne<E extends Entity>(
   foreignEntityFunc: () => EntityClass<E>,
   foreignKey: string,
@@ -1663,7 +1665,7 @@ type HasOneOptions {
 }
 ```
 OR
-```
+```ts
 static hasOne(propertyName, foreignEntityFunc, foreignKey, options)
 ```
 
@@ -1684,7 +1686,7 @@ The property is mutable, in that it can be assigned a different foreign Entity, 
 A `hasMany` declaration will implicitly create or use a `uniqueIndex` on the foreign Entity, which enforces uniqueness of the foreignKey property.  If that uniqueness is ever violated (two Entity instances are assigned the same foreignKey property value), an exception is thrown immediately.
 
 ##### belongsTo
-```
+```ts
 belongsTo<E extends Entity>(
   foreignEntityFunc: () => EntityClass<E>,
   primaryKey: string,
@@ -1697,7 +1699,7 @@ type BelongsToOptions {
 }
 ```
 OR
-```
+```ts
 static hasOne(propertyName, foreignEntityFunc, primaryKey, options)
 ```
 
@@ -1768,6 +1770,12 @@ The terms specify an ordered list of property names, each prefixed with either `
 `@R.uniqueIndex(...terms: Array<string>)` or `static uniqueIndex(name, ...terms)`
 
 May only be specified for a property of an `Entities` class.
+
+#### Functions
+
+##### reverseTransaction
+
+FIXME
 
 ### Invalidation Rules
 
