@@ -182,9 +182,11 @@ function toActionString(action: Action): string {
         action.args
       )})"`
     case "InitializeAction":
-      return `"InitializeAction"`
+      return `InitializeAction`
     case "UnnamedAction":
-      return `"UnnamedAction"`
+      return `UnnamedAction`
+    case "ReverseAction":
+      return `ReverseAction(${toActionString(action.action)})`
   }
 }
 

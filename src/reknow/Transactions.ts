@@ -121,3 +121,72 @@ function getEntity(
   }
   return entity
 }
+
+export function reverseTransaction(t: Transaction): Transaction {
+  const action: Action = {
+    type: "ReverseAction",
+    action: t.action,
+  }
+  const stateChanges = reverseStateChanges(t.stateChanges)
+  return {action, stateChanges}
+}
+
+function reverseStateChanges(
+  stateChanges: Array<StateChange>
+): Array<StateChange> {
+  const ret: Array<StateChange> = []
+  for (let i = stateChanges.length - 1; i >= 0; i--) {
+    ret.push(reverseStateChange(stateChanges[i]))
+  }
+  return ret
+}
+
+function reverseStateChange(stateChange: StateChange): StateChange {
+  switch (stateChange.type) {
+    case "EntityAdded":
+      return reverseEntityAdded(stateChange)
+    case "EntityRemoved":
+      return reverseEntityRemoved(stateChange)
+    case "EntityPropertyChanged":
+      return reverseEntityPropertyChanged(stateChange)
+  }
+}
+
+function reverseEntityAdded(c: EntityAdded): StateChange {
+  return {
+    type: "EntityRemoved",
+    entityType: c.entityType,
+    id: c.id,
+    entity: c.entity,
+  }
+}
+
+function reverseEntityRemoved(c: EntityRemoved): StateChange {
+  if (c.entity == null) {
+    throw new Error(
+      `Cannot reverse a transction containing an EntityRemoved with no "entity"`
+    )
+  }
+  return {
+    type: "EntityAdded",
+    entityType: c.entityType,
+    id: c.id,
+    entity: c.entity,
+  }
+}
+
+function reverseEntityPropertyChanged(c: EntityPropertyChanged): StateChange {
+  const ret: EntityPropertyChanged = {
+    type: "EntityPropertyChanged",
+    entityType: c.entityType,
+    id: c.id,
+    property: c.property,
+  }
+  if (c.hasOwnProperty("oldValue")) {
+    ret.newValue = c.oldValue
+  }
+  if (c.hasOwnProperty("newValue")) {
+    ret.oldValue = c.newValue
+  }
+  return ret
+}
