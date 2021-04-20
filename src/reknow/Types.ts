@@ -55,6 +55,7 @@ export type Action =
   | EntityAction
   | ServiceAction
   | InitializeAction
+  | ReverseAction
   | UnnamedAction
 
 export interface EntitiesAction {
@@ -81,6 +82,11 @@ export interface ServiceAction {
 
 export interface UnnamedAction {
   type: "UnnamedAction"
+}
+
+export interface ReverseAction {
+  type: "ReverseAction"
+  action: Action
 }
 
 export interface InitializeAction {
@@ -284,5 +290,4 @@ export interface EntityPropertiesExport {
   [name: string]: any
 }
 
-export type IdGenerator = (entityType:string)=>string|null
-
+export type IdGenerator = (entityType: string) => string | null

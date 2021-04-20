@@ -303,7 +303,7 @@ describe("DebugEvents", () => {
       const expected =
         `Action EntitiesAction "E1.create()"\n` +
         `  Add Entity "E1#v1"\n` +
-        `    Action "UnnamedAction"\n` +
+        `    Action UnnamedAction\n` +
         `      Run query "E1#v1.reaction1"\n` +
         `        Add subscriber "E1#v1.reaction1" to "E1#v1.combine2"\n` +
         `        Run query "E1#v1.combine2"\n` +
@@ -311,7 +311,7 @@ describe("DebugEvents", () => {
         `          Add subscriber "E1#v1.combine2" to "E1#v1.v2"\n` +
         `        Set Entity property "E1#v1.v3" to abc:10\n` +
         `  Add Entity "E1#v2"\n` +
-        `    Action "UnnamedAction"\n` +
+        `    Action UnnamedAction\n` +
         `      Run query "E1#v2.reaction1"\n` +
         `        Add subscriber "E1#v2.reaction1" to "E1#v2.combine2"\n` +
         `        Run query "E1#v2.combine2"\n` +

@@ -18,6 +18,7 @@ import {EntitiesAction as _EntitiesAction} from "./Types"
 import {EntityAction as _EntityAction} from "./Types"
 import {ServiceAction as _ServiceAction} from "./Types"
 import {InitializeAction as _InitializeAction} from "./Types"
+import {ReverseAction as _ReverseAction} from "./Types"
 import {UnnamedAction as _UnnamedAction} from "./Types"
 
 import {EntityClass as _EntityClass} from "./Types"
@@ -58,6 +59,7 @@ export {afterAdd} from "./Decorators"
 export {afterRemove} from "./Decorators"
 export {afterChange} from "./Decorators"
 export {afterPropertyChange} from "./Decorators"
+export {reverseTransaction} from "./Transactions"
 
 export {stringifyDebugEvent} from "./DebugEvents"
 export {stringifyTransaction} from "./Transactions"
@@ -83,6 +85,7 @@ export type EntityAction = _EntityAction
 export type ServiceAction = _ServiceAction
 export type InitializeAction = _InitializeAction
 export type UnnamedAction = _UnnamedAction
+export type ReverseAction = _ReverseAction
 
 export type DebugEvent = _DebugEvent
 export type ActionDebugEvent = _ActionDebugEvent
