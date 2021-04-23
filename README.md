@@ -1544,6 +1544,11 @@ Method `removeAll():void`
 
 Convenience method that calls `remove` for every Entity instance.
 
+###### initialize
+Method `initialize():void`
+
+Called when the StateManager is created.  Entities subclasses may override this to perform any initial state modifications, such as adding an initial set of Entity instances.  All `initialize` method calls occur within a single Action created by the StateManager, so `initialize()` calls do not need to be decorated with `@R.action`, but they must still follow the same rules (no side effects besides state modification, no dependence on any other data).
+
 #### Service
 
 ##### Service Instance Methods
@@ -1554,17 +1559,71 @@ Constructor `constructor()`
 
 Creates a Service instance.  Applications should rarely, if ever, need to override this constructor.
 
+###### initialize
+Method `initialize():void`
+
+Called when the StateManager is created.  Service subclasses may override this to perform any initial state modifications, such as adding an initial set of Entity instances.  All `initialize` method calls occur within a single Action created by the StateManager, so `initialize()` calls do not need to be decorated with `@R.action`, but they must still follow the same rules (no side effects besides state modification, no dependence on any other data).
+
 #### StateManager
 
+##### constructor (with StateManagerConfig)
+
 FIXME
+
+##### clearState
+
+FIXME
+
+##### action
+
+FIXME
+
+##### createQuery
+
+FIXME
+
+##### createReaction
+
+FIXME
+
+##### applyTransaction
+
+FIXME
+
+##### exportEntities
+
+FIXME
+
+##### importEntities
+
+FIXME
+
+##### importEntitiesForUpdate
+
+FIXME
+
 
 #### Query
 
+##### value
+
 FIXME
+
+##### remove
+
+FIXME
+
+
+### Types
 
 #### Transaction
 
 FIXME
+
+#### EntitiesExport
+
+FIXME
+
 
 #### Decorators
 
@@ -1683,7 +1742,7 @@ The `dependent` option declares what happens to the foreign Entity if the primar
 
 The property is mutable, in that it can be assigned a different foreign Entity, or `null`.  If a different foreign Entity is assigned, then its foreignKey is set to the value of the primary key.  If a foreign Entity is removed or replaced, then the removed element will follow the `dependent` option above, except that the `"none"` option is treated the same as `"nullify"`.
 
-A `hasMany` declaration will implicitly create or use a `uniqueIndex` on the foreign Entity, which enforces uniqueness of the foreignKey property.  If that uniqueness is ever violated (two Entity instances are assigned the same foreignKey property value), an exception is thrown immediately.
+A `hasOne` declaration will implicitly create or use a `uniqueIndex` on the foreign Entity, which enforces uniqueness of the foreignKey property.  If that uniqueness is ever violated (two Entity instances are assigned the same foreignKey property value), an exception is thrown immediately.
 
 ##### belongsTo
 ```ts
@@ -1766,14 +1825,58 @@ Declares that a property will hold an automatically-maintained structure that or
 
 The terms specify an ordered list of property names, each prefixed with either `=`, `+`, or `-`.  Any combination and number of terms and prefixes may be used, but all `=` terms must appear before any `+` or `-` terms.
 
+Each `=` term results in an Object whose keys are the values of the property specified in the term.  Each key maps to all of the Entity instances whose property matches that key value, organized according to the remaining terms.  Only property values currently existing in the Entity instances will be represented.  `null` and `undefined` property values are not included in the list of keys, and their corresponding Entity instances are not included in the index.
+
+The remaining `+` and `-` terms specify the sort order for the Entity instances, sorting by the specified property values in ascending or descending order, respectively.  `null` or `undefined` property values are considered to be less than all other values.  If two Entity instances have the same sort property value, then the next sort term is considered.  If all sort terms are exhausted, then instances are sorted by their id's, ascending.
+
+The type of the resulting index is a set of nested Objects, terminated by an Array of Entity instances.
+
+```ts
+type HashIndex<I extends HashIndexEntry<any>> = Readonly<{
+  [key: string]: I
+}>
+type HashIndexEntry<E extends Entity> =
+  | HashIndex<E>
+  | SortIndex<E>
+type SortIndex<E extends Entity> = ReadonlyArray<E>
+```
+
 ##### uniqueIndex
 `@R.uniqueIndex(...terms: Array<string>)` or `static uniqueIndex(name, ...terms)`
 
 May only be specified for a property of an `Entities` class.
 
+Declares that a property will hold an automatically-maintained structure that organizes the Entity instances associated with the `Entities` class according to the specified `terms`.  These terms direct the structure to group Entities by matching "own" property values (HashIndex).
+
+The terms specify an ordered list of property names, each prefixed with `=`.
+
+Each `=` term results in an Object whose keys are the values of the property specified in the term.  Each key maps to all of the Entity instances whose property matches that key value, organized according to the remaining terms.  Only property values currently existing in the Entity instances will be represented.  `null` and `undefined` property values are not included in the list of keys, and their corresponding Entity instances are not included in the index.
+
+The Object corresponding to the final term will map to individual Entity instances.  Each combination of non-null property values must therefore map to at most one Entity instance.  Reknow will throw an error if this constraint is ever violated.
+
+The type of the resulting index is a set of nested Objects, terminated by a single Entity instance.
+
+```ts
+type HashIndex<I extends HashIndexEntry<any>> = Readonly<{
+  [key: string]: I
+}>
+type HashIndexEntry<E extends Entity> =
+  | HashIndex<E>
+  | UniqueHashIndex<E>
+type UniqueHashIndex<E extends Entity> = Readonly<{[key: string]: E}>
+```
+
 #### Functions
 
 ##### reverseTransaction
+
+FIXME
+
+##### stringifyTransaction
+
+FIXME
+
+##### stringifyDebugEvent
 
 FIXME
 
@@ -1840,3 +1943,4 @@ These rules have several implications:
 
 ### Anatomy of an Action
 
+FIXME
