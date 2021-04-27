@@ -1566,7 +1566,9 @@ Called when the StateManager is created.  Service subclasses may override this t
 
 #### StateManager
 
-##### constructor (with StateManagerConfig)
+##### constructor
+
+Constructor `constructor(config:StateManagerConfig)`
 
 FIXME
 
@@ -1620,7 +1622,13 @@ FIXME
 
 FIXME
 
+A `Transaction` combines a set of state changes with the action that triggered those state changes.
+
 #### EntitiesExport
+
+FIXME
+
+#### DebugEvent
 
 FIXME
 
@@ -1677,7 +1685,7 @@ Applications do not typically call `@R.reaction` methods directly.
   options: HasManyOptions | null = null
 )
 
-type HasManyOptions {
+interface HasManyOptions {
   primaryKey?: string
   dependent?: "none" | "remove" | "nullify"
   sort?: HasManySort
@@ -1718,7 +1726,7 @@ The array property is partially mutable - items can be added or removed or repla
   options: HasOneOptions | null = null
 )
 
-type HasOneOptions {
+interface HasOneOptions {
   primaryKey?: string
   dependent?: "none" | "remove" | "nullify"
 }
@@ -1752,7 +1760,7 @@ belongsTo<E extends Entity>(
   options: BelongsToOptions | null = null
 )
 
-type BelongsToOptions {
+interface BelongsToOptions {
   foreignKey?: string | null
   dependent?: "none" | "remove" | null
 }
