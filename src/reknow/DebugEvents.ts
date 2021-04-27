@@ -1,4 +1,4 @@
-import {Action} from "./Types"
+import {Action} from "./TransactionTypes"
 
 export type DebugEvent =
   | ActionDebugEvent

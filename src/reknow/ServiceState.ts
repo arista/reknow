@@ -1,6 +1,6 @@
 import {StateManager} from "./StateManager"
 import {Service} from "./Service"
-import {Action} from "./Types"
+import {Action} from "./TransactionTypes"
 import {Query} from "./Query"
 import {ServiceDeclarations} from "./ServiceDeclarations"
 import {FunctionType} from "./Types"

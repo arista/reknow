@@ -1,21 +1,21 @@
-import {EntitiesDefinitionTree} from "./Types"
+import {EntitiesDefinitionTree} from "./StateManagerConfigTypes"
 import {flattenEntitiesDefinitionTree} from "./Utils"
 import {EntitiesState} from "./EntitiesState"
-import {ServiceDefinitionTree} from "./Types"
+import {ServiceDefinitionTree} from "./StateManagerConfigTypes"
 import {flattenServiceDefinitionTree} from "./Utils"
 import {currentEntity} from "./Utils"
 import {ServiceState} from "./ServiceState"
-import {Transaction} from "./Types"
-import {Action} from "./Types"
+import {Transaction} from "./TransactionTypes"
+import {Action} from "./TransactionTypes"
 import {notNull} from "./Utils"
-import {StateChange} from "./Types"
+import {StateChange} from "./TransactionTypes"
 import {Listeners} from "./Listeners"
 import {EntityState} from "./EntityState"
 import {copyInstance} from "./Utils"
-import {EntityAdded} from "./Types"
-import {EntityRemoved} from "./Types"
-import {EntityPropertyChanged} from "./Types"
-import {UnnamedAction} from "./Types"
+import {EntityAdded} from "./TransactionTypes"
+import {EntityRemoved} from "./TransactionTypes"
+import {EntityPropertyChanged} from "./TransactionTypes"
+import {UnnamedAction} from "./TransactionTypes"
 import {Entity} from "./Entity"
 import {Entities} from "./Entities"
 import {ChangeSubscriber} from "./ChangeSubscriber"
@@ -32,15 +32,8 @@ import {EntityTypeExport} from "./Types"
 import {EntityPropertiesExport} from "./Types"
 import {applyTransaction} from "./Transactions"
 import {ActionOptions} from "./Types"
-import {IdGenerator} from "./Types"
-
-export interface StateManagerConfig {
-  entities?: EntitiesDefinitionTree
-  services?: ServiceDefinitionTree
-  listener?: Listener<Transaction>
-  debugListener?: Listener<DebugEvent>
-  idGenerator?: IdGenerator
-}
+import {IdGenerator} from "./StateManagerConfigTypes"
+import {StateManagerConfig} from "./StateManagerConfigTypes"
 
 export class StateManager {
   transaction: Transaction | null = null

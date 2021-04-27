@@ -1,12 +1,12 @@
-import {Transaction} from "./Types"
-import {Action} from "./Types"
-import {StateChange} from "./Types"
+import {Transaction} from "./TransactionTypes"
+import {Action} from "./TransactionTypes"
+import {StateChange} from "./TransactionTypes"
 import {Entity} from "./Entity"
 import {Entities} from "./Entities"
 import {StateManager} from "./StateManager"
-import {EntityAdded} from "./Types"
-import {EntityRemoved} from "./Types"
-import {EntityPropertyChanged} from "./Types"
+import {EntityAdded} from "./TransactionTypes"
+import {EntityRemoved} from "./TransactionTypes"
+import {EntityPropertyChanged} from "./TransactionTypes"
 import {ActionOptions} from "./Types"
 
 export function stringifyTransaction(t: Transaction) {

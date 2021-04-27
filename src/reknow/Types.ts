@@ -3,97 +3,12 @@ import {ENTITIES_KEY} from "./Entity"
 import {EntitiesState} from "./EntitiesState"
 import {Entity} from "./Entity"
 import {Service} from "./Service"
+import {Transaction} from "./TransactionTypes"
 
-export type EntitiesDefinitionTree = {
-  [name: string]: EntitiesDefinitionTreeEntry
-}
-export type EntitiesDefinitionTreeEntry =
-  | EntityClass<any>
-  | EntitiesDefinitionTree
 export type EntitiesDefinitions = {[name: string]: EntityClass<any>}
 
-export type ServiceDefinitionTree = {
-  [name: string]: ServiceDefinitionTreeEntry
-}
-export type ServiceDefinitionTreeEntry = Service | ServiceDefinitionTree
 export type ServiceDefinitions = {[name: string]: Service}
 
-export interface Transaction {
-  action: Action
-  stateChanges: Array<StateChange>
-}
-
-export type ObjectWithProperties = {[name: string]: any}
-
-export type StateChange = EntityAdded | EntityRemoved | EntityPropertyChanged
-
-export interface EntityAdded {
-  type: "EntityAdded"
-  entityType: string
-  id: string
-  entity: ObjectWithProperties
-}
-
-export interface EntityRemoved {
-  type: "EntityRemoved"
-  entityType: string
-  id: string
-  entity?: ObjectWithProperties
-}
-
-export interface EntityPropertyChanged {
-  type: "EntityPropertyChanged"
-  entityType: string
-  id: string
-  property: string
-  oldValue?: any
-  newValue?: any
-}
-
-export type Action =
-  | EntitiesAction
-  | EntityAction
-  | ServiceAction
-  | InitializeAction
-  | ReverseAction
-  | UnnamedAction
-
-export interface EntitiesAction {
-  type: "EntitiesAction"
-  entityType: string
-  name: string
-  args: Array<any>
-}
-
-export interface EntityAction {
-  type: "EntityAction"
-  entityType: string
-  id: string
-  name: string
-  args: Array<any>
-}
-
-export interface ServiceAction {
-  type: "ServiceAction"
-  service: string
-  name: string
-  args: Array<any>
-}
-
-export interface UnnamedAction {
-  type: "UnnamedAction"
-}
-
-export interface ReverseAction {
-  type: "ReverseAction"
-  action: Action
-}
-
-export interface InitializeAction {
-  type: "InitializeAction"
-}
-
-export type Listener<E> = (e: E) => void
 export type TransactionListener = Listener<Transaction>
 
 export interface ActionOptions {
@@ -290,4 +205,4 @@ export interface EntityPropertiesExport {
   [name: string]: any
 }
 
-export type IdGenerator = (entityType: string) => string | null
+export type Listener<E> = (e: E) => void
