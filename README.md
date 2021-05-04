@@ -1549,6 +1549,10 @@ Method `initialize():void`
 
 Called when the StateManager is created.  Entities subclasses may override this to perform any initial state modifications, such as adding an initial set of Entity instances.  All `initialize` method calls occur within a single Action created by the StateManager, so `initialize()` calls do not need to be decorated with `@R.action`, but they must still follow the same rules (no side effects besides state modification, no dependence on any other data).
 
+#### SingletonEntities Reference
+
+FIXME
+
 #### Service
 
 ##### Service Instance Methods
@@ -1570,7 +1574,19 @@ Called when the StateManager is created.  Service subclasses may override this t
 
 Constructor `constructor(config:StateManagerConfig)`
 
-FIXME
+See [StateManagerConfigTypes.ts](https://github.com/arista/reknow/blob/main/src/reknow/StateManagerConfigTypes.ts) for details on the `StateManagerConfig` structure.
+
+Instantiates a StateManager, the central managing object for Reknow applications.  The application's Entity classes are registered with the StateManager as part of its `config`, as are any Service instances.  Throughout the lifetime of the application, the StateManager controls central functions such as recording the state changes in an Action, or buffering and triggering effect calls.
+
+The config structure also specifies optional callbacks for transactions and debugging, and an optional function to use for generating id's.
+
+Upon instantiation, the `initialize` method of every registered Entities and Service instance will be called, all within a single Action.  The order of these calls is not specified, so these methods should not depend on the presence of Entity instances of other types.  It is not unusual for applications to forego this mechanism and instead handle initialization in their own controlled way.
+
+An Entity class may only be registered with one StateManager at a time.  It is acceptable to instantiate a StateManager that references Entity classes that were associated with older StateManager.  In that case, the Entity classes will be "disconnected" from their old StateManager and associated with the new StateManager, losing all of their state in the transition.  The old StateManager should no longer be used in this case.  This "reuse" case doesn't come up often in deployed applications, but is fairly common in development and testing scenarios.
+
+On the other hand, an application can freely instantiate many StateManager instances, as long as they maintain disparate groups of Entity classes and Service instances.
+
+The Entity classes and Service instances are passed to the StateManager as a "tree" of declarations.  The structure of that "tree" determines the names used to refer to those Entities and Services.
 
 ##### clearState
 
@@ -1578,7 +1594,19 @@ FIXME
 
 ##### action
 
-FIXME
+Method `action<T>(f: () => T): T`
+
+Executes the given function in the context of an action, returning the function's result.  When the action completes and is reported, the "action" associated with the transaction will be:
+
+```
+{
+  type: "UnnamedAction"
+}
+```
+
+If an action is already in place when this is called, then the supplied function is called without additional processing.
+
+Applications will typically avoid using this method directly, preferring to use `@action` methods declared on Entity, Entities, and Service classes.
 
 ##### createQuery
 
