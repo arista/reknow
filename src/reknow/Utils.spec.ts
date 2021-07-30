@@ -4,6 +4,7 @@ import {getSortedGE} from "./Utils"
 import {getSortedGT} from "./Utils"
 import {getSortedLE} from "./Utils"
 import {getSortedLT} from "./Utils"
+import {getSuperclass} from "./Utils"
 
 describe("Utils", () => {
   describe("sorted list methods", () => {
@@ -108,5 +109,16 @@ describe("Utils", () => {
         expect(getSortedLT(l, compare8)).toBe(14)
       })
     })
+  })
+  describe("getSuperclass", () => {
+    class A {}
+    class B extends A {}
+    class C1 extends B {}
+    class C2 extends B {}
+
+    expect(getSuperclass(A)).toBe(null)
+    expect(getSuperclass(B)).toBe(A)
+    expect(getSuperclass(C1)).toBe(B)
+    expect(getSuperclass(C2)).toBe(B)
   })
 })

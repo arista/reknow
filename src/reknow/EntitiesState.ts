@@ -28,6 +28,7 @@ import {Query} from "./Query"
 import {FunctionType} from "./Types"
 import {toMemberName} from "./Utils"
 import {relationshipFromRelationshipDecorator} from "./Utils"
+import {getSuperclass} from "./Utils"
 import {ENTITY_STATE_KEY} from "./Entity"
 
 export type EntityStateById<E extends Entity> = {[id: string]: EntityState<E>}
@@ -343,10 +344,7 @@ export class EntitiesState<E extends Entity> extends Proxied<
         } else {
           addNonEnumerableProperty(entity, ENTITY_STATE_KEY, entityState)
 
-          this.invalidateProxy()
-          this.addEntityToEntitiesById(entityId, entityState)
-          this.notifySubscribersOfChange()
-          this.updateIndexesOnEntityAdded(entityState)
+          this.addEntityToInheritanceChain(entityId, entityState)
           this.stateManager.recordEntityAdded(entityState)
           entityState.addPendingAfterAdd()
 
@@ -372,6 +370,29 @@ export class EntitiesState<E extends Entity> extends Proxied<
         return entityState.proxy
       }
     )
+  }
+  
+  get superEntitiesState():EntitiesState<any>|null {
+    let clazz = getSuperclass(this.entityClass)
+    for(; clazz != null; clazz = getSuperclass(clazz)) {
+      const es = ((clazz as unknown) as InternalEntityClass<any>).entitiesState
+      if (es != null) {
+        return es
+      }
+    }
+    return null
+  }
+
+  addEntityToInheritanceChain(entityId: string, entityState: EntityState<E>) {
+    this.invalidateProxy()
+    this.addEntityToEntitiesById(entityId, entityState)
+    this.notifySubscribersOfChange()
+    this.updateIndexesOnEntityAdded(entityState)
+
+    const s = this.superEntitiesState
+    if (s != null){
+      s.addEntityToInheritanceChain(entityId, entityState)
+    }
   }
 
   addEntityToEntitiesById(entityId: string, entityState: EntityState<E>) {

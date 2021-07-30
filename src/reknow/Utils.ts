@@ -842,3 +842,14 @@ export function relationshipFromRelationshipDecorator(
       return new BelongsTo(r.name, r.foreignEntityFunc, r.primaryKey, r.options)
   }
 }
+
+export function getSuperclass(clazz:Function):Function|null {
+  if (clazz.prototype == null) {
+    return null
+  }
+  const superProto = Object.getPrototypeOf(clazz.prototype)
+  if (superProto == null || superProto.constructor == null || superProto.constructor === Object) {
+    return null
+  }
+  return superProto.constructor
+}
