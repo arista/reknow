@@ -36,7 +36,7 @@ cd todoapp
 npm install --save reknow
 npm install --save react-reknow
 
-cp -r {path to reknow}/docs/todoapp/* src/
+cp -r {path to reknow}/docs/todoapp/src/* src/
 ```
 Edit `tsconfig.json` to enable `experimentalDecorators`:
 
