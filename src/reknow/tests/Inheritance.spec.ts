@@ -24,14 +24,32 @@ describe("Inheritance", () => {
     @R.reaction computeTripleName() {
       return this.tripleName = `${this.name}+${this.name}+${this.name}`
     }
+
+    @R.afterAdd onAfterAdd() {
+      effects.push(`User#${this.id} - onAfterAdd`)
+    }
+
+    @R.afterRemove onAfterRemove() {
+      effects.push(`User#${this.id} - onAfterRemove`)
+    }
+
+    @R.afterChange onAfterChange() {
+      effects.push(`User#${this.id} - onAfterChange`)
+    }
+
+    @R.afterPropertyChange("name") onAfterPropertyChange(oldValue:string) {
+      effects.push(`User#${this.id} - onAfterPropertyChange ${oldValue}`)
+    }
   }
   class _Users extends R.Entities<User> {
     @R.index("+name") byName!:R.SortIndex<User>
   }
   const Users = new _Users(User)
 
+  class StaffMemberSuper extends User {}
+
   // StaffMember extends User
-  class StaffMember extends User {
+  class StaffMember extends StaffMemberSuper {
     static get staffMemberEntities(): _StaffMembers {
       return StaffMembers
     }
@@ -70,10 +88,13 @@ describe("Inheritance", () => {
   class _Teachers extends R.Entities<Teacher> {}
   const Teachers = new _Teachers(Teacher)
 
+  let effects:Array<String> = []
+
   let transactions:Array<R.Transaction> = []
   const AppModel = new R.StateManager({
     entities: {Administrator, Teacher, StaffMember, User},
-    listener: t=>transactions.push(t)
+    listener: t=>transactions.push(t),
+    //debugListener: de=>console.log(R.stringifyDebugEvent(de))
   })
   const action = <T>(f: () => T) => {
     return AppModel.action(f)
@@ -81,6 +102,7 @@ describe("Inheritance", () => {
   beforeEach(() => {
     AppModel.clearState()
     transactions = []
+    effects = []
   })
 
   describe("A class with Entity superclasses", () => {
@@ -122,9 +144,19 @@ describe("Inheritance", () => {
 
     // BelongsTo
     // HasOne
-    // AfterAdd
-    // AfterRemove
-    // AfterChange
+
+    it("should inherit the afterAdd declaration from the superclasses", () => {
+      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
+      action(()=>a1.setName("n2"))
+      action(()=>a1.removeEntity())
+      expect(effects).toEqual([
+        "User#a1 - onAfterAdd",
+        "User#a1 - onAfterChange",
+        "User#a1 - onAfterChange",
+        "User#a1 - onAfterPropertyChange n1",
+        "User#a1 - onAfterRemove",
+      ])
+    })
 
     // ById
     // Index

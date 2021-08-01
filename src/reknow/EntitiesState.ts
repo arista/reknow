@@ -60,6 +60,8 @@ export class EntitiesState<E extends Entity> extends Proxied<
   queries: Array<Query<any>> = []
   queriesByName: {[name: string]: Query<any>} = {}
 
+  _inheritanceChain:Array<EntitiesState<any>>|null = null
+
   constructor(
     public name: string,
     public stateManager: StateManager,
@@ -371,27 +373,31 @@ export class EntitiesState<E extends Entity> extends Proxied<
       }
     )
   }
-  
-  get superEntitiesState():EntitiesState<any>|null {
-    let clazz = getSuperclass(this.entityClass)
-    for(; clazz != null; clazz = getSuperclass(clazz)) {
-      const es = ((clazz as unknown) as InternalEntityClass<any>).entitiesState
+
+  get inheritanceChain():Array<EntitiesState<any>> {
+    if (this._inheritanceChain == null) {
+      this._inheritanceChain = this.computeInheritanceChain
+    }
+    return this._inheritanceChain
+  }
+
+  get computeInheritanceChain():Array<EntitiesState<any>> {
+    const ret:Array<EntitiesState<any>> = []
+    for(let eclass:Function|null = this.entityClass; eclass != null; eclass = getSuperclass(eclass)) {
+      const es = ((eclass as unknown) as InternalEntityClass<any>).entitiesState
       if (es != null) {
-        return es
+        ret.push(es)
       }
     }
-    return null
+    return ret
   }
 
   addEntityToInheritanceChain(entityId: string, entityState: EntityState<E>) {
-    this.invalidateProxy()
-    this.addEntityToEntitiesById(entityId, entityState)
-    this.notifySubscribersOfChange()
-    this.updateIndexesOnEntityAdded(entityState)
-
-    const s = this.superEntitiesState
-    if (s != null){
-      s.addEntityToInheritanceChain(entityId, entityState)
+    for(const es of this.inheritanceChain) {
+      es.invalidateProxy()
+      es.addEntityToEntitiesById(entityId, entityState)
+      es.notifySubscribersOfChange()
+      es.updateIndexesOnEntityAdded(entityState)
     }
   }
 
@@ -501,11 +507,8 @@ export class EntitiesState<E extends Entity> extends Proxied<
         entityState.removeQueries()
         entityState.removeChangePublishers()
 
-        this.invalidateProxy()
-        this.deleteEntityFromEntitiesById(id)
-        this.notifySubscribersOfChange()
+        this.deleteEntityFromInheritanceChain(id, entityState)
         this.removeRelationships(entity)
-        this.updateIndexesOnEntityRemoved(entityState)
         this.stateManager.recordEntityRemoved(entityState)
         entityState.addPendingAfterRemove()
       }
@@ -515,6 +518,15 @@ export class EntitiesState<E extends Entity> extends Proxied<
   removeRelationships(entity: E) {
     for (const relationship of this.relationships) {
       relationship.primaryRemoved(entity)
+    }
+  }
+
+  deleteEntityFromInheritanceChain(entityId: string, entityState: EntityState<E>) {
+    for(const es of this.inheritanceChain) {
+      es.invalidateProxy()
+      es.deleteEntityFromEntitiesById(entityId)
+      es.notifySubscribersOfChange()
+      es.updateIndexesOnEntityRemoved(entityState)
     }
   }
 
