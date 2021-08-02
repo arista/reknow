@@ -58,6 +58,10 @@ describe("Inheritance", () => {
     }
 
     @R.hasMany(()=>Teacher, "staffMemberId") teachers!:Array<Teacher>
+
+    @R.afterAdd onAfterAdd() {
+      effects.push(`StaffMember#${this.id} - onAfterAdd`)
+    }
   }
   class _StaffMembers extends R.Entities<StaffMember> {}
   const StaffMembers = new _StaffMembers(StaffMember)
@@ -145,12 +149,13 @@ describe("Inheritance", () => {
     // BelongsTo
     // HasOne
 
-    it("should inherit the afterAdd declaration from the superclasses", () => {
+    it("should inherit the effects declarations from the superclasses", () => {
       const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
       action(()=>a1.setName("n2"))
       action(()=>a1.removeEntity())
       expect(effects).toEqual([
         "User#a1 - onAfterAdd",
+        "StaffMember#a1 - onAfterAdd",
         "User#a1 - onAfterChange",
         "User#a1 - onAfterChange",
         "User#a1 - onAfterPropertyChange n1",

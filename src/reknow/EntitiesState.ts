@@ -384,12 +384,16 @@ export class EntitiesState<E extends Entity> extends Proxied<
   get computeInheritanceChain():Array<EntitiesState<any>> {
     const ret:Array<EntitiesState<any>> = []
     for(let eclass:Function|null = this.entityClass; eclass != null; eclass = getSuperclass(eclass)) {
-      const es = ((eclass as unknown) as InternalEntityClass<any>).entitiesState
+      const es = EntitiesState.entitiesStateForClass(eclass)
       if (es != null) {
         ret.push(es)
       }
     }
     return ret
+  }
+
+  static entitiesStateForClass(clazz:Function):EntitiesState<any>|null {
+    return ((clazz as unknown) as InternalEntityClass<any>).entitiesState
   }
 
   addEntityToInheritanceChain(entityId: string, entityState: EntityState<E>) {
