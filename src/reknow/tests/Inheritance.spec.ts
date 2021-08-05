@@ -75,7 +75,9 @@ describe("Inheritance", () => {
       super(name, employeeNumber)
     }
   }
-  class _Administrators extends R.Entities<Administrator> {}
+  class _Administrators extends R.Entities<Administrator> {
+    @R.index("+name") byName!:R.SortIndex<User>
+  }
   const Administrators = new _Administrators(Administrator)
 
   // Teacher extends StaffMember
@@ -167,7 +169,7 @@ describe("Inheritance", () => {
     // Index
     // Removing from index
 
-    it("should be added and removed from the byId index of all superclasses when added", () => {
+    it("should be added and removed from the byId index of all superclasses", () => {
       const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
       expect(Administrator.administratorEntities.byId.a1).toEqual(a1)
       expect(StaffMember.staffMemberEntities.byId.a1).toEqual(a1)
@@ -177,6 +179,23 @@ describe("Inheritance", () => {
       expect(Administrator.administratorEntities.byId.a1 == null).toBe(true)
       expect(StaffMember.staffMemberEntities.byId.a1 == null).toBe(true)
       expect(User.entities.byId.a1 == null).toBe(true)
+    })
+
+    it("should be added and removed from the indexes of all superclasses", ()=>{
+      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
+      const t1 = action(() => new Teacher("t1", "en2", "c1", "n1").addEntity("t1"))
+      const a2 = action(() => new Administrator("n2", "en1", "o1").addEntity("a2"))
+
+      expect(Administrator.administratorEntities.byName).toEqual([a1, a2])
+      expect(User.entities.byName).toEqual([a1, a2, t1])
+
+      action(()=>a1.removeEntity())
+      expect(Administrator.administratorEntities.byName).toEqual([a2])
+      expect(User.entities.byName).toEqual([a2, t1])
+
+      action(()=>t1.removeEntity())
+      expect(Administrator.administratorEntities.byName).toEqual([a2])
+      expect(User.entities.byName).toEqual([a2])
     })
   })
 })

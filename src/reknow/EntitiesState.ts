@@ -385,7 +385,7 @@ export class EntitiesState<E extends Entity> extends Proxied<
     const ret:Array<EntitiesState<any>> = []
     for(let eclass:Function|null = this.entityClass; eclass != null; eclass = getSuperclass(eclass)) {
       const es = EntitiesState.entitiesStateForClass(eclass)
-      if (es != null) {
+      if (es != null && es.entityClass === eclass) {
         ret.push(es)
       }
     }
