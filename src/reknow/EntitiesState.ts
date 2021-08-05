@@ -60,7 +60,7 @@ export class EntitiesState<E extends Entity> extends Proxied<
   queries: Array<Query<any>> = []
   queriesByName: {[name: string]: Query<any>} = {}
 
-  _inheritanceChain:Array<EntitiesState<any>>|null = null
+  _inheritanceChain: Array<EntitiesState<any>> | null = null
 
   constructor(
     public name: string,
@@ -374,16 +374,20 @@ export class EntitiesState<E extends Entity> extends Proxied<
     )
   }
 
-  get inheritanceChain():Array<EntitiesState<any>> {
+  get inheritanceChain(): Array<EntitiesState<any>> {
     if (this._inheritanceChain == null) {
       this._inheritanceChain = this.computeInheritanceChain
     }
     return this._inheritanceChain
   }
 
-  get computeInheritanceChain():Array<EntitiesState<any>> {
-    const ret:Array<EntitiesState<any>> = []
-    for(let eclass:Function|null = this.entityClass; eclass != null; eclass = getSuperclass(eclass)) {
+  get computeInheritanceChain(): Array<EntitiesState<any>> {
+    const ret: Array<EntitiesState<any>> = []
+    for (
+      let eclass: Function | null = this.entityClass;
+      eclass != null;
+      eclass = getSuperclass(eclass)
+    ) {
       const es = EntitiesState.entitiesStateForClass(eclass)
       if (es != null && es.entityClass === eclass) {
         ret.push(es)
@@ -392,12 +396,12 @@ export class EntitiesState<E extends Entity> extends Proxied<
     return ret
   }
 
-  static entitiesStateForClass(clazz:Function):EntitiesState<any>|null {
+  static entitiesStateForClass(clazz: Function): EntitiesState<any> | null {
     return ((clazz as unknown) as InternalEntityClass<any>).entitiesState
   }
 
   addEntityToInheritanceChain(entityId: string, entityState: EntityState<E>) {
-    for(const es of this.inheritanceChain) {
+    for (const es of this.inheritanceChain) {
       es.invalidateProxy()
       es.addEntityToEntitiesById(entityId, entityState)
       es.notifySubscribersOfChange()
@@ -525,8 +529,11 @@ export class EntitiesState<E extends Entity> extends Proxied<
     }
   }
 
-  deleteEntityFromInheritanceChain(entityId: string, entityState: EntityState<E>) {
-    for(const es of this.inheritanceChain) {
+  deleteEntityFromInheritanceChain(
+    entityId: string,
+    entityState: EntityState<E>
+  ) {
+    for (const es of this.inheritanceChain) {
       es.invalidateProxy()
       es.deleteEntityFromEntitiesById(entityId)
       es.notifySubscribersOfChange()
@@ -670,11 +677,18 @@ export class EntitiesState<E extends Entity> extends Proxied<
     hasNewValue: boolean,
     newValue: any | null
   ) {
-    for(const es of this.inheritanceChain) {
-      es.updateIndexesOnEntityPropertyChanged(e, property, hadOldValue, oldValue, hasNewValue, newValue)
+    for (const es of this.inheritanceChain) {
+      es.updateIndexesOnEntityPropertyChanged(
+        e,
+        property,
+        hadOldValue,
+        oldValue,
+        hasNewValue,
+        newValue
+      )
     }
   }
-  
+
   updateIndexesOnEntityPropertyChanged(
     e: EntityState<E>,
     property: string,

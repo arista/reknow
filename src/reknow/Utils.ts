@@ -843,12 +843,16 @@ export function relationshipFromRelationshipDecorator(
   }
 }
 
-export function getSuperclass(clazz:Function):Function|null {
+export function getSuperclass(clazz: Function): Function | null {
   if (clazz.prototype == null) {
     return null
   }
   const superProto = Object.getPrototypeOf(clazz.prototype)
-  if (superProto == null || superProto.constructor == null || superProto.constructor === Object) {
+  if (
+    superProto == null ||
+    superProto.constructor == null ||
+    superProto.constructor === Object
+  ) {
     return null
   }
   return superProto.constructor

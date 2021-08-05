@@ -3,9 +3,9 @@ import * as R from "../Reknow"
 describe("Inheritance", () => {
   // User
   class User extends R.Entity {
-    @R.id id!:string
-    tripleName:string = ""
-    
+    @R.id id!: string
+    tripleName: string = ""
+
     static get entities(): _Users {
       return Users
     }
@@ -13,7 +13,7 @@ describe("Inheritance", () => {
       super()
     }
 
-    @R.action setName(val:string) {
+    @R.action setName(val: string) {
       this.name = val
     }
 
@@ -22,7 +22,7 @@ describe("Inheritance", () => {
     }
 
     @R.reaction computeTripleName() {
-      return this.tripleName = `${this.name}+${this.name}+${this.name}`
+      return (this.tripleName = `${this.name}+${this.name}+${this.name}`)
     }
 
     @R.afterAdd onAfterAdd() {
@@ -37,12 +37,12 @@ describe("Inheritance", () => {
       effects.push(`User#${this.id} - onAfterChange`)
     }
 
-    @R.afterPropertyChange("name") onAfterPropertyChange(oldValue:string) {
+    @R.afterPropertyChange("name") onAfterPropertyChange(oldValue: string) {
       effects.push(`User#${this.id} - onAfterPropertyChange ${oldValue}`)
     }
   }
   class _Users extends R.Entities<User> {
-    @R.index("+name") byName!:R.SortIndex<User>
+    @R.index("+name") byName!: R.SortIndex<User>
   }
   const Users = new _Users(User)
 
@@ -57,7 +57,7 @@ describe("Inheritance", () => {
       super(name)
     }
 
-    @R.hasMany(()=>Teacher, "staffMemberId") teachers!:Array<Teacher>
+    @R.hasMany(() => Teacher, "staffMemberId") teachers!: Array<Teacher>
 
     @R.afterAdd onAfterAdd() {
       effects.push(`StaffMember#${this.id} - onAfterAdd`)
@@ -76,7 +76,7 @@ describe("Inheritance", () => {
     }
   }
   class _Administrators extends R.Entities<Administrator> {
-    @R.index("+name") byName!:R.SortIndex<User>
+    @R.index("+name") byName!: R.SortIndex<User>
   }
   const Administrators = new _Administrators(Administrator)
 
@@ -85,21 +85,27 @@ describe("Inheritance", () => {
     static get teacherEntities(): _Teachers {
       return Teachers
     }
-    constructor(name: string, employeeNumber: string, public classroom: string, public staffMemberId: string) {
+    constructor(
+      name: string,
+      employeeNumber: string,
+      public classroom: string,
+      public staffMemberId: string
+    ) {
       super(name, employeeNumber)
     }
 
-    @R.belongsTo(()=>StaffMember, "staffMemberId") staffMember!:StaffMember|null
+    @R.belongsTo(() => StaffMember, "staffMemberId")
+    staffMember!: StaffMember | null
   }
   class _Teachers extends R.Entities<Teacher> {}
   const Teachers = new _Teachers(Teacher)
 
-  let effects:Array<String> = []
+  let effects: Array<String> = []
 
-  let transactions:Array<R.Transaction> = []
+  let transactions: Array<R.Transaction> = []
   const AppModel = new R.StateManager({
     entities: {Administrator, Teacher, StaffMember, User},
-    listener: t=>transactions.push(t),
+    listener: (t) => transactions.push(t),
     //debugListener: de=>console.log(R.stringifyDebugEvent(de))
   })
   const action = <T>(f: () => T) => {
@@ -113,20 +119,26 @@ describe("Inheritance", () => {
 
   describe("A class with Entity superclasses", () => {
     it("should inherit the actions from the superclasses", () => {
-      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
+      const a1 = action(() =>
+        new Administrator("n1", "en1", "o1").addEntity("a1")
+      )
       a1.setName("n2")
       expect(a1.name).toEqual("n2")
     })
 
     it("should inherit the queries from the superclasses", () => {
-      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
+      const a1 = action(() =>
+        new Administrator("n1", "en1", "o1").addEntity("a1")
+      )
       expect(a1.doubleName).toEqual("n1+n1")
       a1.setName("n2")
       expect(a1.doubleName).toEqual("n2+n2")
     })
 
     it("should inherit the reactions from the superclasses", () => {
-      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
+      const a1 = action(() =>
+        new Administrator("n1", "en1", "o1").addEntity("a1")
+      )
       expect(a1.doubleName).toEqual("n1+n1")
       expect(a1.tripleName).toEqual("n1+n1+n1")
       a1.setName("n2")
@@ -134,14 +146,24 @@ describe("Inheritance", () => {
     })
 
     it("should inherit the id declaration from the superclasses", () => {
-      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
+      const a1 = action(() =>
+        new Administrator("n1", "en1", "o1").addEntity("a1")
+      )
       expect(a1.id).toEqual("a1")
-      expect(()=>action(()=>a1.id = "a2")).toThrow(new Error("An @id property may not be modified after an Entity has been added"))
+      expect(() => action(() => (a1.id = "a2"))).toThrow(
+        new Error(
+          "An @id property may not be modified after an Entity has been added"
+        )
+      )
     })
 
     it("should inherit a HasMany declaration from the superclasses", () => {
-      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
-      const t1 = action(() => new Teacher("n2", "en2", "c1", "a1").addEntity("t1"))
+      const a1 = action(() =>
+        new Administrator("n1", "en1", "o1").addEntity("a1")
+      )
+      const t1 = action(() =>
+        new Teacher("n2", "en2", "c1", "a1").addEntity("t1")
+      )
       expect(a1.id).toEqual("a1")
       expect(t1.id).toEqual("t1")
       expect(a1.teachers).toEqual([t1])
@@ -152,9 +174,11 @@ describe("Inheritance", () => {
     // HasOne
 
     it("should inherit the effects declarations from the superclasses", () => {
-      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
-      action(()=>a1.setName("n2"))
-      action(()=>a1.removeEntity())
+      const a1 = action(() =>
+        new Administrator("n1", "en1", "o1").addEntity("a1")
+      )
+      action(() => a1.setName("n2"))
+      action(() => a1.removeEntity())
       expect(effects).toEqual([
         "User#a1 - onAfterAdd",
         "StaffMember#a1 - onAfterAdd",
@@ -170,43 +194,57 @@ describe("Inheritance", () => {
     // Removing from index
 
     it("should be added and removed from the byId index of all superclasses", () => {
-      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
+      const a1 = action(() =>
+        new Administrator("n1", "en1", "o1").addEntity("a1")
+      )
       expect(Administrator.administratorEntities.byId.a1).toEqual(a1)
       expect(StaffMember.staffMemberEntities.byId.a1).toEqual(a1)
       expect(User.entities.byId.a1).toEqual(a1)
 
-      action(()=>a1.removeEntity())
+      action(() => a1.removeEntity())
       expect(Administrator.administratorEntities.byId.a1 == null).toBe(true)
       expect(StaffMember.staffMemberEntities.byId.a1 == null).toBe(true)
       expect(User.entities.byId.a1 == null).toBe(true)
     })
 
-    it("should be added and removed from the indexes of all superclasses", ()=>{
-      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
-      const t1 = action(() => new Teacher("t1", "en2", "c1", "n1").addEntity("t1"))
-      const a2 = action(() => new Administrator("n2", "en1", "o1").addEntity("a2"))
+    it("should be added and removed from the indexes of all superclasses", () => {
+      const a1 = action(() =>
+        new Administrator("n1", "en1", "o1").addEntity("a1")
+      )
+      const t1 = action(() =>
+        new Teacher("t1", "en2", "c1", "n1").addEntity("t1")
+      )
+      const a2 = action(() =>
+        new Administrator("n2", "en1", "o1").addEntity("a2")
+      )
 
       expect(Administrator.administratorEntities.byName).toEqual([a1, a2])
       expect(User.entities.byName).toEqual([a1, a2, t1])
 
-      action(()=>a1.removeEntity())
+      action(() => a1.removeEntity())
       expect(Administrator.administratorEntities.byName).toEqual([a2])
       expect(User.entities.byName).toEqual([a2, t1])
 
-      action(()=>t1.removeEntity())
+      action(() => t1.removeEntity())
       expect(Administrator.administratorEntities.byName).toEqual([a2])
       expect(User.entities.byName).toEqual([a2])
     })
 
-    it("should be changed in all indexes of all superclasses", ()=>{
-      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
-      const t1 = action(() => new Teacher("t1", "en2", "c1", "n1").addEntity("t1"))
-      const a2 = action(() => new Administrator("n2", "en1", "o1").addEntity("a2"))
+    it("should be changed in all indexes of all superclasses", () => {
+      const a1 = action(() =>
+        new Administrator("n1", "en1", "o1").addEntity("a1")
+      )
+      const t1 = action(() =>
+        new Teacher("t1", "en2", "c1", "n1").addEntity("t1")
+      )
+      const a2 = action(() =>
+        new Administrator("n2", "en1", "o1").addEntity("a2")
+      )
 
       expect(Administrator.administratorEntities.byName).toEqual([a1, a2])
       expect(User.entities.byName).toEqual([a1, a2, t1])
 
-      action(()=>a1.name = "n3")
+      action(() => (a1.name = "n3"))
       expect(Administrator.administratorEntities.byName).toEqual([a2, a1])
       expect(User.entities.byName).toEqual([a2, a1, t1])
     })

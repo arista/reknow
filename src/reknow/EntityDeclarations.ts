@@ -207,7 +207,11 @@ export class EntityDeclarations {
     ed.idPropertyName = name
   }
 
-  static combineDeclarations(d1:EntityDeclarations, d2:EntityDeclarations, className:string):EntityDeclarations {
+  static combineDeclarations(
+    d1: EntityDeclarations,
+    d2: EntityDeclarations,
+    className: string
+  ): EntityDeclarations {
     const ret = new EntityDeclarations()
 
     // Just combine these - it doesn't matter if they have the same
@@ -218,13 +222,13 @@ export class EntityDeclarations {
     ret.afterAdds.push(...d1.afterAdds, ...d2.afterAdds)
     ret.afterRemoves.push(...d1.afterRemoves, ...d2.afterRemoves)
     ret.afterChanges.push(...d1.afterChanges, ...d2.afterChanges)
-    for(const p in d1.afterPropertyChanges) {
+    for (const p in d1.afterPropertyChanges) {
       if (!ret.afterPropertyChanges[p]) {
         ret.afterPropertyChanges[p] = []
       }
       ret.afterPropertyChanges[p].push(...d1.afterPropertyChanges[p])
     }
-    for(const p in d2.afterPropertyChanges) {
+    for (const p in d2.afterPropertyChanges) {
       if (!ret.afterPropertyChanges[p]) {
         ret.afterPropertyChanges[p] = []
       }
@@ -232,11 +236,17 @@ export class EntityDeclarations {
     }
 
     // The id property cannot have conflicting declarations
-    if (d1.idPropertyName && d2.idPropertyName && d1.idPropertyName !== d2.idPropertyName) {
-      throw new Error(`Class ${className} declares @id property ${d2.idPropertyName}, which conflict with @id property declaration ${d1.idPropertyName} in a superclass`)
+    if (
+      d1.idPropertyName &&
+      d2.idPropertyName &&
+      d1.idPropertyName !== d2.idPropertyName
+    ) {
+      throw new Error(
+        `Class ${className} declares @id property ${d2.idPropertyName}, which conflict with @id property declaration ${d1.idPropertyName} in a superclass`
+      )
     }
     ret.idPropertyName = d1.idPropertyName || d2.idPropertyName
-    
+
     return ret
   }
 
@@ -255,7 +265,8 @@ export class EntityDeclarations {
       // Go up the inheritance chain and collect and combine the
       // declarations, checking for collisions
       const sclazz = getSuperclass(entityClass)
-      const d1 = (sclazz == null) ? new EntityDeclarations() : this.forClass(sclazz)
+      const d1 =
+        sclazz == null ? new EntityDeclarations() : this.forClass(sclazz)
       const d2 = EntityDeclarations.forPrototype(entityClass.prototype)
       ret = this.combineDeclarations(d1, d2, entityClass.name)
 
@@ -266,5 +277,5 @@ export class EntityDeclarations {
   }
 }
 
-const entityDeclarationsByClassProto = new WeakMap<Object,EntityDeclarations>()
-const entityDeclarationsByClass = new WeakMap<Function,EntityDeclarations>()
+const entityDeclarationsByClassProto = new WeakMap<Object, EntityDeclarations>()
+const entityDeclarationsByClass = new WeakMap<Function, EntityDeclarations>()
