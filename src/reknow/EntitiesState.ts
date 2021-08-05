@@ -662,6 +662,19 @@ export class EntitiesState<E extends Entity> extends Proxied<
     }
   }
 
+  updateIndexesInInheritanceChainOnEntityPropertyChanged(
+    e: EntityState<E>,
+    property: string,
+    hadOldValue: boolean,
+    oldValue: any | null,
+    hasNewValue: boolean,
+    newValue: any | null
+  ) {
+    for(const es of this.inheritanceChain) {
+      es.updateIndexesOnEntityPropertyChanged(e, property, hadOldValue, oldValue, hasNewValue, newValue)
+    }
+  }
+  
   updateIndexesOnEntityPropertyChanged(
     e: EntityState<E>,
     property: string,

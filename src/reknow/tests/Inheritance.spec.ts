@@ -197,5 +197,18 @@ describe("Inheritance", () => {
       expect(Administrator.administratorEntities.byName).toEqual([a2])
       expect(User.entities.byName).toEqual([a2])
     })
+
+    it("should be changed in all indexes of all superclasses", ()=>{
+      const a1 = action(() => new Administrator("n1", "en1", "o1").addEntity("a1"))
+      const t1 = action(() => new Teacher("t1", "en2", "c1", "n1").addEntity("t1"))
+      const a2 = action(() => new Administrator("n2", "en1", "o1").addEntity("a2"))
+
+      expect(Administrator.administratorEntities.byName).toEqual([a1, a2])
+      expect(User.entities.byName).toEqual([a1, a2, t1])
+
+      action(()=>a1.name = "n3")
+      expect(Administrator.administratorEntities.byName).toEqual([a2, a1])
+      expect(User.entities.byName).toEqual([a2, a1, t1])
+    })
   })
 })

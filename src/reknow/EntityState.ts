@@ -114,7 +114,7 @@ export class EntityState<E extends Entity> extends Proxied<E, E> {
 
   propertyChanged(prop: string, hadValue: boolean, oldValue: any, value: any) {
     this.invalidateProxy()
-    this.entitiesState.updateIndexesOnEntityPropertyChanged(
+    this.entitiesState.updateIndexesInInheritanceChainOnEntityPropertyChanged(
       this,
       prop,
       hadValue,
@@ -162,7 +162,7 @@ export class EntityState<E extends Entity> extends Proxied<E, E> {
 
   propertyDeleted(prop: string, hadValue: boolean, oldValue: any) {
     this.invalidateProxy()
-    this.entitiesState.updateIndexesOnEntityPropertyChanged(
+    this.entitiesState.updateIndexesInInheritanceChainOnEntityPropertyChanged(
       this,
       prop,
       hadValue,
