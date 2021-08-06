@@ -240,7 +240,7 @@ export class TodoListItem extends R.Entity {
   ...
 }
 
-class Entities extends R.Entities {
+class Entities extends R.Entities<TodoListItem> {
   @R.index("+name") byName!:R.SortIndex<TodoListItem>
 }
 
@@ -743,6 +743,51 @@ Both the `useQuery` and `useComponentEntity` hooks take an optional name as a se
 ```
 
 This name doesn't impact the behavior of the application, but it does appear in the events sent to the StateManager's `debugListener`.  Most applications won't use this facility until they are trying to understand why some component is or is not updating.  In that scenario, the application can enable the `debugListener` on the StateManager and start adding names to narrow down the behavior.
+
+#### Inheritance
+
+Entity classes are allowed to subclass other Entity classes, typically to represent inheritance in the data model.  The subclass will inherit all of the declarations from the superclass (`@action`, `@query`, `@hasMany`, etc.)  The subclass will also be managed in any indexes declared by the superclass.
+
+Note that when an Entity subclasses another Entity, the corresponding `Entities` classes should *not* subclass each other.
+
+For example:
+
+```
+// User superclass
+export class User extends R.Entity {
+  constructor(public name:string) {
+    super()
+  }
+
+  @R.action setName(name:string) {
+    this.name = name
+  }
+}
+
+export class UserEntitiesClass extends R.Entities<User> {
+  @R.index("+name") byName!:R.SortIndex<User>
+}
+
+export const UserEntities = new UserEntitiesClass(User)
+
+// Teacher subclasses User
+export class Teacher extends User {
+  constructor(name:string, public classroom:string) {
+    super(name)
+  }
+}
+
+// TeacherEntitiesClass should NOT subclass UserEntitiesClass
+export class TeacherEntitiesClass extends R.Entities<Teacher> {
+  @R.uniqueIndex("=classroom") byClassroom!:R.UniqueHashIndex<Teacher>
+}
+
+export const TeacherEntities = new TeacherEntitiesClass(Teacher)
+```
+
+In this example, the `Teacher` Entity class extends `User`, inheriting all of the declarations from `User`, such as the `setName` action.  However, the corresponding Entities classes (`UserEntitiesClass` and `TeacherEntitiesClass`) still just extend `@R.Entities`.
+
+When a `Teacher` is added, Reknow will manage the indexes in the inheritance chain, adding it to both `TeacherEntities.byClassroom` and `UserEntities.byName`.  On the other hand, if a `User` is added, Reknow will only add it to `UserEntities.byName`.
 
 ## Examining the Sample TodoApp
 

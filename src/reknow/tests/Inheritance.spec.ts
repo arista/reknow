@@ -170,9 +170,6 @@ describe("Inheritance", () => {
       expect(t1.staffMember).toEqual(a1)
     })
 
-    // BelongsTo
-    // HasOne
-
     it("should inherit the effects declarations from the superclasses", () => {
       const a1 = action(() =>
         new Administrator("n1", "en1", "o1").addEntity("a1")
@@ -188,10 +185,6 @@ describe("Inheritance", () => {
         "User#a1 - onAfterRemove",
       ])
     })
-
-    // ById
-    // Index
-    // Removing from index
 
     it("should be added and removed from the byId index of all superclasses", () => {
       const a1 = action(() =>
