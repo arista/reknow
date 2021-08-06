@@ -6,6 +6,7 @@ import {AfterRemoveDecorator} from "./Types"
 import {AfterChangeDecorator} from "./Types"
 import {AfterPropertyChangeDecorator} from "./Types"
 import {replaceFunction} from "./Utils"
+import {getSuperclass} from "./Utils"
 import {Entity} from "./Entity"
 import {FunctionType} from "./Types"
 import {RelationshipDecorator} from "./Types"
@@ -206,20 +207,75 @@ export class EntityDeclarations {
     ed.idPropertyName = name
   }
 
+  static combineDeclarations(
+    d1: EntityDeclarations,
+    d2: EntityDeclarations,
+    className: string
+  ): EntityDeclarations {
+    const ret = new EntityDeclarations()
+
+    // Just combine these - it doesn't matter if they have the same
+    // name in both classes
+    ret.relationships.push(...d1.relationships, ...d2.relationships)
+    ret.queries.push(...d1.queries, ...d2.queries)
+    ret.reactions.push(...d1.reactions, ...d2.reactions)
+    ret.afterAdds.push(...d1.afterAdds, ...d2.afterAdds)
+    ret.afterRemoves.push(...d1.afterRemoves, ...d2.afterRemoves)
+    ret.afterChanges.push(...d1.afterChanges, ...d2.afterChanges)
+    for (const p in d1.afterPropertyChanges) {
+      if (!ret.afterPropertyChanges[p]) {
+        ret.afterPropertyChanges[p] = []
+      }
+      ret.afterPropertyChanges[p].push(...d1.afterPropertyChanges[p])
+    }
+    for (const p in d2.afterPropertyChanges) {
+      if (!ret.afterPropertyChanges[p]) {
+        ret.afterPropertyChanges[p] = []
+      }
+      ret.afterPropertyChanges[p].push(...d2.afterPropertyChanges[p])
+    }
+
+    // The id property cannot have conflicting declarations
+    if (
+      d1.idPropertyName &&
+      d2.idPropertyName &&
+      d1.idPropertyName !== d2.idPropertyName
+    ) {
+      throw new Error(
+        `Class ${className} declares @id property ${d2.idPropertyName}, which conflict with @id property declaration ${d1.idPropertyName} in a superclass`
+      )
+    }
+    ret.idPropertyName = d1.idPropertyName || d2.idPropertyName
+
+    return ret
+  }
+
   static forPrototype(proto: Object): EntityDeclarations {
-    let ret: EntityDeclarations | null = (proto as any)[ENTITY_DECLARATIONS_KEY]
+    let ret = entityDeclarationsByClassProto.get(proto)
     if (ret == null) {
       ret = new EntityDeclarations()
-      ;(proto as any)[ENTITY_DECLARATIONS_KEY] = ret
+      entityDeclarationsByClassProto.set(proto, ret)
     }
     return ret
   }
 
   static forClass(entityClass: Function): EntityDeclarations {
-    // FIXME - go up the inheritance chain and collect and combine the
-    // declarations, checking for collisions
-    return EntityDeclarations.forPrototype(entityClass.prototype)
+    let ret = entityDeclarationsByClass.get(entityClass)
+    if (ret == null) {
+      // Go up the inheritance chain and collect and combine the
+      // declarations, checking for collisions
+      const sclazz = getSuperclass(entityClass)
+      const d1 =
+        sclazz == null ? new EntityDeclarations() : this.forClass(sclazz)
+      const d2 = EntityDeclarations.forPrototype(entityClass.prototype)
+      ret = this.combineDeclarations(d1, d2, entityClass.name)
+
+      // Cache the result
+      entityDeclarationsByClass.set(entityClass, ret)
+    }
+    return ret
   }
 }
 
-export const ENTITY_DECLARATIONS_KEY = Symbol("ENTTITY_DECLARATIONS_KEY")
+const entityDeclarationsByClassProto = new WeakMap<Object, EntityDeclarations>()
+const entityDeclarationsByClass = new WeakMap<Function, EntityDeclarations>()

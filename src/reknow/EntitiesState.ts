@@ -28,6 +28,7 @@ import {Query} from "./Query"
 import {FunctionType} from "./Types"
 import {toMemberName} from "./Utils"
 import {relationshipFromRelationshipDecorator} from "./Utils"
+import {getSuperclass} from "./Utils"
 import {ENTITY_STATE_KEY} from "./Entity"
 
 export type EntityStateById<E extends Entity> = {[id: string]: EntityState<E>}
@@ -58,6 +59,8 @@ export class EntitiesState<E extends Entity> extends Proxied<
   reactionsByName: {[name: string]: Query<any>} = {}
   queries: Array<Query<any>> = []
   queriesByName: {[name: string]: Query<any>} = {}
+
+  _inheritanceChain: Array<EntitiesState<any>> | null = null
 
   constructor(
     public name: string,
@@ -343,10 +346,7 @@ export class EntitiesState<E extends Entity> extends Proxied<
         } else {
           addNonEnumerableProperty(entity, ENTITY_STATE_KEY, entityState)
 
-          this.invalidateProxy()
-          this.addEntityToEntitiesById(entityId, entityState)
-          this.notifySubscribersOfChange()
-          this.updateIndexesOnEntityAdded(entityState)
+          this.addEntityToInheritanceChain(entityId, entityState)
           this.stateManager.recordEntityAdded(entityState)
           entityState.addPendingAfterAdd()
 
@@ -372,6 +372,41 @@ export class EntitiesState<E extends Entity> extends Proxied<
         return entityState.proxy
       }
     )
+  }
+
+  get inheritanceChain(): Array<EntitiesState<any>> {
+    if (this._inheritanceChain == null) {
+      this._inheritanceChain = this.computeInheritanceChain
+    }
+    return this._inheritanceChain
+  }
+
+  get computeInheritanceChain(): Array<EntitiesState<any>> {
+    const ret: Array<EntitiesState<any>> = []
+    for (
+      let eclass: Function | null = this.entityClass;
+      eclass != null;
+      eclass = getSuperclass(eclass)
+    ) {
+      const es = EntitiesState.entitiesStateForClass(eclass)
+      if (es != null && es.entityClass === eclass) {
+        ret.push(es)
+      }
+    }
+    return ret
+  }
+
+  static entitiesStateForClass(clazz: Function): EntitiesState<any> | null {
+    return ((clazz as unknown) as InternalEntityClass<any>).entitiesState
+  }
+
+  addEntityToInheritanceChain(entityId: string, entityState: EntityState<E>) {
+    for (const es of this.inheritanceChain) {
+      es.invalidateProxy()
+      es.addEntityToEntitiesById(entityId, entityState)
+      es.notifySubscribersOfChange()
+      es.updateIndexesOnEntityAdded(entityState)
+    }
   }
 
   addEntityToEntitiesById(entityId: string, entityState: EntityState<E>) {
@@ -480,11 +515,8 @@ export class EntitiesState<E extends Entity> extends Proxied<
         entityState.removeQueries()
         entityState.removeChangePublishers()
 
-        this.invalidateProxy()
-        this.deleteEntityFromEntitiesById(id)
-        this.notifySubscribersOfChange()
+        this.deleteEntityFromInheritanceChain(id, entityState)
         this.removeRelationships(entity)
-        this.updateIndexesOnEntityRemoved(entityState)
         this.stateManager.recordEntityRemoved(entityState)
         entityState.addPendingAfterRemove()
       }
@@ -494,6 +526,18 @@ export class EntitiesState<E extends Entity> extends Proxied<
   removeRelationships(entity: E) {
     for (const relationship of this.relationships) {
       relationship.primaryRemoved(entity)
+    }
+  }
+
+  deleteEntityFromInheritanceChain(
+    entityId: string,
+    entityState: EntityState<E>
+  ) {
+    for (const es of this.inheritanceChain) {
+      es.invalidateProxy()
+      es.deleteEntityFromEntitiesById(entityId)
+      es.notifySubscribersOfChange()
+      es.updateIndexesOnEntityRemoved(entityState)
     }
   }
 
@@ -622,6 +666,26 @@ export class EntitiesState<E extends Entity> extends Proxied<
   updateIndexesOnEntityRemoved(e: EntityState<E>) {
     for (const index of this.indexes) {
       index.onEntityRemoved(e)
+    }
+  }
+
+  updateIndexesInInheritanceChainOnEntityPropertyChanged(
+    e: EntityState<E>,
+    property: string,
+    hadOldValue: boolean,
+    oldValue: any | null,
+    hasNewValue: boolean,
+    newValue: any | null
+  ) {
+    for (const es of this.inheritanceChain) {
+      es.updateIndexesOnEntityPropertyChanged(
+        e,
+        property,
+        hadOldValue,
+        oldValue,
+        hasNewValue,
+        newValue
+      )
     }
   }
 
