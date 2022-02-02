@@ -1,10 +1,109 @@
 # Reknow
 
-_knowledge before action_
-
 Reknow is a state management library based on relational modeling concepts, designed to support React applications written in either TypeScript or JavaScript.
 
-## Introduction
+## Why Reknow?
+
+Designing shared state for React applications can be tricky if you're building something that will stand the test of time.  Consider the venerable "Todo" application, which might start off modeled something like this:
+
+```
+TodoLists = [
+  {name: "Home", todos: [
+    {todo: "buy milk", status: "complete", due: "2022-02-03"},
+    {todo: "wash dishes", status: "incomplete", due: "2022-02-04"},
+  ]},
+  {name: "School", todos: [
+    {todo: "schedule conference", status: "incomplete", due: "2022-02-05"},
+    {todo: "permission slip", status: "incomplete", due: "2022-02-04"},
+  ]}
+]
+```
+
+This structure works well if it matches the way your data is displayed.  But what if you want to display all incomplete tasks from across all lists, sorted by due date?  The additional code is not particularly difficult, but it doesn't take many more use cases before this structure loses its original value and starts to become a hindrance.
+
+An alternative is to avoid committing to a hierarchical structure and model your data "relationally" instead, using id's to imply connections between data:
+
+```
+{
+  TodoList: {
+    "1": {name: "Home"}
+    "2": {name: "School"}
+  }
+  TodoItem: {
+    "3": {todoListId: "1", todo: "buy milk", status: "complete", due: "2022-02-03"},
+    "4": {todoListId: "1", todo: "wash dishes", status: "incomplete", due: "2022-02-04"},
+    "5": {todoListId: "2", todo: "schedule conference", status: "incomplete", due: "2022-02-05"},
+    "6": {todoListId: "2", todo: "permission slip", status: "incomplete", due: "2022-02-04"},
+  }
+}
+```
+
+This approach maximizes the flexibility of your data, giving it a greater chance of remaining useful into the future.  It's easy to extend the data model with new types and relationships and structures.  Of course, the downside is that you'll need to write additional code, and perhaps maintain some indexes, if you're going to extract useful data out of the model.
+
+This is where Reknow comes in.  You provide Reknow with this relational data and tell Reknow what indexes and relationships you want.  Reknow will then synthesize new properties on your data to expose those relationships and indexes:
+
+```
+todoList.todoItems
+todoItem.todoList.name
+TodoItems.byStatusSortedByDueDate.incomplete
+```
+
+Reknow also monitors the data for changes, so that if you change the "todoListId" or "status" properties of a TodoItem, the above relationships and indexes will automatically update to reflect those changes.  Or if you add a TodoItem to the `todoList.todos` relationship, it will automatically assign the appropriate `todoListId`.
+
+Reknow is especially useful when paired with React.  Reknow's `useQuery` hook allows a React component to pull data directly from Reknow:
+
+```
+const IncompleteTodos = () => {
+  const todos = useQuery(()=>TodoItems.byStatusSortedByDueDate.incomplete)
+  return (
+    <>
+    todos.map(todo => <TodoView key={todo.id} todo={todo} />
+    </>
+  )
+}
+```
+
+Reknow will track what data is accessed by useQuery, so that when any part of that data changes, Reknow will automatically trigger the component to re-render.  These "query functions" can also be factored out into shared libraries or model methods, thereby taking on the role that "selectors" play in other state management systems.
+
+Reknow data can be mutated by directly setting properties or manipulating relationships, without the use of "reducers" or "action creators" required by other state managers:
+
+```
+<button onclick={()=>todo.status = "complete"}>
+  Finished!
+</button>
+```
+
+Reknow's change detection system (which is powered by JavaScript Proxies) will automatically transmit the effects of those changes to the appropriate relationships, indexes, and React components.
+
+Building on this foundation, Reknow offers several other features, such as indexable computed properties, multi-key hashing and sorting indexes, hooks that are called when data changes, JSON import and export, and even optional logging of all changes made to the data model.  With all these features, Reknow is aiming to be a complete state management system for an application, handling not only shared global state, but also state down at the individual component level.  Of course, you can choose to use Reknow at whatever granularity you find most useful or comfortable.
+
+Although it can be used in JavaScript, Reknow is designed primarily for TypeScript, with heavy use of decorators.  Each type of model object, such as `TodoList` or `TodoItem` is modeled as a separate "Entity" class.  The declaration of the `TodoItem` model might look something like this:
+
+```
+import * as R from "reknow"
+
+export type TodoItemStatus = "complete" | "incomplete"
+
+export class TodoItem extends R.Entity {
+  @R.id id!: string
+  todoListId!: string
+  status!: TodoItemStatus
+  dueDate!: string
+
+  @R.belongsTo(() => TodoList, "todoListId") todoList!: TodoList
+}
+
+class TodoItemsClass extends R.Entities<TodoItem> {
+  @R.index("=status", "+dueDate")
+  byStatusSortedByDueDate!: R.HashIndex<R.SortIndex<TodoListIem>>
+}
+
+export const TodoItems = new TodoItemsClass(TodoItem)
+```
+
+If you're not familiar with TypeScript or decorators, then the above code can seem arcane and noisy.  But it doesn't take long to get used to it.  If you're willing to give it a chance, and you're intrigued by the idea of relational modeling for client-side data, then read on - perhaps Reknow will be a good fit for your application building patterns.
+
+## Overview
 
 Reknow organizes and maintains an application's internal state, separating that state from the application's presentation layer.  In a React application, Reknow occupies the same space as libraries like Redux or Recoil.
 
@@ -176,7 +275,7 @@ const item = new TodoListItem("buy milk").addEntity("Item22424")
 
 Entity id's must be strings, and they must be unique among all instances of a given Entity type.
 
-By default, if Reknow is generating the id, it will use a very simple counter to generate id's like "1", "2", etc.  The application can provide an alternate id generator (FIXME), which will be consulted whenever Reknow needs a new id.
+By default, if Reknow is generating the id, it will use a very simple counter to generate id's like "1", "2", etc.  The application can provide an alternate id generator, which will be consulted whenever Reknow needs a new id.
 
 #### Entities `byId` Index
 
@@ -223,9 +322,7 @@ export class TodoListItem extends R.Entity {
 
 (alternatives to decorators are described later)
 
-The `@R.action` decorator declares that a method will be making state changes.  It also declares that the action will leave all affected instances in consistent and valid states, and that it will pass any declared validations once the action completes (FIXME - see the section later on validations).
-
-All of the state changes that occur while executing an `@R.action` method will be collected into a single "action", whether it's a single property change on one instance or a more complex sequence of changes spanning multiple instances.  Reknow will wait until the end of the application's action before taking its own actions in response, such as reporting the action to its listeners, notifying the application of invalidated cached values, updating the affected React components, or running validators on the affected Entities (coming soon).
+The `@R.action` decorator declares that a method will be making state changes.  All of the state changes that occur while executing an `@R.action` method will be collected into a single "action", whether it's a single property change on one instance or a more complex sequence of changes spanning multiple instances.  Reknow will wait until the end of the application's action before taking its own actions in response, such as reporting the action to its listeners, notifying the application of invalidated cached values, updating the affected React components.
 
 It is fine for `action` methods to call other `action` methods - only the "outermost" `action` will apply.  But before going and marking every method as an `action`, be aware that conceptually, an action should represent a "top-level" operation and should leave all affected model instances in valid and consistent states.
 
@@ -1414,10 +1511,6 @@ The `importEntities()` method does the reverse.  It takes an `EntitiesExport` st
 
 The `importEntitiesForUpdate()` is similar, except that it follows the same rules as `updateObject()`, in that it will modify existing Entity instances in place, if they have id's that match those specified in the supplied `EntitiesExport`.
 
-## Validations
-
-FIXME - coming soon!
-
 ## Using With JavaScript
 
 While Reknow was designed to work well with TypeScript, it can also be used with JavaScript.  The main adjustment is in the use of decorators.  Reknow uses decorators declared on properties, not just methods, and those decorators are not supported by JavaScript.  There may also be some environments where decorators cannot be used at all, since they are not (as of this writing) an officially adopted part of the language.
@@ -1455,10 +1548,6 @@ Each decorator has a corresponding static method call, in which the name of the 
 
 These declarations must be made before the class is added to the StateManager.
 
-## Testing
-
-FIXME - reset StateManager, mocking
-
 ## Reference
 
 ### API Reference
@@ -1467,12 +1556,12 @@ FIXME - reset StateManager, mocking
 
 ##### Entity Instance Methods
 
-The following properties and methods are available to instances of `Entity` and its application-defined subclasses.  Decorators are specified elsewhere (FIXME)
+The following properties and methods are available to instances of `Entity` and its application-defined subclasses.  Available decorators are [specified below](#decorators).
 
 ###### constructor
 Constructor `constructor()`
 
-If an Entity class has a constructor, it should start by calling `super()` as usual.  As mentioned elsewhere (FIXME), there are situations where an Entity instance might be created and added without calling its constructor.  If an application anticipates being in such a situation, it should avoid doing anything more in its constructor than assigning its parameters to properties.  Other initializations can be performed in `@R.reaction` methods.
+If an Entity class has a constructor, it should start by calling `super()` as usual.  There are situations where an Entity instance might be created and added without calling its constructor ([applyTransaction](#applying-transactions) for example).  If an application anticipates being in such a situation, it should avoid doing anything more in its constructor than assigning its parameters to properties.  Other initializations can be performed in `@R.reaction` methods.
 
 ###### entityId
 Read-only property `entityId:string`
@@ -1518,7 +1607,7 @@ Method `removeEntity():void`
 
 Removes an Entity.  The Entity is removed from all appropriate indexes and any `@R.reaction` and `@R.query` methods on the Entity will no longer receive invalidations.
 
-If the Entity declares relationships with a `dependent` value specified, then the appropriate action is taken on the Entities in that relationship.  See (FIXME).
+If the Entity declares relationships with a `dependent` value specified, then the appropriate action is taken on the Entities in that relationship.
 
 At the end of the action, any declared `@R.afterRemove` methods will be called.
 
@@ -1531,7 +1620,7 @@ Returns true if the Entity is the same underlying instance as the given `entity`
 
 ##### Entities Instance Methods
 
-The following properties and methods are available to instances of `Entities` and its application-defined subclasses.  Decorators are specified elsewhere (FIXME).
+The following properties and methods are available to instances of `Entities` and its application-defined subclasses.  Available decorators are [specified below](#decorators).
 
 Each application `Entity` subclass is expected to define an associated `Entities` subclass, and to create a singleton instance of that `Entities` class
 
@@ -1548,7 +1637,7 @@ Provides access to all Entity instances that have been added.  The property's va
 ###### add
 Method `add(entity: E, id: string | null = null):E`
 
-Adds an Entity instance.  See (FIXME).
+Adds an Entity instance.  See [addEntity](#addentity).
 
 ###### update
 Method `update(entity: E, id: string | null = null):E`
@@ -1558,7 +1647,7 @@ Similar to `add`, except that it behaves differently if another Entity exists wi
 ###### addObject
 Method `addObject(entity: Object, id: string | null = null):E`
 
-Creates and adds a new Entity instance, copying its "own" properties from the given `entity`.  The same id generation and effects are followed as (FIXME).  Note that the Entity instance is created without calling its constructor, which includes TypeScript's property initializations:
+Creates and adds a new Entity instance, copying its "own" properties from the given `entity`.  The same id generation and effects are followed as [addEntity](#addentity).  Note that the Entity instance is created without calling its constructor, which includes TypeScript's property initializations:
 
 ```
 export class TodoListItem extends R.Entity {
@@ -1580,7 +1669,7 @@ Similarly, when calling through `@R.hasMany` relationships, the Entity Objects w
 ###### remove
 Method `remove(entity: E):void`
 
-Removes an Entity instance.  See (FIXME).
+Removes an Entity instance.  See [removeEntity](#removeentity).
 
 ###### removeAll
 Method `removeAll():void`
@@ -1599,9 +1688,15 @@ Creates a Service instance.  Applications should rarely, if ever, need to overri
 
 #### StateManager
 
+TBD - coming soon
+
 #### Query
 
+TBD - coming soon
+
 #### Transaction
+
+TBD - coming soon
 
 #### Decorators
 
@@ -1626,7 +1721,7 @@ Action methods should perform no other side effects besides modifying Reknow sta
 
 May only be specified for a getter in an `Entity`, `Entities`, or `Service` class.
 
-Indicates that the given method will be executed as a Query.  Its return value will be cached and returned on subsequent calls without executing the body of the method.  If the query's result is invalidated, then the cached value will be discarded and recomputed the next time the method is called.  When the body of the method executes, Reknow will record its dependencies and subscribe to changes in those dependencies, invalidating the query's result if any dependency changes.  The rules for what constitutes an invalidating change are described in FIXME.
+Indicates that the given method will be executed as a Query.  Its return value will be cached and returned on subsequent calls without executing the body of the method.  If the query's result is invalidated, then the cached value will be discarded and recomputed the next time the method is called.  When the body of the method executes, Reknow will record its dependencies and subscribe to changes in those dependencies, invalidating the query's result if any dependency changes.  The rules for what constitutes an invalidating change are described in [Invalidation Rules](#invalidation-rules).
 
 If an `@R.query` is called by another query, then the called query itself becomes a dependent of the calling query.  If the called query's result is later invalidated, the calling query will also invalidate its result.
 
@@ -1862,12 +1957,3 @@ With that in mind, here are the dependency and invalidation rules:
         * An element of the Array changes value (where `newValue !== oldValue`)
 
 * If a query retrieves the value of a another query, then the original query will be invalidated if the retrieved query is invalidated.
-
-These rules have several implications:
-
-* Entity properties only trigger invalidation if they are assigned a new value.
-* FIXME - relationships don't change an Entity
-* FIXME - relationships aren't changed by an member Entity changing
-
-### Anatomy of an Action
-
