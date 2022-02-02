@@ -1,10 +1,107 @@
 # Reknow
 
-_knowledge before action_
-
 Reknow is a state management library based on relational modeling concepts, designed to support React applications written in either TypeScript or JavaScript.
 
-## Introduction
+## Why Reknow?
+
+Designing shared state for React applications can be tricky if you're building something that will stand the test of time.  Consider the venerable "Todo" application, which might start off modeled something like this:
+
+```
+TodoLists = [
+  {name: "Home", todos: [
+    {todo: "buy milk", status: "complete", due: "2022-02-03"},
+    {todo: "wash dishes", status: "incomplete", due: "2022-02-04"},
+  ]},
+  {name: "School", todos: [
+    {todo: "schedule conference", status: "incomplete", due: "2022-02-05"},
+    {todo: "permission slip", status: "incomplete", due: "2022-02-04"},
+  ]}
+]
+```
+
+This structure works well if your data is displayed in this hierarchical fashion.  But what if you later want to display all incomplete tasks from across all lists, sorted by due date?  The required code is not particularly difficult, but it doesn't take many more use cases before this structure loses its original value and starts to become a hindrance.
+
+An alternative is to avoid committing to a hierarchical structure, instead modeling your data "relationally" where id's are used to imply connections between data:
+
+```
+{
+  TodoList: {
+    "1": {name: "Home"}
+    "2": {name: "School"}
+  }
+  TodoItem: {
+    "3": {todoListId: "1", todo: "buy milk", status: "complete", due: "2022-02-03"},
+    "4": {todoListId: "1", todo: "wash dishes", status: "incomplete", due: "2022-02-04"},
+    "5": {todoListId: "2", todo: "schedule conference", status: "incomplete", due: "2022-02-05"},
+    "6": {todoListId: "2", todo: "permission slip", status: "incomplete", due: "2022-02-04"},
+  }
+}
+```
+
+This approach maximizes the flexibility of your data, giving it a greater chance of remaining useful into the future.  Extending the data model with new types and relationships and structures is straightforward.  The downside is that some level of indexing and coding is needed to get any useful data out of the model.
+
+This is where Reknow comes in.  You provide Reknow with this relational data and tell Reknow what indexes and relationships you want.  Reknow will then synthesize new properties on your data, allowing your application to access data in "natural" ways like this:
+
+```
+todoList.todoItems
+todoItem.todoList.name
+TodoItems.byStatusSortedByDueDate.incomplete
+```
+
+Reknow also monitors the data for changes, so that if you change the "todoListId" or "status" properties of a TodoItem, the above relationships and indexes will automatically reflect those changes.  Or if you add a TodoItem to the `todoList.todos` relationship, it will automatically assign the appropriate `todoListId`.
+
+Reknow is especially useful when paired with React.  The `useQuery` hook allows a React component to pull data directly from Reknow:
+
+```
+const IncompleteTodos = () => {
+  const todos = useQuery(()=>TodoItems.byStatusSortedByDueDate.incomplete)
+  return (
+    todos.map(todo => <TodoView key={todo.id} todo={todo} />
+  )
+}
+```
+
+Reknow will track what data is accessed by useQuery, so that when any part of that data changes Reknow will automatically trigger the component to re-render.  These "query functions" can also be factored out into shared libraries or model methods, thereby taking on the role that "selectors" play in other state management systems.
+
+Reknow data can be mutated by directly setting properties or manipulating relationships, without the use of "reducers" or "action creators" required by other state managers:
+
+```
+<button onclick={()=>todo.status = "complete"}>
+  Finished!
+</button>
+```
+
+Reknow's change detection system (which is powered by JavaScript Proxies) will automatically transmit the effects of those changes to the appropriate relationships, indexes, and React components.
+
+Building on this foundation, Reknow offers several other features, such as indexable computed properties, multi-key hashing and sorting indexes, hooks that are called when data changes, JSON import and export, and even optional logging of all changes made to the data model.  With all these features, Reknow is aiming to be a complete state management system for an application, handling not only shared global state, but also state down at the individual component level.  Of course, you can choose to use Reknow at whatever granularity you find most useful or comfortable.
+
+Although it can be used in JavaScript, Reknow is designed primarily for TypeScript, with heavy use of decorators.  Each type of model object, such as `TodoList` or `TodoItem` is modeled as a separate "Entity" class.  The declaration of the `TodoItem` model might look something like this:
+
+```
+import * as R from "reknow"
+
+export type TodoItemStatus = "complete" | "incomplete"
+
+export class TodoItem extends R.Entity {
+  @R.id id!: string
+  todoListId!: string
+  status!: TodoItemStatus
+  dueDate!: string
+
+  @R.belongsTo(() => TodoList, "todoListId") todoList!: TodoList
+}
+
+class TodoItemsClass extends R.Entities<TodoItem> {
+  @R.index("=status", "+dueDate")
+  byStatusSortedByDueDate!: R.HashIndex<R.SortIndex<TodoListIem>>
+}
+
+export const TodoItems = new TodoItemsClass(TodoItem)
+```
+
+If you're not familiar with TypeScript or decorators, then the above code can seem arcane and noisy.  But it doesn't take long to get used to it.  If you're willing to give it a chance, and you're intrigued by the idea of relational modeling for client-side data, then read on - perhaps Reknow will be a good fit for your application building patterns.
+
+## Overview
 
 Reknow organizes and maintains an application's internal state, separating that state from the application's presentation layer.  In a React application, Reknow occupies the same space as libraries like Redux or Recoil.
 
