@@ -1688,9 +1688,15 @@ Creates a Service instance.  Applications should rarely, if ever, need to overri
 
 #### StateManager
 
+TBD - coming soon
+
 #### Query
 
+TBD - coming soon
+
 #### Transaction
+
+TBD - coming soon
 
 #### Decorators
 
