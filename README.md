@@ -19,9 +19,9 @@ TodoLists = [
 ]
 ```
 
-This structure works well if your data is displayed in this hierarchical fashion.  But what if you later want to display all incomplete tasks from across all lists, sorted by due date?  The required code is not particularly difficult, but it doesn't take many more use cases before this structure loses its original value and starts to become a hindrance.
+This structure works well if it matches the way your data is displayed.  But what if you want to display all incomplete tasks from across all lists, sorted by due date?  The additional code is not particularly difficult, but it doesn't take many more use cases before this structure loses its original value and starts to become a hindrance.
 
-An alternative is to avoid committing to a hierarchical structure, instead modeling your data "relationally" where id's are used to imply connections between data:
+An alternative is to avoid committing to a hierarchical structure and model your data "relationally" instead, using id's to imply connections between data:
 
 ```
 {
@@ -38,9 +38,9 @@ An alternative is to avoid committing to a hierarchical structure, instead model
 }
 ```
 
-This approach maximizes the flexibility of your data, giving it a greater chance of remaining useful into the future.  Extending the data model with new types and relationships and structures is straightforward.  The downside is that some level of indexing and coding is needed to get any useful data out of the model.
+This approach maximizes the flexibility of your data, giving it a greater chance of remaining useful into the future.  It's easy to extend the data model with new types and relationships and structures.  Of course, the downside is that you'll need to write additional code, and perhaps maintain some indexes, if you're going to extract useful data out of the model.
 
-This is where Reknow comes in.  You provide Reknow with this relational data and tell Reknow what indexes and relationships you want.  Reknow will then synthesize new properties on your data, allowing your application to access data in "natural" ways like this:
+This is where Reknow comes in.  You provide Reknow with this relational data and tell Reknow what indexes and relationships you want.  Reknow will then synthesize new properties on your data to expose those relationships and indexes:
 
 ```
 todoList.todoItems
@@ -48,9 +48,9 @@ todoItem.todoList.name
 TodoItems.byStatusSortedByDueDate.incomplete
 ```
 
-Reknow also monitors the data for changes, so that if you change the "todoListId" or "status" properties of a TodoItem, the above relationships and indexes will automatically reflect those changes.  Or if you add a TodoItem to the `todoList.todos` relationship, it will automatically assign the appropriate `todoListId`.
+Reknow also monitors the data for changes, so that if you change the "todoListId" or "status" properties of a TodoItem, the above relationships and indexes will automatically update to reflect those changes.  Or if you add a TodoItem to the `todoList.todos` relationship, it will automatically assign the appropriate `todoListId`.
 
-Reknow is especially useful when paired with React.  The `useQuery` hook allows a React component to pull data directly from Reknow:
+Reknow is especially useful when paired with React.  Reknow's `useQuery` hook allows a React component to pull data directly from Reknow:
 
 ```
 const IncompleteTodos = () => {
@@ -61,7 +61,7 @@ const IncompleteTodos = () => {
 }
 ```
 
-Reknow will track what data is accessed by useQuery, so that when any part of that data changes Reknow will automatically trigger the component to re-render.  These "query functions" can also be factored out into shared libraries or model methods, thereby taking on the role that "selectors" play in other state management systems.
+Reknow will track what data is accessed by useQuery, so that when any part of that data changes, Reknow will automatically trigger the component to re-render.  These "query functions" can also be factored out into shared libraries or model methods, thereby taking on the role that "selectors" play in other state management systems.
 
 Reknow data can be mutated by directly setting properties or manipulating relationships, without the use of "reducers" or "action creators" required by other state managers:
 
