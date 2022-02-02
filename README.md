@@ -57,7 +57,7 @@ const IncompleteTodos = () => {
   const todos = useQuery(()=>TodoItems.byStatusSortedByDueDate.incomplete)
   return (
     <>
-    todos.map(todo => <TodoView key={todo.id} todo={todo} />
+    todos.map(todo => <TodoView key={todo.id} todo={todo} />)
     </>
   )
 }
