@@ -1556,12 +1556,12 @@ These declarations must be made before the class is added to the StateManager.
 
 ##### Entity Instance Methods
 
-The following properties and methods are available to instances of `Entity` and its application-defined subclasses.  Available decorators are [specified below](./#decorators).
+The following properties and methods are available to instances of `Entity` and its application-defined subclasses.  Available decorators are [specified below](#decorators).
 
 ###### constructor
 Constructor `constructor()`
 
-If an Entity class has a constructor, it should start by calling `super()` as usual.  There are situations where an Entity instance might be created and added without calling its constructor ([applyTransaction](./#applying-transactions) for example).  If an application anticipates being in such a situation, it should avoid doing anything more in its constructor than assigning its parameters to properties.  Other initializations can be performed in `@R.reaction` methods.
+If an Entity class has a constructor, it should start by calling `super()` as usual.  There are situations where an Entity instance might be created and added without calling its constructor ([applyTransaction](#applying-transactions) for example).  If an application anticipates being in such a situation, it should avoid doing anything more in its constructor than assigning its parameters to properties.  Other initializations can be performed in `@R.reaction` methods.
 
 ###### entityId
 Read-only property `entityId:string`
@@ -1620,7 +1620,7 @@ Returns true if the Entity is the same underlying instance as the given `entity`
 
 ##### Entities Instance Methods
 
-The following properties and methods are available to instances of `Entities` and its application-defined subclasses.  Available decorators are [specified below](./#decorators).
+The following properties and methods are available to instances of `Entities` and its application-defined subclasses.  Available decorators are [specified below](#decorators).
 
 Each application `Entity` subclass is expected to define an associated `Entities` subclass, and to create a singleton instance of that `Entities` class
 
@@ -1637,7 +1637,7 @@ Provides access to all Entity instances that have been added.  The property's va
 ###### add
 Method `add(entity: E, id: string | null = null):E`
 
-Adds an Entity instance.  See [addEntity](./#addentity).
+Adds an Entity instance.  See [addEntity](#addentity).
 
 ###### update
 Method `update(entity: E, id: string | null = null):E`
@@ -1647,7 +1647,7 @@ Similar to `add`, except that it behaves differently if another Entity exists wi
 ###### addObject
 Method `addObject(entity: Object, id: string | null = null):E`
 
-Creates and adds a new Entity instance, copying its "own" properties from the given `entity`.  The same id generation and effects are followed as [addEntity](./#addentity).  Note that the Entity instance is created without calling its constructor, which includes TypeScript's property initializations:
+Creates and adds a new Entity instance, copying its "own" properties from the given `entity`.  The same id generation and effects are followed as [addEntity](#addentity).  Note that the Entity instance is created without calling its constructor, which includes TypeScript's property initializations:
 
 ```
 export class TodoListItem extends R.Entity {
@@ -1669,7 +1669,7 @@ Similarly, when calling through `@R.hasMany` relationships, the Entity Objects w
 ###### remove
 Method `remove(entity: E):void`
 
-Removes an Entity instance.  See [removeEntity](./#removeentity).
+Removes an Entity instance.  See [removeEntity](#removeentity).
 
 ###### removeAll
 Method `removeAll():void`
@@ -1715,7 +1715,7 @@ Action methods should perform no other side effects besides modifying Reknow sta
 
 May only be specified for a getter in an `Entity`, `Entities`, or `Service` class.
 
-Indicates that the given method will be executed as a Query.  Its return value will be cached and returned on subsequent calls without executing the body of the method.  If the query's result is invalidated, then the cached value will be discarded and recomputed the next time the method is called.  When the body of the method executes, Reknow will record its dependencies and subscribe to changes in those dependencies, invalidating the query's result if any dependency changes.  The rules for what constitutes an invalidating change are described in [Invalidation Rules](./#invalidation-rules).
+Indicates that the given method will be executed as a Query.  Its return value will be cached and returned on subsequent calls without executing the body of the method.  If the query's result is invalidated, then the cached value will be discarded and recomputed the next time the method is called.  When the body of the method executes, Reknow will record its dependencies and subscribe to changes in those dependencies, invalidating the query's result if any dependency changes.  The rules for what constitutes an invalidating change are described in [Invalidation Rules](#invalidation-rules).
 
 If an `@R.query` is called by another query, then the called query itself becomes a dependent of the calling query.  If the called query's result is later invalidated, the calling query will also invalidate its result.
 
