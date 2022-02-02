@@ -87,7 +87,7 @@ export class EntitiesState<E extends Entity> extends Proxied<
     entities._entitiesState = this
 
     // Connect the Entity class to this
-    ;((entityClass as unknown) as InternalEntityClass<any>).entitiesState = this
+    ;(entityClass as unknown as InternalEntityClass<any>).entitiesState = this
 
     // Apply declarations for the entities class (@index, for example)
     this.applyEntitiesDeclarations()
@@ -116,8 +116,8 @@ export class EntitiesState<E extends Entity> extends Proxied<
 
   disconnectEntitiesState() {
     this.entities._entitiesState = null
-    ;((this
-      .entityClass as unknown) as InternalEntityClass<any>).entitiesState = null
+    ;(this.entityClass as unknown as InternalEntityClass<any>).entitiesState =
+      null
   }
 
   get entitiesClass() {
@@ -397,7 +397,7 @@ export class EntitiesState<E extends Entity> extends Proxied<
   }
 
   static entitiesStateForClass(clazz: Function): EntitiesState<any> | null {
-    return ((clazz as unknown) as InternalEntityClass<any>).entitiesState
+    return (clazz as unknown as InternalEntityClass<any>).entitiesState
   }
 
   addEntityToInheritanceChain(entityId: string, entityState: EntityState<E>) {
@@ -417,7 +417,7 @@ export class EntitiesState<E extends Entity> extends Proxied<
       // from the application's view it is typed as having Entity
       // instances, so we need to do some type-casting to make this
       // pass the compiler
-      const byId = (this.entitiesById as unknown) as {
+      const byId = this.entitiesById as unknown as {
         [key: string]: EntityState<E>
       }
       byId[entityId] = entityState

@@ -9,7 +9,8 @@ import {ObjectChangePublishers} from "./ObjectChangePublishers"
  * remains the same. */
 
 export abstract class Proxied<P extends Object, T extends Object>
-  implements ProxyHandler<P> {
+  implements ProxyHandler<P>
+{
   _proxy: P | null = null
 
   _changePublishers: ObjectChangePublishers | null = null
@@ -198,17 +199,14 @@ export abstract class Proxied<P extends Object, T extends Object>
 
   apply(target: Object, thisArg: any, argumentsList: Array<any>) {
     return Reflect.apply(
-      (this.target as unknown) as Function,
+      this.target as unknown as Function,
       thisArg,
       argumentsList
     )
   }
 
   construct(target: Object, argumentsList: Array<any>) {
-    return Reflect.construct(
-      (this.target as unknown) as Function,
-      argumentsList
-    )
+    return Reflect.construct(this.target as unknown as Function, argumentsList)
   }
 
   //--------------------------------------------------

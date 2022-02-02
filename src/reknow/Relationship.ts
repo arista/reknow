@@ -15,7 +15,8 @@ export abstract class Relationship {
 
   get foreignEntitiesState(): EntitiesState<any> {
     if (this._foreignEntitiesState == null) {
-      const entityClass = (this.foreignEntityFunc() as unknown) as InternalEntityClass<any>
+      const entityClass =
+        this.foreignEntityFunc() as unknown as InternalEntityClass<any>
       const entitiesState: EntitiesState<any> | null = entityClass.entitiesState
       if (entitiesState == null) {
         throw new Error(
