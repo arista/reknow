@@ -710,7 +710,7 @@ export function removeProperty<T>(target: Object, name: string) {
 
 export function addNonEnumerableProperty<T>(
   target: Object,
-  name: symbol,
+  name: string|symbol,
   value: T
 ) {
   const pd: PropertyDescriptor = {value, enumerable: false}
