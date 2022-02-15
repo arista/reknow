@@ -3,6 +3,7 @@ import {ReactionDecorator} from "./Types"
 import {replaceFunction} from "./Utils"
 import {Service} from "./Service"
 import {FunctionType} from "./Types"
+import {addNonEnumerableProperty} from "./Utils"
 
 /** Stores the declarations, typically made with @ decorators,
  * specified in a Services class.  The declarations are associated
@@ -78,7 +79,7 @@ export class ServiceDeclarations {
     ]
     if (ret == null) {
       ret = new ServiceDeclarations()
-      ;(proto as any)[SERVICE_DECLARATIONS_KEY] = ret
+      addNonEnumerableProperty(proto, SERVICE_DECLARATIONS_KEY, ret)
     }
     return ret
   }
@@ -90,4 +91,4 @@ export class ServiceDeclarations {
   }
 }
 
-export const SERVICE_DECLARATIONS_KEY = Symbol("SERVICE_DECLARATIONS_KEY")
+export const SERVICE_DECLARATIONS_KEY = "__SERVICE_DECLARATIONS_KEY"

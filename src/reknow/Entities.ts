@@ -4,6 +4,7 @@ import {EntitiesState} from "./EntitiesState"
 import {EntityClass} from "./Types"
 import {EntitiesDeclarations} from "./EntitiesDeclarations"
 import {ById} from "./Types"
+import {addNonEnumerableProperty} from "./Utils"
 
 export class Entities<E extends Entity> {
   _entitiesState: EntitiesState<E> | null = null
@@ -80,7 +81,7 @@ export class Entities<E extends Entity> {
     entityClass: EntityClass<E>,
     entities: Entities<E>
   ) {
-    entityClass[ENTITIES_KEY] = entities
+    addNonEnumerableProperty(entityClass, ENTITIES_KEY, entities)
   }
 
   // FIXME - factor this out into Utils of Entity, Entities, and Service

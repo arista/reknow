@@ -6,6 +6,7 @@ import {FunctionType} from "./Types"
 import {Entities} from "./Entities"
 import {indexTermsToSchema} from "./Utils"
 import {uniqueIndexTermsToSchema} from "./Utils"
+import {addNonEnumerableProperty} from "./Utils"
 
 /** Stores the declarations, typically made with @ decorators,
  * specified in an Entities class.  The declarations are associated
@@ -99,7 +100,7 @@ export class EntitiesDeclarations {
     ]
     if (ret == null) {
       ret = new EntitiesDeclarations()
-      ;(proto as any)[ENTITIES_DECLARATIONS_KEY] = ret
+      addNonEnumerableProperty(proto, ENTITIES_DECLARATIONS_KEY, ret)
     }
     return ret
   }
@@ -111,4 +112,4 @@ export class EntitiesDeclarations {
   }
 }
 
-export const ENTITIES_DECLARATIONS_KEY = Symbol("ENTITIES_DECLARATIONS_KEY")
+export const ENTITIES_DECLARATIONS_KEY = "__ENTITIES_DECLARATIONS_KEY"
