@@ -2,7 +2,14 @@
   "name": "reknow",
   "version": "0.0.5",
   "description": "Reknow is a state management library based on relational modeling concepts, designed to support React applications written in either TypeScript or JavaScript.",
-  "keywords": ["react", "reknow", "state", "model", "typescript", "relational"],
+  "keywords": [
+    "react",
+    "reknow",
+    "state",
+    "model",
+    "typescript",
+    "relational"
+  ],
   "homepage": "https://github.com/arista/reknow#readme",
   "bugs": "https://github.com/arista/reknow/issues",
   "license": "MIT",
@@ -27,18 +34,18 @@
     "start": "concurrently npm:test-watch npm:tsc-watch npm:build-watch"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.19",
-    "@typescript-eslint/eslint-plugin": "^4.12.0",
-    "@typescript-eslint/parser": "^4.12.0",
-    "concurrently": "^5.3.0",
-    "eslint": "^7.17.0",
-    "jest": "^26.6.3",
-    "json": "^10.0.0",
-    "prettier": "^2.2.1",
-    "rollup": "^2.35.1",
-    "rollup-plugin-typescript2": "^0.29.0",
-    "ts-jest": "^26.4.4",
-    "typescript": "^4.1.3"
+    "@types/jest": "^27.4.0",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "concurrently": "^7.0.0",
+    "eslint": "^8.9.0",
+    "jest": "^27.5.1",
+    "json": "^11.0.0",
+    "prettier": "^2.5.1",
+    "rollup": "^2.67.2",
+    "rollup-plugin-typescript2": "^0.31.2",
+    "ts-jest": "^27.1.3",
+    "typescript": "^4.5.5"
   },
   "jest": {
     "transform": {
