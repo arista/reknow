@@ -91,4 +91,4 @@ export class ServiceDeclarations {
   }
 }
 
-export const SERVICE_DECLARATIONS_KEY = "__SERVICE_DECLARATIONS_KEY"
+export const SERVICE_DECLARATIONS_KEY = Symbol("SERVICE_DECLARATIONS_KEY")

@@ -112,4 +112,4 @@ export class EntitiesDeclarations {
   }
 }
 
-export const ENTITIES_DECLARATIONS_KEY = "__ENTITIES_DECLARATIONS_KEY"
+export const ENTITIES_DECLARATIONS_KEY = Symbol("ENTITIES_DECLARATIONS_KEY")
