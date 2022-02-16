@@ -266,5 +266,5 @@ export abstract class Proxied<P extends Object, T extends Object>
   }
 }
 
-const TARGET = "__TARGET_KEY"
-const PROXIED = "__PROXIED_KEY"
+const TARGET = Symbol("TARGET")
+const PROXIED = Symbol("PROXIED")

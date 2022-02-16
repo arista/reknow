@@ -8,8 +8,8 @@ import {HasOneOptions} from "./Types"
 import {BelongsToOptions} from "./Types"
 import {addNonEnumerableProperty} from "./Utils"
 
-export const ENTITY_STATE_KEY = "__ENTITY_STATE_KEY"
-export const ENTITIES_KEY = "__ENTITIES_KEY"
+export const ENTITY_STATE_KEY = Symbol("ENTITY_STATE_KEY")
+export const ENTITIES_KEY = Symbol("ENTITIES_KEY")
 
 export abstract class Entity {
   [ENTITY_STATE_KEY]: EntityState<any> | null
