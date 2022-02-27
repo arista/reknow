@@ -54,7 +54,7 @@ export class HasMany extends Relationship {
   getPrimaryKeyValue<P extends Entity>(entity: P) {
     return this.primaryKey == null
       ? entity.entityId
-      : (entity as any)[this.primaryKey]
+      : (entity.currentEntity as any)[this.primaryKey]
   }
 
   getValue<P extends Entity, F extends Entity>(entity: P): Array<F> {
