@@ -36,7 +36,7 @@ export class BelongsTo extends Relationship {
   }
 
   getPrimaryKeyValue<P extends Entity>(entity: P) {
-    return (entity as any)[this.primaryKey]
+    return (entity.currentEntity as any)[this.primaryKey]
   }
 
   getValue<P extends Entity, F extends Entity>(entity: P): F | null {
