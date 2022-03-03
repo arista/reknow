@@ -409,12 +409,17 @@ export class StateManager {
 
       for (const id in entitiesState.byId) {
         const entityState = entitiesState.byId[id]
-        const entity: EntityPropertiesExport = {}
-        entityType[id] = entity
+        // Subclass instances will appear in the byId indexes for all
+        // superclasses.  We only want each instance to appear once, so
+        // we only include it if it's exporting the concrete class.
+        if (entityState.entitiesState === entitiesState) {
+          const entity: EntityPropertiesExport = {}
+          entityType[id] = entity
 
-        for (const name in entityState.target) {
-          const value = entityState.target[name]
-          entity[name] = value
+          for (const name in entityState.target) {
+            const value = entityState.target[name]
+            entity[name] = value
+          }
         }
       }
     }

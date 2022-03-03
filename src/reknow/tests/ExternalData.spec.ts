@@ -24,6 +24,16 @@ describe("StateManager External Data Integrations", () => {
   }
   const JobEntities = new _JobEntities(Job)
 
+  class Teacher extends Job {
+    public constructor(userId: string, name: string) {
+      super(userId, name)
+    }
+  }
+  class _TeacherEntities extends R.Entities<Teacher> {
+    @R.index("+name") byName!: R.SortIndex<Teacher>
+  }
+  const TeacherEntities = new _TeacherEntities(Teacher)
+
   let transactions: Array<R.Transaction> = []
   let stateManager!: R.StateManager
 
@@ -36,6 +46,7 @@ describe("StateManager External Data Integrations", () => {
             Job,
           },
         },
+        Teacher,
       },
       listener: (t) => transactions.push(t),
     })
@@ -47,6 +58,7 @@ describe("StateManager External Data Integrations", () => {
       const expected = {
         entities: {
           User: {},
+          Teacher: {},
           "a.b.Job": {},
         },
       }
@@ -66,6 +78,7 @@ describe("StateManager External Data Integrations", () => {
               age: 12,
             },
           },
+          Teacher: {},
           "a.b.Job": {},
         },
       }
@@ -92,6 +105,41 @@ describe("StateManager External Data Integrations", () => {
               name: "def",
               age: null,
               employed: true,
+            },
+          },
+          Teacher: {},
+          "a.b.Job": {
+            j1: {
+              id: "j1",
+              userId: "u1",
+              name: "job1",
+            },
+          },
+        },
+      }
+      expect(stateManager.exportEntities()).toEqual(expected)
+    })
+
+    it("should export a StateManager with multiple entities with subclasses", () => {
+      stateManager.action(() => {
+        const u1 = new User("abc", 12).addEntity("u1")
+        const j1 = new Job("u1", "job1").addEntity("j1")
+        const t1 = new Teacher("u1", "job2").addEntity("j2")
+      })
+      const expected = {
+        entities: {
+          User: {
+            u1: {
+              id: "u1",
+              name: "abc",
+              age: 12,
+            },
+          },
+          Teacher: {
+            j2: {
+              id: "j2",
+              userId: "u1",
+              name: "job2",
             },
           },
           "a.b.Job": {
