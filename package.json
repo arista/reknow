@@ -31,7 +31,8 @@
     "test": "npx jest",
     "test-watch": "npx jest --watch",
     "lint": "npx eslint src/**/*.{js,ts,tsx}",
-    "start": "concurrently npm:test-watch npm:tsc-watch npm:build-watch"
+    "xstart": "concurrently npm:test-watch npm:tsc-watch npm:build-watch",
+    "start": "concurrently npm:tsc-watch npm:build-watch"
   },
   "devDependencies": {
     "@types/jest": "^27.4.0",
