@@ -1,5 +1,5 @@
 import {StateManager} from "./StateManager"
-import {isNonInheritedProperty} from "./Utils"
+import {isNonInheritedProperty, isSetter, isGetter} from "./Utils"
 import {ObjectChangePublishers} from "./ObjectChangePublishers"
 
 /** Superclass for objects that expose their state to the application
@@ -127,6 +127,8 @@ export abstract class Proxied<P extends Object, T extends Object>
       return target
     } else if (prop === PROXIED) {
       return this
+    } else if (isGetter(target, prop)) {
+      return Reflect.get(target, prop, receiver)
     } else if (typeof prop === "string") {
       return this.propertyGet(prop)
     } else {
@@ -135,7 +137,9 @@ export abstract class Proxied<P extends Object, T extends Object>
   }
 
   set(target: Object, prop: PropertyKey, value: any, receiver: Object) {
-    if (typeof prop === "string") {
+    if (isSetter(target, prop)) {
+      return Reflect.set(target, prop, value, receiver)
+    } else if (typeof prop === "string") {
       return this.propertySet(prop, value)
     } else {
       return Reflect.set(target, prop, value, receiver)

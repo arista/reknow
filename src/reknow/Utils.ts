@@ -710,7 +710,7 @@ export function removeProperty<T>(target: Object, name: string) {
 
 export function addNonEnumerableProperty<T>(
   target: Object,
-  name: string|symbol,
+  name: string | symbol,
   value: T
 ) {
   const pd: PropertyDescriptor = {value, enumerable: false}
@@ -856,4 +856,36 @@ export function getSuperclass(clazz: Function): Function | null {
     return null
   }
   return superProto.constructor
+}
+
+// Returns true if the given object has the given name as a getter in
+// its prototype chain
+export function isGetter(obj: Object, prop: PropertyKey): boolean {
+  for (let o: Object | null = obj; o != null; o = Object.getPrototypeOf(o)) {
+    const pd = Object.getOwnPropertyDescriptor(o, prop)
+    if (pd != null) {
+      if (pd.get != null) {
+        return true
+      } else {
+        return false
+      }
+    }
+  }
+  return false
+}
+
+// Returns true if the given object has the given name as a setter in
+// its prototype chain
+export function isSetter(obj: Object, prop: PropertyKey): boolean {
+  for (let o: Object | null = obj; o != null; o = Object.getPrototypeOf(o)) {
+    const pd = Object.getOwnPropertyDescriptor(o, prop)
+    if (pd != null) {
+      if (pd.set != null) {
+        return true
+      } else {
+        return false
+      }
+    }
+  }
+  return false
 }

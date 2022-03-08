@@ -15,25 +15,25 @@ import * as R from "../Reknow"
 // getting the primary key.
 
 describe("Bug18", () => {
-  it("should trigger the reaction that depends on a relationship that depends on another property", ()=>{
+  it("should trigger the reaction that depends on a relationship that depends on another property", () => {
     class A extends R.Entity {
-      w!:string
-      x!:string
+      w!: string
+      x!: string
 
-      @R.belongsTo(()=>A, "w", {foreignKey: "x"}) y1!:A
-      z1!:A
+      @R.belongsTo(() => A, "w", {foreignKey: "x"}) y1!: A
+      z1!: A
       @R.reaction setZ1() {
         this.z1 = this.y1
       }
 
-      @R.hasMany(()=>A, "x", {primaryKey: "w"}) y2!:Array<A>
-        z2!:Array<A>
-        @R.reaction setZ2() {
-          this.z2 = this.y2
-        }
+      @R.hasMany(() => A, "x", {primaryKey: "w"}) y2!: Array<A>
+      z2!: Array<A>
+      @R.reaction setZ2() {
+        this.z2 = this.y2
+      }
 
-      @R.hasOne(()=>A, "x", {primaryKey: "w"}) y3!:A
-      z3!:A
+      @R.hasOne(() => A, "x", {primaryKey: "w"}) y3!: A
+      z3!: A
       @R.reaction setZ3() {
         this.z3 = this.y3
       }
@@ -41,13 +41,13 @@ describe("Bug18", () => {
 
     class _AEntities extends R.Entities<A> {}
     const AEntities = new _AEntities(A)
-    const Entities = { A }
+    const Entities = {A}
     const stateManager = new R.StateManager({entities: Entities})
 
-    let _a1!:A
-    let a1!:A
-    let a2!:A
-    stateManager.action(()=>{
+    let _a1!: A
+    let a1!: A
+    let a2!: A
+    stateManager.action(() => {
       _a1 = new A()
       a1 = _a1.addEntity()
       a1.w = "abc"

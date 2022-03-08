@@ -5,6 +5,8 @@ import {getSortedGT} from "./Utils"
 import {getSortedLE} from "./Utils"
 import {getSortedLT} from "./Utils"
 import {getSuperclass} from "./Utils"
+import {isGetter} from "./Utils"
+import {isSetter} from "./Utils"
 
 describe("Utils", () => {
   describe("sorted list methods", () => {
@@ -120,5 +122,87 @@ describe("Utils", () => {
     expect(getSuperclass(B)).toBe(A)
     expect(getSuperclass(C1)).toBe(B)
     expect(getSuperclass(C2)).toBe(B)
+  })
+  describe("isGetter", () => {
+    it("should return false for a nonexistent property", () => {
+      class A {}
+      const a = new A()
+      expect(isGetter(a, "val")).toBe(false)
+    })
+    it("should return false for a property set on the object", () => {
+      class A {
+        val!: string
+      }
+      const a = new A()
+      a.val = "abc"
+      expect(isGetter(a, "val")).toBe(false)
+    })
+    it("should return true for a getter on the class", () => {
+      class A {
+        get val() {
+          return 0
+        }
+      }
+      const a = new A()
+      expect(isGetter(a, "val")).toBe(true)
+    })
+    it("should return true for a getter on the superclass", () => {
+      class A {
+        get val() {
+          return 0
+        }
+      }
+      class A2 extends A {}
+      const a = new A2()
+      expect(isGetter(a, "val")).toBe(true)
+    })
+    it("should return false for a property shadowing a getter", () => {
+      class A {
+        get val() {
+          return 0
+        }
+      }
+      const a = new A()
+      Object.defineProperty(a, "val", {value: 10})
+      expect(isGetter(a, "val")).toBe(false)
+    })
+  })
+  describe("isSetter", () => {
+    it("should return false for a nonexistent property", () => {
+      class A {}
+      const a = new A()
+      expect(isSetter(a, "val")).toBe(false)
+    })
+    it("should return false for a property set on the object", () => {
+      class A {
+        val!: string
+      }
+      const a = new A()
+      a.val = "abc"
+      expect(isSetter(a, "val")).toBe(false)
+    })
+    it("should return true for a setter on the class", () => {
+      class A {
+        set val(v: string) {}
+      }
+      const a = new A()
+      expect(isSetter(a, "val")).toBe(true)
+    })
+    it("should return true for a setter on the superclass", () => {
+      class A {
+        set val(v: string) {}
+      }
+      class A2 extends A {}
+      const a = new A2()
+      expect(isSetter(a, "val")).toBe(true)
+    })
+    it("should return false for a property shadowing a setter", () => {
+      class A {
+        set val(v: string) {}
+      }
+      const a = new A()
+      Object.defineProperty(a, "val", {value: 10})
+      expect(isSetter(a, "val")).toBe(false)
+    })
   })
 })
