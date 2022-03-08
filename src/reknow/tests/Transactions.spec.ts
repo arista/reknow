@@ -14,6 +14,10 @@ describe("Transactions", () => {
     @R.action setAge(age: number) {
       this.age = age
     }
+
+    set userName(userName: string) {
+      this.name = userName
+    }
   }
   class _Users extends R.Entities<User> {
     @R.action createUser() {
@@ -422,6 +426,34 @@ describe("Transactions", () => {
         .map((t) => R.stringifyTransaction(t))
         .join("\n")
       expect(resultStr).toEqual(expectedStr)
+    })
+  })
+  describe("Entity setter", () => {
+    let user!: User
+    beforeEach(() => {
+      user = Users.createUser()
+      transactions = []
+    })
+    it("should not report the setter call, but the underlying property setting", () => {
+      AppModel.action(() => (user.userName = "abc"))
+      const expected = [
+        {
+          action: {
+            type: "UnnamedAction",
+          },
+          stateChanges: [
+            {
+              type: "EntityPropertyChanged",
+              entityType: "User",
+              id: "user1",
+              property: "name",
+              newValue: "abc",
+              oldValue: "brad",
+            },
+          ],
+        },
+      ]
+      expect(transactions).toEqual(expected)
     })
   })
   describe("Service actions", () => {
