@@ -279,7 +279,7 @@ describe("Inheritance", () => {
         expect(o1.teachers).toEqual([])
         expect(u1.organization).toEqual(o1)
       })
-      xit("should assign the relationship by reference", ()=>{
+      it("should assign the relationship by reference", ()=>{
         action(()=>u1.organization = o1)
         expect(o1.users).toEqual([u1])
         expect(o1.teachers).toEqual([])
@@ -322,7 +322,7 @@ describe("Inheritance", () => {
         expect(t1.organization).toEqual(o1)
         expect(a1.organization).toEqual(o1)
       })
-      xit("should assign the relationship by reference", ()=>{
+      it("should assign the relationship by reference", ()=>{
         action(()=>t1.organization = o1)
         expect(o1.users).toEqual([t1])
         expect(o1.teachers).toEqual([t1])

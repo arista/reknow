@@ -2,6 +2,7 @@ import * as R from "../Reknow"
 
 describe("BelongsTo", () => {
   class User extends R.Entity {
+    @R.id id!:string
     static get entities(): _Users {
       return Users
     }
@@ -37,7 +38,9 @@ describe("BelongsTo", () => {
     @R.belongsTo(() => User, "dependentRemoveId", {dependent: "remove"})
     dependentRemove!: User | null
   }
-  class _Jobs extends R.Entities<Job> {}
+  class _Jobs extends R.Entities<Job> {
+    @R.index("=userId") byUserId!:R.HashIndex<Job>
+  }
   const Jobs = new _Jobs(Job)
 
   const AppModel = new R.StateManager({entities: {User, Job}})
@@ -76,6 +79,8 @@ describe("BelongsTo", () => {
         expect(j1.userByName).toBe(null)
       })
     })
+  })
+  describe("set value", () => {
     it("should set value by id", () => {
       action(() => {
         const u1 = Users.add(new User("jack"), "user#1")
@@ -98,9 +103,7 @@ describe("BelongsTo", () => {
         expect(j1.userByName).toBe(null)
       })
     })
-  })
-  describe("set value", () => {
-    it("should set value by id", () => {
+    it("should set value by reference", () => {
       action(() => {
         const u1 = Users.add(new User("jack"), "user#1")
         const u2 = Users.add(new User("sam"), "user#2")
@@ -128,6 +131,42 @@ describe("BelongsTo", () => {
         expect(j1.userName).toBe("sam")
         j1.userByName = null
         expect(j1.userName).toBe(null)
+      })
+    })
+    it("should affect indexes when setting value by id", () => {
+      action(() => {
+        const u1 = Users.add(new User("jack"), "user#1")
+        const u2 = Users.add(new User("sam"), "user#2")
+        const j1 = Jobs.add(new Job("banker"))
+        expect(Jobs.byUserId[u1.id] == null).toBe(true)
+        expect(Jobs.byUserId[u2.id] == null).toBe(true)
+        j1.userId = "user#1"
+        expect(Jobs.byUserId[u1.id]).toEqual([j1])
+        expect(Jobs.byUserId[u2.id] == null).toBe(true)
+        j1.userId = "user#2"
+        expect(Jobs.byUserId[u1.id] == null).toBe(true)
+        expect(Jobs.byUserId[u2.id]).toEqual([j1])
+        j1.userId = null
+        expect(Jobs.byUserId[u1.id] == null).toBe(true)
+        expect(Jobs.byUserId[u2.id] == null).toBe(true)
+      })
+    })
+    it("should affect indexes when setting value by reference", () => {
+      action(() => {
+        const u1 = Users.add(new User("jack"), "user#1")
+        const u2 = Users.add(new User("sam"), "user#2")
+        const j1 = Jobs.add(new Job("banker"))
+        expect(Jobs.byUserId[u1.id] == null).toBe(true)
+        expect(Jobs.byUserId[u2.id] == null).toBe(true)
+        j1.user = u1
+        expect(Jobs.byUserId[u1.id]).toEqual([j1])
+        expect(Jobs.byUserId[u2.id] == null).toBe(true)
+        j1.user = u2
+        expect(Jobs.byUserId[u1.id] == null).toBe(true)
+        expect(Jobs.byUserId[u2.id]).toEqual([j1])
+        j1.userId = null
+        expect(Jobs.byUserId[u1.id] == null).toBe(true)
+        expect(Jobs.byUserId[u2.id] == null).toBe(true)
       })
     })
   })
