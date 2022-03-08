@@ -99,7 +99,7 @@ export class HasOne extends Relationship {
   }
 
   setForeignKeyValue<F extends Entity>(foreign: F, value: any) {
-    ;(foreign as any)[this.foreignKey] = value
+    ;(foreign.currentEntity as any)[this.foreignKey] = value
   }
 
   createGetter<P extends Entity, F extends Entity>(): () => F | null {

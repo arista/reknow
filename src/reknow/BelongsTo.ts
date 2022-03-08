@@ -119,11 +119,11 @@ export class BelongsTo extends Relationship {
   getForeignKeyValue<F extends Entity>(foreign: F) {
     return this.foreignKey == null
       ? foreign.entityId
-      : (foreign as any)[this.foreignKey]
+      : (foreign.currentEntity as any)[this.foreignKey]
   }
 
   setPrimaryKeyValue<P extends Entity>(primary: P, value: any) {
-    ;(primary as any)[this.primaryKey] = value
+    ;(primary.currentEntity as any)[this.primaryKey] = value
   }
 
   apply(entitiesState: EntitiesState<any>) {
