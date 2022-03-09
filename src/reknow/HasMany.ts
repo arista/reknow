@@ -129,7 +129,7 @@ export class HasMany extends Relationship {
   }
 
   setForeignKeyValue<F extends Entity>(foreign: F, value: any) {
-    ;(foreign as any)[this.foreignKey] = value
+    ;(foreign.currentEntity as any)[this.foreignKey] = value
   }
 
   getResultProxy<F extends Entity>(
