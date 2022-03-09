@@ -1,6 +1,6 @@
 {
   "name": "reknow",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Reknow is a state management library based on relational modeling concepts, designed to support React applications written in either TypeScript or JavaScript.",
   "keywords": [
     "react",
