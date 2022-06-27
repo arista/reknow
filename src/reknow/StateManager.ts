@@ -401,24 +401,41 @@ export class StateManager {
     applyTransaction(this, transaction)
   }
 
-  exportEntities(): EntitiesExport {
+  exportEntities(
+    entityTypeFilter: ((entityTypeName: string) => boolean) | null = null,
+    entityFilter:
+      | ((
+          entityTypeName: string,
+          id: string,
+          entity: EntityPropertiesExport
+        ) => boolean)
+      | null = null
+  ): EntitiesExport {
     const ret: EntitiesExport = {entities: {}}
     for (const entitiesState of this.entitiesStates) {
-      const entityType: EntityTypeExport = {}
-      ret.entities[entitiesState.name] = entityType
+      const entityTypeName = entitiesState.name
+      if (entityTypeFilter == null || entityTypeFilter(entityTypeName)) {
+        const entityType: EntityTypeExport = {}
+        ret.entities[entityTypeName] = entityType
 
-      for (const id in entitiesState.byId) {
-        const entityState = entitiesState.byId[id]
-        // Subclass instances will appear in the byId indexes for all
-        // superclasses.  We only want each instance to appear once, so
-        // we only include it if it's exporting the concrete class.
-        if (entityState.entitiesState === entitiesState) {
-          const entity: EntityPropertiesExport = {}
-          entityType[id] = entity
+        for (const id in entitiesState.byId) {
+          const entityState = entitiesState.byId[id]
+          // Subclass instances will appear in the byId indexes for all
+          // superclasses.  We only want each instance to appear once, so
+          // we only include it if it's exporting the concrete class.
+          if (entityState.entitiesState === entitiesState) {
+            const entity: EntityPropertiesExport = {}
+            for (const name in entityState.target) {
+              const value = entityState.target[name]
+              entity[name] = value
+            }
 
-          for (const name in entityState.target) {
-            const value = entityState.target[name]
-            entity[name] = value
+            if (
+              entityFilter == null ||
+              entityFilter(entityTypeName, id, entity)
+            ) {
+              entityType[id] = entity
+            }
           }
         }
       }
