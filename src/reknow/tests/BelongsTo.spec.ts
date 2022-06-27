@@ -2,7 +2,7 @@ import * as R from "../Reknow"
 
 describe("BelongsTo", () => {
   class User extends R.Entity {
-    @R.id id!:string
+    @R.id id!: string
     static get entities(): _Users {
       return Users
     }
@@ -39,7 +39,7 @@ describe("BelongsTo", () => {
     dependentRemove!: User | null
   }
   class _Jobs extends R.Entities<Job> {
-    @R.index("=userId") byUserId!:R.HashIndex<Job>
+    @R.index("=userId") byUserId!: R.HashIndex<Job>
   }
   const Jobs = new _Jobs(Job)
 

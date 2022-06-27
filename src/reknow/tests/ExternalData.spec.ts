@@ -153,6 +153,79 @@ describe("StateManager External Data Integrations", () => {
       }
       expect(stateManager.exportEntities()).toEqual(expected)
     })
+    it("should export a StateManager using the entityTypeFilter", () => {
+      stateManager.action(() => {
+        const u1 = new User("abc", 12).addEntity("u1")
+        const j1 = new Job("u1", "job1").addEntity("j1")
+        const t1 = new Teacher("u1", "job2").addEntity("j2")
+      })
+      const expected = {
+        entities: {
+          User: {
+            u1: {
+              id: "u1",
+              name: "abc",
+              age: 12,
+            },
+          },
+          "a.b.Job": {
+            j1: {
+              id: "j1",
+              userId: "u1",
+              name: "job1",
+            },
+          },
+        },
+      }
+      const entityTypeFilter = (entityTypeName: string) =>
+        entityTypeName !== "Teacher"
+      expect(stateManager.exportEntities(entityTypeFilter)).toEqual(expected)
+    })
+    it("should export a StateManager using the entity filter", () => {
+      stateManager.action(() => {
+        const u1 = new User("abc", 12).addEntity("u1")
+        const j1 = new Job("u1", "job1").addEntity("j1")
+        const t1 = new Teacher("u1", "job2").addEntity("j2")
+        const t2 = new Teacher("u2", "job3").addEntity("j3")
+        const t3 = new Teacher("u3", "job4").addEntity("j4")
+      })
+      const expected = {
+        entities: {
+          User: {
+            u1: {
+              id: "u1",
+              name: "abc",
+              age: 12,
+            },
+          },
+          Teacher: {
+            j3: {
+              id: "j3",
+              userId: "u2",
+              name: "job3",
+            },
+            j4: {
+              id: "j4",
+              userId: "u3",
+              name: "job4",
+            },
+          },
+          "a.b.Job": {
+            j1: {
+              id: "j1",
+              userId: "u1",
+              name: "job1",
+            },
+          },
+        },
+      }
+      const entityFilter = (
+        entityTypeName: string,
+        id: string,
+        entity: R.EntityPropertiesExport
+      ) => entityTypeName !== "Teacher" || id === "j3" || entity.name === "job4"
+      expect(stateManager.exportEntities(null, entityFilter)).toEqual(expected)
+    })
   })
   describe("importEntities", () => {
     it("should handle an empty exports", () => {

@@ -5,21 +5,24 @@ describe("Inheritance", () => {
   class Organization extends R.Entity {
     @R.id id!: string
 
-    @R.hasMany(()=>User, "organizationId", {primaryKey: "id", sort: "+name"}) users!:Array<User>
-    @R.hasMany(()=>Teacher, "organizationId", {primaryKey: "id"}) teachers!:Array<Teacher>
-    @R.hasMany(()=>Administrator, "organizationId", {primaryKey: "id"}) administrators!:Array<Administrator>
+    @R.hasMany(() => User, "organizationId", {primaryKey: "id", sort: "+name"})
+    users!: Array<User>
+    @R.hasMany(() => Teacher, "organizationId", {primaryKey: "id"})
+    teachers!: Array<Teacher>
+    @R.hasMany(() => Administrator, "organizationId", {primaryKey: "id"})
+    administrators!: Array<Administrator>
   }
-  class _OrganizationEntities extends R.Entities<Organization> {
-  }
+  class _OrganizationEntities extends R.Entities<Organization> {}
   const OrganizationEntities = new _OrganizationEntities(Organization)
-  
+
   // User
   class User extends R.Entity {
     @R.id id!: string
     tripleName: string = ""
-    organizationId!:string|null
+    organizationId!: string | null
 
-    @R.belongsTo(()=>Organization, "organizationId", {foreignKey: "id"}) organization!:Organization|null
+    @R.belongsTo(() => Organization, "organizationId", {foreignKey: "id"})
+    organization!: Organization | null
 
     static get entities(): _Users {
       return Users
@@ -83,7 +86,8 @@ describe("Inheritance", () => {
 
   // Administrator extends StaffMember
   class Administrator extends StaffMember {
-    @R.belongsTo(()=>Organization, "organizationId", {foreignKey: "id"}) organization!:Organization|null
+    @R.belongsTo(() => Organization, "organizationId", {foreignKey: "id"})
+    organization!: Organization | null
 
     static get administratorEntities(): _Administrators {
       return Administrators
@@ -261,91 +265,95 @@ describe("Inheritance", () => {
   })
 
   describe("A relationship with a superclass", () => {
-    describe("assigning relationships to the base subclass", ()=>{
-      let o1!:Organization
-      let u1!:User
-      beforeEach(()=>{
-        o1 = action(() =>new Organization().addEntity())
-        u1 = action(()=>new User("abc").addEntity())
+    describe("assigning relationships to the base subclass", () => {
+      let o1!: Organization
+      let u1!: User
+      beforeEach(() => {
+        o1 = action(() => new Organization().addEntity())
+        u1 = action(() => new User("abc").addEntity())
       })
-      it("should start with no relationship", ()=>{
+      it("should start with no relationship", () => {
         expect(o1.users).toEqual([])
         expect(o1.teachers).toEqual([])
         expect(u1.organization).toEqual(null)
       })
-      it("should assign the relationship by id", ()=>{
-        action(()=>u1.organizationId = o1.id)
+      it("should assign the relationship by id", () => {
+        action(() => (u1.organizationId = o1.id))
         expect(o1.users).toEqual([u1])
         expect(o1.teachers).toEqual([])
         expect(u1.organization).toEqual(o1)
       })
-      it("should assign the relationship by reference", ()=>{
-        action(()=>u1.organization = o1)
+      it("should assign the relationship by reference", () => {
+        action(() => (u1.organization = o1))
         expect(o1.users).toEqual([u1])
         expect(o1.teachers).toEqual([])
         expect(u1.organization).toEqual(o1)
       })
-      it("should assign the relationship from the hasMany", ()=>{
-        action(()=>o1.users.push(u1))
+      it("should assign the relationship from the hasMany", () => {
+        action(() => o1.users.push(u1))
         expect(o1.users).toEqual([u1])
         expect(o1.teachers).toEqual([])
         expect(u1.organization).toEqual(o1)
       })
     })
-    describe("assigning relationships to a subclass", ()=>{
-      let o1!:Organization
-      let t1!:Teacher
-      let a1!:Administrator
-      beforeEach(()=>{
-        o1 = action(() =>new Organization().addEntity())
-        t1 = action(()=>new Teacher("abc", "14323", "math", "5111").addEntity())
-        a1 = action(()=>new Administrator("def", "14323", "learningCenter").addEntity())
+    describe("assigning relationships to a subclass", () => {
+      let o1!: Organization
+      let t1!: Teacher
+      let a1!: Administrator
+      beforeEach(() => {
+        o1 = action(() => new Organization().addEntity())
+        t1 = action(() =>
+          new Teacher("abc", "14323", "math", "5111").addEntity()
+        )
+        a1 = action(() =>
+          new Administrator("def", "14323", "learningCenter").addEntity()
+        )
       })
-      it("should start with no relationship", ()=>{
+      it("should start with no relationship", () => {
         expect(o1.users).toEqual([])
         expect(o1.teachers).toEqual([])
         expect(t1.organization).toEqual(null)
         expect(a1.organization).toEqual(null)
       })
-      it("should assign the relationship by id", ()=>{
-        action(()=>t1.organizationId = o1.id)
+      it("should assign the relationship by id", () => {
+        action(() => (t1.organizationId = o1.id))
         expect(o1.users).toEqual([t1])
         expect(o1.teachers).toEqual([t1])
         expect(o1.administrators).toEqual([])
         expect(t1.organization).toEqual(o1)
         expect(a1.organization).toEqual(null)
 
-        action(()=>a1.organizationId = o1.id)
+        action(() => (a1.organizationId = o1.id))
         expect(o1.users).toEqual([t1, a1])
         expect(o1.teachers).toEqual([t1])
         expect(o1.administrators).toEqual([a1])
         expect(t1.organization).toEqual(o1)
         expect(a1.organization).toEqual(o1)
       })
-      it("should assign the relationship by reference", ()=>{
-        action(()=>t1.organization = o1)
+      it("should assign the relationship by reference", () => {
+        action(() => (t1.organization = o1))
         expect(o1.users).toEqual([t1])
         expect(o1.teachers).toEqual([t1])
         expect(o1.administrators).toEqual([])
         expect(t1.organization).toEqual(o1)
         expect(a1.organization).toEqual(null)
 
-        action(()=>a1.organization = o1)
+        action(() => (a1.organization = o1))
         expect(o1.users).toEqual([t1, a1])
         expect(o1.teachers).toEqual([t1])
         expect(o1.administrators).toEqual([a1])
         expect(t1.organization).toEqual(o1)
         expect(a1.organization).toEqual(o1)
       })
-      it("should assign the relationship from the hasMany", ()=>{
-        action(()=>o1.users.push(t1))
+      it("should assign the relationship from the hasMany", () => {
+        action(() => o1.users.push(t1))
         expect(o1.users).toEqual([t1])
         expect(o1.teachers).toEqual([t1])
         expect(o1.administrators).toEqual([])
         expect(t1.organization).toEqual(o1)
         expect(a1.organization).toEqual(null)
 
-        action(()=>o1.users.push(a1))
+        action(() => o1.users.push(a1))
         expect(o1.users).toEqual([t1, a1])
         expect(o1.teachers).toEqual([t1])
         expect(o1.administrators).toEqual([a1])
